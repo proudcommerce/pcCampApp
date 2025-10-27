@@ -65,6 +65,20 @@ open http://localhost:5173
 
 **Das war's!** Die App läuft jetzt mit Live-Reload.
 
+```bash
+# 1. Live-Preview starten (Docker)
+make prod-up
+
+# 2. Browser öffnen
+open http://localhost:5174
+
+# Build erstellen (/build-Ordner)
+# wird auch mit prod-up erstellt
+make build
+```
+
+**Build-Inhalt auf Server laden!** Die App läuft jetzt als PWA.
+
 ---
 
 ## 🚀 Screenshots
