@@ -70,12 +70,19 @@ open http://localhost:5173
 ## 🚀 Screenshots
 
 <details>
+
 <summary>Screenshots anzeigen</summary>
+
 ![pccampapp1](docs/screenshots/pccampapp1.jpeg)
+
 ![pccampapp2](docs/screenshots/pccampapp2.jpeg)
+
 ![pccampapp3](docs/screenshots/pccampapp3.jpeg)
+
 ![pccampapp4](docs/screenshots/pccampapp4.jpeg)
+
 ![pccampapp5](docs/screenshots/pccampapp5.jpeg)
+
 </details>
 
 ---
