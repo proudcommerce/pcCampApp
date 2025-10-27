@@ -1,0 +1,104 @@
+{
+  "freitag": {
+    "18:00 - 21:00 Uhr": [
+      {
+        "room": "Empfangsbereich",
+        "title": "Check-in und Networking bei Snacks und Getränken"
+      }
+    ]
+  },
+  "samstag": {
+    "08:00 - 09:00 Uhr": [
+      {
+        "room": "Foyer",
+        "title": "Frühstück und Ankommen"
+      }
+    ],
+    "09:30 Uhr": [
+      {
+        "room": "Hauptraum",
+        "title": "Begrüßung und Vorstellungsrunde"
+      }
+    ],
+    "10:00 Uhr": [
+      {
+        "room": "Alle Räume",
+        "title": "Sessionplanung und Ideensammlung"
+      }
+    ],
+    "11:00 Uhr": [
+      {
+        "room": "Sessions",
+        "title": "Session-Block 1 (60 Minuten)"
+      }
+    ],
+    "12:00 Uhr": [
+      {
+        "room": "Sessions",
+        "title": "Session-Block 2 (60 Minuten)"
+      }
+    ],
+    "13:00 - 14:00 Uhr": [
+      {
+        "room": "Cafeteria",
+        "title": "Mittagspause"
+      }
+    ],
+    "14:00 Uhr": [
+      {
+        "room": "Sessions",
+        "title": "Session-Block 3 (60 Minuten)"
+      }
+    ],
+    "15:00 Uhr": [
+      {
+        "room": "Sessions",
+        "title": "Session-Block 4 (60 Minuten)"
+      }
+    ],
+    "16:00 - 17:30 Uhr": [
+      {
+        "room": "Hauptraum",
+        "title": "Session-Voting und Gewinner-Bekanntgabe"
+      }
+    ],
+    "18:00 Uhr": [
+      {
+        "room": "Außenbereich",
+        "title": "Abendessen und Networking"
+      }
+    ]
+  },
+  "sonntag": {
+    "09:00 - 10:00 Uhr": [
+      {
+        "room": "Foyer",
+        "title": "Frühstück und Sessionplanung"
+      }
+    ],
+    "10:00 Uhr": [
+      {
+        "room": "Sessions",
+        "title": "Session-Block 5 (60 Minuten)"
+      }
+    ],
+    "11:00 Uhr": [
+      {
+        "room": "Sessions",
+        "title": "Session-Block 6 (60 Minuten)"
+      }
+    ],
+    "12:00 - 13:30 Uhr": [
+      {
+        "room": "Cafeteria",
+        "title": "Gemeinsames Mittagessen"
+      }
+    ],
+    "14:00 Uhr": [
+      {
+        "room": "Hauptraum",
+        "title": "Abschluss, Feedback und Verabschiedung"
+      }
+    ]
+  }
+}

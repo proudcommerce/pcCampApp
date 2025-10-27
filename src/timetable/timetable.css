@@ -1,0 +1,12 @@
+.timetable{font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica Neue,sans-serif;background:#ffffff;border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+.timetable details{border:1px solid #e2e8f0;border-radius:8px;margin:8px 0;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:all 0.2s ease}
+.timetable details:hover{box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+.timetable summary{padding:14px 16px;font-weight:600;list-style:none;cursor:pointer;color:#2d3748;font-size:16px;letter-spacing:-0.02em;transition:all 0.2s ease}
+.timetable summary:hover{background:#f7fafc}
+.timetable summary::-webkit-details-marker{display:none}
+.timetable .slot-content{padding:16px}
+.timetable .slot{padding:30px 0 20px 0;border-top:1px solid #e2e8f0}
+.timetable .slot:first-child{border-top:0}
+.timetable .room{color:#3182ce;font-weight:600;font-size:14px;text-align:center}
+.timetable .title{color:#2d3748;font-weight:500;font-size:15px;line-height:1.4;text-align:center}
+.timetable .muted{color:#718096;font-size:13px;margin-bottom:8px;font-weight:500;text-align:center}

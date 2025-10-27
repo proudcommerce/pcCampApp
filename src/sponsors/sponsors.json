@@ -1,0 +1,22 @@
+{
+  "sponsors": [
+    {
+      "name": "Sponsor 1",
+      "logo": "sponsor-placeholder.png",
+      "url": "https://example.com",
+      "beschreibung": "Beschreibung des ersten Sponsors (lokale Grafik)"
+    },
+    {
+      "name": "Sponsor 2",
+      "logo": "sponsor-placeholder.png",
+      "url": "https://example.com",
+      "beschreibung": "Beschreibung des zweiten Sponsors (externe URL)"
+    },
+    {
+      "name": "Sponsor 3",
+      "logo": "sponsor-placeholder.png",
+      "url": "https://example.com",
+      "beschreibung": "Beschreibung des dritten Sponsors (lokale Grafik)"
+    }
+  ]
+}

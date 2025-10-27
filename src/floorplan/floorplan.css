@@ -1,0 +1,58 @@
+.brand img{border:none;box-shadow:none}
+.page-wrap img{max-width:100%;height:auto;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,0.08);transition:all 0.2s ease}
+.page-wrap img:hover{transform:scale(1.01);box-shadow:0 4px 12px rgba(0,0,0,0.12)}
+
+.floorplan-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.zoom-hint {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.zoom-hint svg {
+  color: #3b82f6;
+}
+
+#floorplanImage {
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  transform-origin: center center;
+}
+
+#floorplanImage.zoomed {
+  transform: scale(3);
+  cursor: grab;
+}
+
+#floorplanImage.zoomed:active {
+  cursor: grabbing;
+}
+
+#floorplanImage.dragging {
+  transition: none;
+}
+
+@media (max-width: 768px) {
+  .zoom-hint {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .zoom-hint svg {
+    width: 14px;
+    height: 14px;
+  }
+}

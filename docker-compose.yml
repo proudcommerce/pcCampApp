@@ -1,0 +1,26 @@
+services:
+  pccampapp-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pccampapp-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount entire project root (contains src/ and event.json)
+      - ./:/usr/share/nginx/html
+      # Override nginx config
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - pccampapp-network
+
+networks:
+  pccampapp-network:
+    driver: bridge

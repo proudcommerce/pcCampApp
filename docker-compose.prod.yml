@@ -1,0 +1,26 @@
+services:
+  pccampapp-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pccampapp-prod
+    ports:
+      - "5174:5173"
+    volumes:
+      # Mount build/ directory for production testing
+      - ./build:/usr/share/nginx/html:ro
+      # Use production-optimized nginx config
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173/index.html"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - pccampapp-prod-network
+
+networks:
+  pccampapp-prod-network:
+    driver: bridge

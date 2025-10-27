@@ -1,0 +1,53 @@
+{
+  "items": [
+        {
+            "title": "Sessionplan",
+            "url": "/sessionplan/",
+            "description": "",
+            "icon": "calendar",
+            "active": true
+        },
+        {
+            "title": "Timetable",
+            "url": "/timetable/",
+            "description": "",
+            "icon": "clock",
+            "active": true
+        },
+        {
+            "title": "Floorplan",
+            "url": "/floorplan/",
+            "description": "",
+            "icon": "map",
+            "active": true
+        },
+        {
+            "title": "Food",
+            "url": "/food/",
+            "description": "",
+            "icon": "food",
+            "active": true
+        },
+        {
+            "title": "Sponsoren",
+            "url": "/sponsors/",
+            "description": "Unsere Unterstützer",
+            "icon": "star",
+            "active": true
+        },
+        {
+            "title": "GitHub",
+            "url": "https://github.com/proudcommerce/pcCampApp",
+            "description": "Open Source Event-App",
+            "icon": "image",
+            "active": true
+        },
+        {
+            "title": "WLAN",
+            "url": "",
+            "description": "EventWiFi / test123",
+            "icon": "wifi",
+            "active": true
+        }
+    ]
+}

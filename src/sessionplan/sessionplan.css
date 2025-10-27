@@ -1,0 +1,31 @@
+.sessionplan{font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#ffffff;}
+.sessionplan details{border:1px solid #e5e7eb;border-radius:8px;margin:8px 0;background:#fff;overflow:hidden}
+.sessionplan summary{padding:12px 14px;font-weight:600;list-style:none;cursor:pointer}
+.sessionplan summary::-webkit-details-marker{display:none}
+.sessionplan ul{margin:0;padding:0 14px 12px 14px}
+.sessionplan li{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-top:1px solid #e5e7eb}
+.sessionplan li:first-child{border-top:0}
+.sessionplan .room{font-weight:700}
+.sessionplan .title{color:#111827}
+.sessionplan .host{color:#6b7280;font-size:0.95em}
+.sessionplan .cancelled-badge{background:#ef4444;color:white;padding:2px 6px;border-radius:4px;font-size:0.75em;font-weight:600;margin-left:8px;text-decoration:none}
+@media (min-width:768px){.sessionplan li{flex-direction:row;justify-content:space-between;align-items:baseline}.sessionplan .title{margin-left:8px;flex:1}}
+
+/* Favorites filter */
+.favorites-filter{margin:20px 0;display:block}
+.favorites-filter input[type="checkbox"]{display:none}
+.favorites-filter label{font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 16px;background:#ffffff;border:none;border-radius:8px}
+.favorites-filter label svg{color:#ef4444}
+
+/* Grouping toggle */
+.grouping-toggle{margin:20px 0}
+.grouping-toggle>div{display:flex;background:#f3f4f6;border-radius:8px;padding:4px;width:100%}
+.grouping-btn{flex:1;padding:12px 16px;border:none;background:transparent;color:#6b7280;border-radius:6px;cursor:pointer;font-weight:500;margin:0 2px}
+.grouping-btn.active{background:#3b82f6;color:white}
+.grouping-btn svg{margin-right:6px;vertical-align:middle}
+
+/* Voting section */
+.voting-section{margin:40px 0;padding:20px;background:#fffbeb;border-radius:8px;border:2px solid #f59e0b;display:none}
+.voting-section h3{margin:0 0 20px 0;text-align:center;color:#78350f}
+.voting-section #voting-container{max-width:600px;margin:0 auto}
+.voting-section .voting-hint{text-align:center;margin-bottom:20px;padding:12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;color:#78350f}

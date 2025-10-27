@@ -1,0 +1,48 @@
+# PWA und Security Headers
+<IfModule mod_headers.c>
+    # Permissions Policy - Nur unterstützte Features
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+    
+    # PWA Headers
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # CORS für externe Bilder
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type"
+    
+    # Cache Control für PWA Assets
+    # Nur gehashte Assets (z.B. app.abc123.css) bekommen aggressive Caching
+    <FilesMatch "\.[a-f0-9]{8}\.(css|js|json|png|jpg|jpeg|gif|ico|svg)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # Nicht-gehashte Assets und dynamische Dateien
+    <FilesMatch "^(manifest\.json|votes\.json)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+
+    <FilesMatch "\.(html|php)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+# Service Worker MIME Type
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType application/json .json
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+# PWA Manifest
+<Files "manifest.json">
+    Header set Content-Type "application/manifest+json"
+</Files>
+
+# Service Worker
+<Files "sw.js">
+    Header set Content-Type "application/javascript"
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+</Files>

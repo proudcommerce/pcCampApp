@@ -1,0 +1,11 @@
+.food{font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica Neue,sans-serif;background:#ffffff;border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+.food details{border:1px solid #e2e8f0;border-radius:8px;margin:8px 0;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:all 0.2s ease}
+.food details:hover{box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+.food summary{padding:14px 16px;font-weight:600;list-style:none;cursor:pointer;color:#2d3748;font-size:16px;letter-spacing:-0.02em;transition:all 0.2s ease;font-weight:normal}
+.food summary:hover{background:#f7fafc}
+.food summary::-webkit-details-marker{display:none}
+.food .meal-content{padding:0 16px 16px 16px}
+.meal{color:#3182ce;font-weight:600;margin:12px 0 6px 0;font-size:15px;text-align:center}
+.food .slot{padding:20px 0 20px 0;border-top:1px solid #e2e8f0}
+.food .slot:first-child{border-top:0}
+.food .slot div{text-align:center}

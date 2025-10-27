@@ -1,0 +1,80 @@
+{
+    "permanent": [
+        {
+            "id": "1",
+            "content": "Willkommen zur Event-Demo! Diese App zeigt dir alle Funktionen der PC CampApp.",
+            "priority": "medium"
+        }
+    ],
+    "days": {
+        "2025-11-15": [
+                {
+                    "id": "10",
+                    "content": "Die Türen öffnen um 18:00 Uhr. Wir freuen uns auf euch!",
+                    "timeFrom": "16:00",
+                    "timeTo": "20:00",
+                    "priority": "high"
+                },
+                {
+                    "id": "20",
+                    "content": "Check-in am Empfang nicht vergessen!",
+                    "timeFrom": "17:00",
+                    "timeTo": "19:00",
+                    "priority": "medium"
+                }
+        ],
+        "2025-11-16": [
+                {
+                    "id": "30",
+                    "content": "Frühstück ab 8:00 Uhr verfügbar.",
+                    "timeFrom": "07:00",
+                    "timeTo": "09:00",
+                    "priority": "medium"
+                },
+                {
+                    "id": "40",
+                    "content": "Die Begrüßung startet um 9:30 Uhr im Hauptraum.",
+                    "timeFrom": "09:00",
+                    "timeTo": "10:00",
+                    "priority": "high"
+                },
+                {
+                    "id": "50",
+                    "content": "Der Sessionplan ist jetzt online verfügbar!",
+                    "timeFrom": "10:00",
+                    "timeTo": "11:00",
+                    "priority": "high"
+                },
+                {
+                    "id": "60",
+                    "content": "Mittagessen von 13:00 - 14:00 Uhr in der Cafeteria.",
+                    "timeFrom": "12:30",
+                    "timeTo": "14:00",
+                    "priority": "medium"
+                },
+                {
+                    "id": "70",
+                    "content": "Session-Voting ist nun freigeschaltet!",
+                    "timeFrom": "16:00",
+                    "timeTo": "17:30",
+                    "priority": "high"
+                }
+        ],
+        "2025-11-17": [
+                {
+                    "id": "80",
+                    "content": "Letzter Tag - Frühstück ab 9:00 Uhr.",
+                    "timeFrom": "08:30",
+                    "timeTo": "10:00",
+                    "priority": "medium"
+                },
+                {
+                    "id": "90",
+                    "content": "Abschluss-Session um 14:00 Uhr im Hauptraum.",
+                    "timeFrom": "13:30",
+                    "timeTo": "14:30",
+                    "priority": "high"
+                }
+        ]
+    }
+}

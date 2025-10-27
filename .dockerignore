@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Version Control
+.git/
+.gitignore
+.gitlab-ci.yml
+
+# IDE
+.cursor/
+.claude/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# History
+.history/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (keep CLAUDE.md)
+*.md
+!CLAUDE.md
+!README.md
+
+# Sensitive Data
+.env
+.env.local
+.env.*.local
+votes/votes.json
+
+# Build artifacts (keep for deployment)
+# cache-hashes.json is needed
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore

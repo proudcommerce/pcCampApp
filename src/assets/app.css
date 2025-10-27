@@ -1,0 +1,422 @@
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;padding-top:64px;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica Neue,sans-serif;background:#fafbfc;color:#1a202c;letter-spacing:-0.01em}
+a{color:inherit}
+
+.container{max-width:100%;margin:0 auto;padding:0 16px}
+
+.header{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-bottom:1px solid #e2e8f0;transition:top 0.3s ease}
+.header.with-banner{top:40px}
+.header .bar{display:flex;align-items:center;justify-content:space-between;height:64px}
+.header-buttons{display:flex;align-items:center;gap:8px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand img{height:56px;display:block}
+
+.news-button{display:flex;align-items:center;justify-content:center;width:48px;height:48px;background:transparent;border:none;cursor:pointer;padding:12px;z-index:60;border-radius:12px;transition:all 0.2s ease;position:relative}
+.news-button:hover{background:rgba(0,0,0,0.05)}
+.news-button svg{width:20px;height:20px;color:#4a5568;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}
+.news-button.active svg{color:#3182ce}
+.news-badge{position:absolute;top:8px;right:8px;width:8px;height:8px;background:#e53e3e;border-radius:50%;display:none;animation:pulse 2s infinite}
+.news-badge.show{display:block}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+.burger-menu{display:flex;flex-direction:column;justify-content:space-around;width:48px;height:48px;background:transparent;border:none;cursor:pointer;padding:12px;z-index:998;border-radius:12px;transition:all 0.2s ease}
+.burger-menu:hover{background:rgba(0,0,0,0.05)}
+.burger-menu span{display:block;height:2px;width:100%;background:#4a5568;border-radius:1px;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}
+.burger-menu.active span:nth-child(1){transform:rotate(45deg) translate(6px,6px)}
+.burger-menu.active span:nth-child(2){opacity:0}
+.burger-menu.active span:nth-child(3){transform:rotate(-45deg) translate(8px,-7px)}
+
+.mobile-nav{position:fixed;top:64px;left:0;right:0;background:rgba(255,255,255,0.98);backdrop-filter:blur(10px);border-bottom:1px solid #e2e8f0;transform:translateY(-100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);z-index:997;display:block;box-shadow:0 4px 6px rgba(0,0,0,0.05)}
+.mobile-nav.active{transform:translateY(0)}
+.nav-content{padding:16px}
+.nav-items{display:flex;flex-direction:column;gap:8px}
+.nav-item{display:block;padding:14px 18px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;text-decoration:none;color:#2d3748;transition:all 0.2s ease;font-weight:500;min-height:44px;display:flex;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+.nav-item:hover{background:#f7fafc;border-color:#cbd5e0;transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+
+
+.burger{display:flex;flex-direction:column;justify-content:space-around;width:48px;height:48px;background:transparent;border:none;cursor:pointer;padding:12px;z-index:60;border-radius:12px;transition:all 0.2s ease}
+.burger:hover{background:rgba(0,0,0,0.05)}
+.burger svg{width:22px;height:22px;color:#4a5568;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}
+.burger.active svg{transform:rotate(90deg)}
+
+.drawer{position:fixed;top:64px;left:0;right:0;background:rgba(255,255,255,0.98);backdrop-filter:blur(10px);border-bottom:1px solid #e2e8f0;transform:translateY(-100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);z-index:999;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 4px rgba(0,0,0,0.05)}
+.drawer.active{transform:translateY(0)}
+.drawer a{display:block;padding:16px 20px;background:#ffffff;border:none;border-radius:6px;text-decoration:none;color:#2d3748;transition:all 0.2s ease;min-height:48px;display:flex;align-items:center;justify-content:flex-end;box-shadow:0 1px 2px rgba(0,0,0,0.03);font-size:18px;font-weight:500;border-bottom:1px solid #f1f5f9;text-align:right}
+.drawer a:last-child{border-bottom:none}
+.drawer a:hover{background:#f7fafc;transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+
+.news-flyout{position:fixed;top:64px;right:-400px;width:400px;height:calc(100vh - 64px);background:rgba(255,255,255,0.98);backdrop-filter:blur(10px);border-left:1px solid #e2e8f0;transition:right 0.3s cubic-bezier(0.4,0,0.2,1);z-index:50;box-shadow:-2px 0 8px rgba(0,0,0,0.1);display:flex;flex-direction:column}
+.news-flyout.active{right:0}
+
+/* Homepage styles */
+.page-wrap h1{line-height:1.5}
+.news-flyout-content{flex:1;overflow-y:auto;padding:20px}
+
+
+.page-wrap{margin:20px;padding:30px 20px;background-color:#ffffff;border-radius:12px}
+
+.news-container{margin-bottom:24px}
+.news-item{background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:all 0.2s ease}
+.news-item:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.news-item.high{border:2px solid #e53e3e}
+.news-item.medium{border:2px solid #3182ce}
+.news-item.low{border:2px solid #38a169}
+.news-item-content{color:#4a5568;font-size:14px;line-height:1.5;margin:0;text-align:center}
+.news-item-flyout{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:12px}
+.news-item-flyout .news-item-content{font-size:13px;text-align:center}
+.news-item-flyout.high{border:2px solid #e53e3e}
+.news-item-flyout.medium{border:2px solid #3182ce}
+.news-item-flyout.low{border:2px solid #38a169}
+
+.grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:768px){.grid{grid-template-columns:repeat(2,1fr);gap:16px}}
+@media (min-width:1024px){.grid{grid-template-columns:repeat(2,1fr);max-width:800px;margin:0 auto;gap:20px}}
+.card{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;color:#2d3748;text-decoration:none;min-height:80px;transition:all 0.2s ease;box-shadow:0 1px 2px rgba(0,0,0,0.03);background-color: #fafbfc;}
+.card:hover{border-color:#cbd5e0;background:#f7fafc;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.title{font-weight:600;font-size:20px;margin:0 0 8px;letter-spacing:-0.02em}
+.desc{margin:0;color:#718096;font-size:15px;line-height:1.5}
+
+.section{margin:12px 0;padding:16px;border-radius:12px;background:#ffffff;border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+.section h2{margin:0 0 8px;font-size:18px;font-weight:600;color:#2d3748;letter-spacing:-0.02em}
+.item{padding:8px 0;border-top:1px solid #e2e8f0}
+.item:first-child{border-top:0}
+.muted{color:#718096;font-size:14px}
+.pill{display:inline-block;padding:3px 8px;margin:2px;border-radius:999px;font-size:12px;background:#f7fafc;border:1px solid #e2e8f0;color:#4a5568;font-weight:500}
+.day{margin-top:8px}
+.box{background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+.room{color:#3182ce;font-weight:600}
+.title-text{color:#2d3748;font-weight:500}
+
+/* Startseiten-Karten: Icon Layout */
+.card .nav-icon-wrap{margin-bottom:8px}
+.card .nav-icon{width:28px;height:28px}
+
+h1{text-align:center;font:700 24px system-ui,-apple-system,Segoe UI,Roboto,Helvetica Neue,sans-serif;margin:0;padding:0 0 15px 0;margin: 0 0 30px 0;color:#1a202c;letter-spacing:-0.04em;position:relative}
+h1::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:60px;height:3px;background:linear-gradient(90deg,#3182ce,#63b3ed);border-radius:2px}
+
+/* Favoriten-Styling */
+.favorite-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.favorite-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.favorite-btn svg {
+    width: 18px;
+    height: 18px;
+    transition: all 0.2s ease;
+}
+
+.favorite-btn.favorite svg {
+    fill: #ef4444;
+    color: #ef4444;
+}
+
+.favorite-btn:not(.favorite) svg {
+    fill: none;
+    color: #9ca3af;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+.favorite-btn.favorite:hover svg {
+    fill: #dc2626;
+    color: #dc2626;
+}
+
+.favorite-btn:not(.favorite):hover svg {
+    color: #6b7280;
+}
+
+.session-card {
+    position: relative;
+}
+
+.favorites-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow:0 1px 2px rgba(0,0,0,0.03);
+}
+
+.favorites-filter input[type="checkbox"] {
+    margin: 0;
+}
+
+.favorites-filter label {
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+
+/* Navigation Icon Layout */
+.nav-item .nav-item-content{display:flex;align-items:center;gap:10px;width:100%;justify-content:flex-end;margin-left:auto}
+.nav-item .nav-icon-wrap{order:2}
+.nav-item .nav-item-label{order:1}
+.nav-item .nav-icon-wrap{display:flex;align-items:center;justify-content:center;width:22px;height:22px;color:#4a5568}
+.nav-item .nav-icon{width:22px;height:22px;display:block}
+.nav-item .nav-item-label{display:inline-block}
+
+
+/* Startseite: 2 Karten pro Zeile erzwingen */
+#cardsContainer{grid-template-columns:repeat(2,1fr)}
+
+/* Footer */
+.footer {
+    background: #f8f9fa;
+    border-top: 1px solid #e2e8f0;
+    padding: 30px 0 0 0;
+    margin-top: 40px;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+    text-align: center;
+}
+
+.footer h3 {
+    margin: 0 0 30px 0;
+    color: #2d3748;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.sponsors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 25px;
+    justify-items: center;
+    align-items: center;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.sponsor-logo {
+    height: 60px;
+    width: auto;
+    max-width: 180px;
+    object-fit: contain;
+    transition: all 0.3s ease;
+    filter: none;
+    opacity: 1;
+}
+
+.lazy-image {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.lazy-image.loaded {
+    opacity: 1;
+}
+
+.sponsor-logo:hover {
+    transform: scale(1.1);
+    filter: brightness(1.1);
+}
+
+.sponsor-fallback {
+    display: inline-block;
+    padding: 10px 15px;
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4a5568;
+    text-align: center;
+    min-height: 40px;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.footer-text {
+    color: #718096;
+    font-size: 14px;
+    margin: 0;
+}
+
+.footer-copyright {
+    background: linear-gradient(90deg, #3182ce, #63b3ed);
+    color: white;
+    padding: 12px 0;
+    margin-top: 20px;
+}
+
+.copyright-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+.copyright-left,
+.copyright-right {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .sponsors {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 20px;
+    }
+    
+    .sponsor-logo {
+        height: 50px;
+        max-width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sponsors {
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 15px;
+    }
+    
+    .sponsor-logo {
+        height: 40px;
+        max-width: 120px;
+    }
+}
+
+/* PWA Install Button */
+.pwa-install-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+}
+
+.pwa-install-btn:hover {
+    background: #2c5aa0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
+}
+
+.pwa-install-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* iOS Install Banner */
+.ios-install-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #3182ce, #2c5aa0);
+    color: white;
+    padding: 8px 16px;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.ios-install-banner.show {
+    transform: translateY(0);
+}
+
+.ios-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.ios-banner-text {
+    font-weight: 500;
+}
+
+.ios-banner-close {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.ios-banner-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.ios-banner-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* PWA Status Indicators */
+.pwa-status {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 100;
+    display: none;
+}
+
+.pwa-status.show {
+    display: block;
+}
+
+.pwa-status.success {
+    background: #38a169;
+}
+
+.pwa-status.error {
+    background: #e53e3e;
+}

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="{{EVENT_LOCALE}}">
+<head>
+<!-- Source: https://github.com/proudcommerce/pcCampApp -->
+<meta name="robots" content="{{ROBOTS_META}}">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{EVENT_SHORT_NAME}}</title>
+<script src="../assets/event-config-loader.js"></script>
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="stylesheet" href="./sessionplan.css">
+</head>
+<body>
+
+<header class="header"><div class="bar container"><a class="brand" href="../"><img src="../assets/logo.png" alt="{{EVENT_SHORT_NAME}}"></a><div class="header-buttons"><button id="newsButton" class="news-button" data-i18n-aria="aria.newsButton"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg><span id="newsBadge" class="news-badge"></span></button><button id="burger" class="burger" data-i18n-aria="aria.menuButton"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button></div></div></header>
+<nav id="nav-drawer" class="drawer container">
+  <div id="navItems"></div>
+</nav>
+
+<div id="news-flyout" class="news-flyout">
+  <div id="newsFlyoutContent" class="news-flyout-content"></div>
+</div>
+
+<div class="page-wrap container">
+	<h1 data-i18n="pageTitle.sessionplan"></h1>
+
+<div class="favorites-filter" id="favorites-filter">
+    <input type="checkbox" id="favorites-only" />
+    <label for="favorites-only">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <span data-i18n="favorites.filterLabel"></span>
+    </label>
+</div>
+
+<div class="grouping-toggle">
+    <div>
+        <button id="time-grouping" class="grouping-btn active">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12,6 12,12 16,14"></polyline>
+            </svg>
+            <span data-i18n="sessionplan.groupByTime"></span>
+        </button>
+        <button id="room-grouping" class="grouping-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="9" x2="15" y2="9"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+            <span data-i18n="sessionplan.groupByRoom"></span>
+        </button>
+    </div>
+</div>
+
+<div class="voting-section" id="voting-section">
+  <h3 data-i18n="voting.title"></h3>
+  <div id="voting-container">
+    <br>
+    <div class="voting-hint">
+        <strong data-i18n="voting.hint"></strong>
+    </div>
+  </div>
+  <br>
+</div>
+
+<div id="sessionplan-days-container"></div>
+
+</div>
+
+<footer class="footer">
+  <div class="footer-content" id="sponsorFooter">
+    <p class="footer-text" data-i18n="ui.sponsorFooterText"></p>
+    <br>
+    <div class="sponsors" id="sponsorsContainer"></div>
+  </div>
+  <div class="footer-copyright">
+    <div class="copyright-content">
+      <span class="copyright-left">{{COPYRIGHT}}</span>
+      <span class="copyright-right">{{EVENT_HASHTAG}}</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/header.js"></script>
+<script src="./sessionplan.js"></script>
+<script src="../sponsors/footer.js"></script>
+
+</body>
+</html>
+
+

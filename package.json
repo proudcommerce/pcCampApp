@@ -1,0 +1,31 @@
+{
+  "name": "pccampapp",
+  "version": "1.0.0",
+  "description": "Config-driven Progressive Web App for BarCamps and Unconferences",
+  "type": "module",
+  "scripts": {
+    "build": "node build-cache-busting.cjs",
+    "install": "npx playwright install",
+    "test": "playwright test",
+    "test:prod": "BASE_URL=http://localhost:5174 playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:translations": "playwright test tests/translations.spec.js",
+    "test:pwa": "playwright test tests/pwa.spec.js",
+    "test:ui-tests": "playwright test tests/ui.spec.js",
+    "test:report": "playwright show-report"
+  },
+  "keywords": [
+    "pwa",
+    "barcamp",
+    "unconference",
+    "event",
+    "offline-first"
+  ],
+  "author": "Proud Commerce GmbH",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "sharp": "^0.33.5"
+  }
+}

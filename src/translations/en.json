@@ -1,0 +1,75 @@
+{
+  "pageTitle": {
+    "sessionplan": "Session Plan",
+    "timetable": "Timetable",
+    "food": "Food",
+    "floorplan": "Floorplan",
+    "sponsors": "Sponsors"
+  },
+  "favorites": {
+    "filterLabel": "Show favorites only",
+    "addLabel": "Add to favorites",
+    "removeLabel": "Remove from favorites",
+    "emptyTitle": "No favorites yet",
+    "emptyMessage": "You haven't marked any sessions as favorites yet. Click the heart icon on sessions to add them to your favorites."
+  },
+  "sessionplan": {
+    "groupByTime": "By Time",
+    "groupByRoom": "By Room",
+    "cancelledBadge": "CANCELLED",
+    "roomPrefix": "Room"
+  },
+  "voting": {
+    "title": "Session Voting",
+    "hint": "You can only vote for one session per day.",
+    "selectPlaceholder": "Select session...",
+    "selectSession": "Please select a session.",
+    "submitting": "Submitting...",
+    "submitButton": "Rate session",
+    "success": "Rating saved!",
+    "alreadyVoted": "Already voted",
+    "alreadyVotedMessage": "You have already voted for this day. If this is an error, clear your browser cache and try again."
+  },
+  "news": {
+    "emptyTitle": "No news available",
+    "emptyMessage": "There are currently no active or past news for today."
+  },
+  "food": {
+    "allergensTitle": "Allergens"
+  },
+  "sponsors": {
+    "introText": "This event is made possible by our generous sponsors. Thank you for your support!",
+    "noSponsorsAvailable": "No sponsors available.",
+    "errorLoadingTitle": "Error loading sponsors",
+    "errorLoadingMessage": "The sponsors could not be loaded."
+  },
+  "pwa": {
+    "iosInstallPrompt": "Share → Add to Home Screen",
+    "iosInstallPrefix": "Install app",
+    "installButton": "Install app"
+  },
+  "aria": {
+    "newsButton": "News",
+    "menuButton": "Menu"
+  },
+  "ui": {
+    "sponsorFooterText": "Thank you to our sponsors:",
+    "newsButtonLabel": "News",
+    "menuButtonLabel": "Menu",
+    "favoritesLabel": "Favorites",
+    "noNewsText": "No current news",
+    "errorPrefix": "Error:",
+    "unknownRoom": "Unknown"
+  },
+  "loading": {
+    "menu": "Loading menu...",
+    "allergens": "Loading allergens..."
+  },
+  "errors": {
+    "loadingSessions": "Error loading session data",
+    "loadingMenu": "Error loading menu",
+    "loadingAllergens": "Error loading allergens",
+    "loadingSponsors": "Error loading sponsors",
+    "votingNetwork": "Network error while submitting vote."
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "pageTitle": {
+    "sessionplan": "Sessionplan",
+    "timetable": "Timetable",
+    "food": "Food",
+    "floorplan": "Floorplan",
+    "sponsors": "Sponsoren"
+  },
+  "favorites": {
+    "filterLabel": "Nur Favoriten anzeigen",
+    "addLabel": "Als Favorit hinzufügen",
+    "removeLabel": "Aus Favoriten entfernen",
+    "emptyTitle": "Keine Favoriten vorhanden",
+    "emptyMessage": "Du hast noch keine Sessions als Favoriten markiert. Klicke auf das Herz-Symbol bei den Sessions, um sie zu deinen Favoriten hinzuzufügen."
+  },
+  "sessionplan": {
+    "groupByTime": "Nach Uhrzeit",
+    "groupByRoom": "Nach Räumen",
+    "cancelledBadge": "ENTFÄLLT",
+    "roomPrefix": "Raum"
+  },
+  "voting": {
+    "title": "Session Voting",
+    "hint": "Du kannst nur eine Session pro Tag voten.",
+    "selectPlaceholder": "Session auswählen...",
+    "selectSession": "Bitte wähle eine Session aus.",
+    "submitting": "Wird gesendet...",
+    "submitButton": "Session bewerten",
+    "success": "Bewertung gespeichert!",
+    "alreadyVoted": "Bereits abgestimmt",
+    "alreadyVotedMessage": "Du hast bereits für diesen Tag abgestimmt. Falls das ein Fehler ist, lösche den Browser-Cache und versuche es erneut."
+  },
+  "news": {
+    "emptyTitle": "Keine News verfügbar",
+    "emptyMessage": "Es sind derzeit keine aktiven oder vergangenen News für heute vorhanden."
+  },
+  "food": {
+    "allergensTitle": "Allergene"
+  },
+  "sponsors": {
+    "introText": "Dieses Event wird ermöglicht durch unsere großzügigen Sponsoren. Vielen Dank für die Unterstützung!",
+    "noSponsorsAvailable": "Keine Sponsoren verfügbar.",
+    "errorLoadingTitle": "Fehler beim Laden der Sponsoren",
+    "errorLoadingMessage": "Die Sponsoren konnten nicht geladen werden."
+  },
+  "pwa": {
+    "iosInstallPrompt": "Teilen → Zum Home-Bildschirm hinzufügen",
+    "iosInstallPrefix": "App installieren",
+    "installButton": "App installieren"
+  },
+  "aria": {
+    "newsButton": "News",
+    "menuButton": "Menü"
+  },
+  "ui": {
+    "sponsorFooterText": "Vielen Dank an unsere Sponsoren:",
+    "newsButtonLabel": "News",
+    "menuButtonLabel": "Menü",
+    "favoritesLabel": "Favoriten",
+    "noNewsText": "Keine aktuellen News",
+    "errorPrefix": "Fehler:",
+    "unknownRoom": "Unbekannt"
+  },
+  "loading": {
+    "menu": "Lade Speisekarte...",
+    "allergens": "Lade Allergene..."
+  },
+  "errors": {
+    "loadingSessions": "Fehler beim Laden der Session-Daten",
+    "loadingMenu": "Fehler beim Laden der Speisekarte",
+    "loadingAllergens": "Fehler beim Laden der Allergene",
+    "loadingSponsors": "Fehler beim Laden der Sponsoren",
+    "votingNetwork": "Netzwerkfehler beim Senden des Votes."
+  }
+}

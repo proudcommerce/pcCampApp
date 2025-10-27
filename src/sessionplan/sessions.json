@@ -1,0 +1,146 @@
+{
+  "samstag": {
+    "11:00 - 12:00": [
+      {
+        "id": "10",
+        "room": "Raum Alpha",
+        "title": "Einführung in moderne Entwicklungsmethoden",
+        "host": "Max Mustermann",
+        "votes": 0,
+        "cancelled": false
+      },
+      {
+        "id": "20",
+        "room": "Raum Beta",
+        "title": "Best Practices für Teamarbeit",
+        "host": "Lisa Schmidt",
+        "votes": 0,
+        "cancelled": false
+      },
+      {
+        "id": "30",
+        "room": "Raum Gamma",
+        "title": "Cloud-Infrastruktur für Einsteiger",
+        "host": "Thomas Weber",
+        "votes": 0,
+        "cancelled": false
+      }
+    ],
+    "12:00 - 13:00": [
+      {
+        "id": "40",
+        "room": "Raum Alpha",
+        "title": "Container-Technologien im Überblick",
+        "host": "Anna Müller",
+        "votes": 0,
+        "cancelled": false
+      },
+      {
+        "id": "50",
+        "room": "Raum Beta",
+        "title": "Automatisierung im Entwicklungsprozess",
+        "host": "Michael Klein",
+        "votes": 0,
+        "cancelled": false
+      },
+      {
+        "id": "60",
+        "room": "Raum Gamma",
+        "title": "Sicherheit in modernen Anwendungen",
+        "host": "Sarah Wagner",
+        "votes": 0,
+        "cancelled": false
+      }
+    ],
+    "14:00 - 15:00": [
+      {
+        "id": "70",
+        "room": "Raum Alpha",
+        "title": "Monitoring und Logging Strategien",
+        "host": "Peter Schneider",
+        "votes": 0,
+        "cancelled": false
+      },
+      {
+        "id": "80",
+        "room": "Raum Beta",
+        "title": "Agile Methoden in der Praxis",
+        "host": "Julia Hoffmann",
+        "votes": 0,
+        "cancelled": false
+      },
+      {
+        "id": "90",
+        "room": "Raum Gamma",
+        "title": "API-Design und Dokumentation",
+        "host": "Martin Fischer",
+        "votes": 0,
+        "cancelled": false
+      }
+    ]
+  },
+  "sonntag": {
+    "10:00 - 11:00": [
+      {
+        "id": "100",
+        "room": "Raum Alpha",
+        "title": "Erfahrungsaustausch: Projektmanagement",
+        "host": "Claudia Becker",
+        "votes": 0,
+        "cancelled": false
+      },
+      {
+        "id": "110",
+        "room": "Raum Beta",
+        "title": "Open Source: Chancen und Herausforderungen",
+        "host": "Daniel Richter",
+        "votes": 0,
+        "cancelled": false
+      },
+      {
+        "id": "120",
+        "room": "Raum Gamma",
+        "title": "Performance-Optimierung",
+        "host": "Laura Zimmermann",
+        "votes": 0,
+        "cancelled": false
+      }
+    ],
+    "11:00 - 12:00": [
+      {
+        "id": "130",
+        "room": "Raum Alpha",
+        "title": "Testing-Strategien für große Projekte",
+        "host": "Sebastian König",
+        "votes": 0,
+        "cancelled": false
+      },
+      {
+        "id": "140",
+        "room": "Raum Beta",
+        "title": "Datenbanken: SQL vs. NoSQL",
+        "host": "Nina Schäfer",
+        "votes": 0,
+        "cancelled": false
+      },
+      {
+        "id": "150",
+        "room": "Raum Gamma",
+        "title": "Barrierefreiheit im Web",
+        "host": "Frank Meyer",
+        "votes": 0,
+        "cancelled": false
+      }
+    ],
+    "14:00 - 15:00": [
+      {
+        "id": "160",
+        "room": "Raum Alpha",
+        "title": "Abschluss und Feedback",
+        "host": "Organisationsteam",
+        "votes": 0,
+        "cancelled": false
+      }
+    ]
+  }
+}

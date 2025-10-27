@@ -1,0 +1,57 @@
+{
+  "samstag": {
+    "Frühstück": [
+      {
+        "name": "Brötchen & Aufschnitt",
+        "allergens": ["A", "G"]
+      },
+      {
+        "name": "Rührei",
+        "allergens": ["C"]
+      },
+      {
+        "name": "Müsli mit Joghurt",
+        "allergens": ["A", "G"]
+      }
+    ],
+    "Mittagessen": [
+      {
+        "name": "Pasta mit verschiedenen Soßen",
+        "allergens": ["A", "G"]
+      },
+      {
+        "name": "Hähnchen mit Reis",
+        "allergens": ["I"]
+      },
+      {
+        "name": "Salat-Buffet",
+        "allergens": ["C"]
+      }
+    ],
+    "Abendessen": [
+      {
+        "name": "Grill-Buffet",
+        "allergens": ["I"]
+      },
+      {
+        "name": "Kartoffelsalat",
+        "allergens": ["C"]
+      }
+    ]
+  },
+  "sonntag": {
+    "Brunch": [
+      {
+        "name": "Bagel mit verschiedenen Toppings",
+        "allergens": ["A", "G"]
+      },
+      {
+        "name": "Pancakes",
+        "allergens": ["A", "C", "G"]
+      },
+      {
+        "name": "Frisches Obst"
+      }
+    ]
+  }
+}

@@ -1,0 +1,256 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Event Configuration",
+  "description": "Configuration for event-specific branding and content in the PWA",
+  "type": "object",
+  "required": ["event", "branding", "pwa"],
+  "properties": {
+    "event": {
+      "type": "object",
+      "description": "General event information",
+      "required": ["name", "shortName", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Full event name displayed in title and headers"
+        },
+        "shortName": {
+          "type": "string",
+          "description": "Abbreviated event name for small screens"
+        },
+        "hashtag": {
+          "type": "string",
+          "description": "Event hashtag for social media",
+          "pattern": "^#[A-Z0-9]+$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Event description for meta tags and PWA manifest"
+        },
+        "copyright": {
+          "type": "string",
+          "description": "Copyright notice displayed in footer"
+        },
+        "locale": {
+          "type": "string",
+          "description": "Language code (ISO 639-1)",
+          "pattern": "^[a-z]{2}$",
+          "default": "de"
+        },
+        "timezone": {
+          "type": "string",
+          "description": "IANA timezone identifier",
+          "default": "Europe/Berlin"
+        }
+      }
+    },
+    "branding": {
+      "type": "object",
+      "description": "Visual branding assets and colors",
+      "required": ["logo", "sourceIcon", "themeColor"],
+      "properties": {
+        "logo": {
+          "type": "string",
+          "description": "Path to event logo (relative to src/)"
+        },
+        "sourceIcon": {
+          "type": "string",
+          "description": "Path to source icon (relative to src/) - PWA icons will be auto-generated at build time",
+          "default": "./assets/icon.png"
+        },
+        "themeColor": {
+          "type": "string",
+          "description": "Theme color for browser UI (hex color)",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "backgroundColor": {
+          "type": "string",
+          "description": "Background color for splash screen (hex color)",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#ffffff"
+        }
+      }
+    },
+    "pwa": {
+      "type": "object",
+      "description": "Progressive Web App manifest settings",
+      "required": ["manifestName", "manifestShortName", "manifestDescription"],
+      "properties": {
+        "manifestName": {
+          "type": "string",
+          "description": "Full name in PWA manifest"
+        },
+        "manifestShortName": {
+          "type": "string",
+          "description": "Short name for home screen"
+        },
+        "manifestDescription": {
+          "type": "string",
+          "description": "Description in PWA manifest"
+        },
+        "startUrl": {
+          "type": "string",
+          "description": "PWA start URL",
+          "default": "/"
+        },
+        "scope": {
+          "type": "string",
+          "description": "PWA scope",
+          "default": "/"
+        },
+        "display": {
+          "type": "string",
+          "description": "PWA display mode",
+          "enum": ["standalone", "fullscreen", "minimal-ui", "browser"],
+          "default": "standalone"
+        },
+        "orientation": {
+          "type": "string",
+          "description": "Preferred screen orientation",
+          "enum": ["any", "natural", "portrait", "portrait-primary", "portrait-secondary", "landscape", "landscape-primary", "landscape-secondary"],
+          "default": "portrait-primary"
+        },
+        "categories": {
+          "type": "array",
+          "description": "App store categories",
+          "items": {
+            "type": "string"
+          },
+          "default": ["productivity", "utilities"]
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "description": "Feature flags to enable/disable functionality",
+      "properties": {
+        "voting": {
+          "type": "boolean",
+          "description": "Enable voting system",
+          "default": true
+        },
+        "votingSchedule": {
+          "type": "array",
+          "description": "Voting schedule configuration (when voting is active)",
+          "items": {
+            "type": "object",
+            "required": ["day", "dayOfWeek", "startTime", "endTime"],
+            "properties": {
+              "day": {
+                "type": "string",
+                "description": "Day identifier (must match keys in sessions.json/votes.json, e.g., 'samstag', 'sonntag')"
+              },
+              "dayLabel": {
+                "type": "string",
+                "description": "Display label for the day (e.g., 'Samstag', 'Saturday', 'Day 1')"
+              },
+              "dayOfWeek": {
+                "type": "integer",
+                "description": "Day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)",
+                "minimum": 0,
+                "maximum": 6
+              },
+              "startTime": {
+                "type": "string",
+                "description": "Voting start time (HH:MM format)",
+                "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+              },
+              "endTime": {
+                "type": "string",
+                "description": "Voting end time (HH:MM format)",
+                "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+              }
+            }
+          },
+          "default": []
+        },
+        "votingAdminKey": {
+          "type": "string",
+          "description": "Secret key for admin access (admin.php, results.php). Change this for production!",
+          "minLength": 8,
+          "default": "littGEEGsfdaxsd6Oe6DiJF"
+        },
+        "favorites": {
+          "type": "boolean",
+          "description": "Enable session favorites",
+          "default": true
+        },
+        "news": {
+          "type": "boolean",
+          "description": "Enable news notifications",
+          "default": true
+        },
+        "sponsors": {
+          "type": "boolean",
+          "description": "Show sponsors in footer",
+          "default": true
+        },
+        "installPrompt": {
+          "type": "boolean",
+          "description": "Show PWA installation prompts (iOS banner, Android install button)",
+          "default": true
+        }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "description": "Performance and caching settings",
+      "properties": {
+        "cacheTTL": {
+          "type": "integer",
+          "description": "Cache time-to-live in milliseconds for localStorage caching",
+          "default": 3600000,
+          "minimum": 0
+        },
+        "newsPollingInterval": {
+          "type": "integer",
+          "description": "News polling interval in milliseconds",
+          "default": 30000,
+          "minimum": 5000
+        }
+      }
+    },
+    "texts": {
+      "type": "object",
+      "description": "Customizable UI text labels for internationalization",
+      "properties": {
+        "sponsorFooterText": {
+          "type": "string",
+          "description": "Text displayed above sponsors in footer",
+          "default": "Vielen Dank an unsere Sponsoren:"
+        },
+        "newsButtonLabel": {
+          "type": "string",
+          "description": "ARIA label for news button",
+          "default": "News"
+        },
+        "menuButtonLabel": {
+          "type": "string",
+          "description": "ARIA label for menu/burger button",
+          "default": "Menü"
+        },
+        "favoritesLabel": {
+          "type": "string",
+          "description": "Label for favorites functionality",
+          "default": "Favoriten"
+        },
+        "noNewsText": {
+          "type": "string",
+          "description": "Message when no news are available",
+          "default": "Keine aktuellen News"
+        }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "description": "Search engine optimization settings",
+      "properties": {
+        "allowIndexing": {
+          "type": "boolean",
+          "description": "Allow search engines to index the app (true = index/follow, false = noindex/nofollow + robots.txt Disallow)",
+          "default": false
+        }
+      }
+    }
+  }
+}

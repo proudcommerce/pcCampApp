@@ -1,0 +1,62 @@
+{
+  "$schema": "./event.schema.json",
+  "event": {
+    "name": "Demo CampApp Event",
+    "shortName": "CampApp Event",
+    "hashtag": "#DCAE25",
+    "description": "Event-App für BarCamps und Unkonferenzen",
+    "copyright": "<a href='https://github.com/proudcommerce/pcCampApp' target='_blank' style='text-decoration: none; color: inherit;'>pcCampApp</a>",
+    "locale": "de",
+    "timezone": "Europe/Berlin"
+  },
+  "branding": {
+    "logo": "./assets/logo.png",
+    "sourceIcon": "./assets/icon.png",
+    "themeColor": "#3182ce",
+    "backgroundColor": "#ffffff"
+  },
+  "pwa": {
+    "manifestName": "Demo CampApp Event",
+    "manifestShortName": "CampApp Event",
+    "manifestDescription": "Demo Event-App für BarCamps und Unkonferenzen",
+    "startUrl": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "categories": [
+      "productivity",
+      "utilities"
+    ]
+  },
+  "features": {
+    "voting": true,
+    "votingSchedule": [
+      {
+        "day": "samstag",
+        "dayLabel": "Samstag",
+        "dayOfWeek": 6,
+        "startTime": "16:00",
+        "endTime": "17:45"
+      },
+      {
+        "day": "sonntag",
+        "dayLabel": "Sonntag",
+        "dayOfWeek": 0,
+        "startTime": "14:00",
+        "endTime": "15:30"
+      }
+    ],
+    "votingAdminKey": "demo-admin-key-change-me",
+    "favorites": true,
+    "news": true,
+    "sponsors": true,
+    "installPrompt": true
+  },
+  "performance": {
+    "cacheTTL": 3600000,
+    "newsPollingInterval": 30000
+  },
+  "seo": {
+    "allowIndexing": false
+  }
+}
