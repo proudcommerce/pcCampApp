@@ -17,18 +17,29 @@
 
 ---
 
+**Live-Demo: [https://app.devops-camp.de](https://app.devops-camp.de)**
+
+---
+
 ## 📋 Inhaltsverzeichnis
 
 - [Quick Start](#-quick-start)
+- [Screenshots](#-screenshots)
 - [Konfiguration](#konfiguration)
   - [Anpassung für Ihre Veranstaltung](#anpassung-für-ihre-veranstaltung)
   - [Eventspezifische JSON-Dateien](#eventspezifische-json-dateien)
   - [JSON-Dateien für neue Events anpassen](#json-dateien-für-neue-events-anpassen)
+- [Voting-System](#-voting-system)
+  - [Aktivierung](#aktivierung)
+  - [Voting-Konfiguration](#voting-konfiguration)
+  - [Nutzung](#nutzung)
+  - [Admin-Bereich](#admin-bereich)
+  - [Deployment](#deployment)
 - [Entwicklung](#-entwicklung)
   - [Befehle](#befehle)
 - [Internationalisierung (i18n)](#-internationalisierung-i18n)
   - [Unterstützte Sprachen](#unterstützte-sprachen)
-  - [Konfiguration](#konfiguration-1)
+  - [i18n-Konfiguration](#i18n-konfiguration)
   - [Übersetzungen hinzufügen](#übersetzungen-hinzufügen)
 - [Architektur](#️-architektur)
   - [Tech-Stack](#tech-stack)
@@ -53,6 +64,19 @@ open http://localhost:5173
 ```
 
 **Das war's!** Die App läuft jetzt mit Live-Reload.
+
+---
+
+## 🚀 Screenshots
+
+<details>
+<summary>Screenshots anzeigen</summary>
+![pccampapp1](docs/screenshots/pccampapp1.jpeg)
+![pccampapp2](docs/screenshots/pccampapp2.jpeg)
+![pccampapp3](docs/screenshots/pccampapp3.jpeg)
+![pccampapp4](docs/screenshots/pccampapp4.jpeg)
+![pccampapp5](docs/screenshots/pccampapp5.jpeg)
+</details>
 
 ---
 
@@ -307,6 +331,73 @@ Hauptnavigation der App:
 
 ---
 
+## 🗳️ Voting-System
+
+Das Voting-System ermöglicht es Teilnehmern, Sessions zu bewerten und die beliebtesten Sessions zu ermitteln.
+
+### Aktivierung
+
+Das Voting-System kann über `event.json` die zeitgesteuer aktiviert werden:
+
+```json
+{
+  "features": {
+    "voting": true,
+    "votingSchedule": [
+      {
+        "day": "samstag",
+        "dayLabel": "Samstag",
+        "dayOfWeek": 6,
+        "startTime": "16:00",
+        "endTime": "17:45"
+      }
+    ],
+    "votingAdminKey": "dein-geheimes-admin-passwort"
+  }
+}
+```
+
+Zusätzlich kann das Voting auch über den Admin-Bereich de/aktiviert oder beendet werden.
+
+### Voting-Konfiguration
+
+- **voting:** Aktiviert/deaktiviert das Voting-System
+- **votingSchedule:** Zeitfenster für Abstimmungen
+  - `day`: Interner Tag-Name (z.B. "samstag")
+  - `dayLabel`: Anzeige-Name (z.B. "Samstag")
+  - `dayOfWeek`: Wochentag als Zahl (0=Sonntag, 6=Samstag)
+  - `startTime` / `endTime`: Zeitfenster für Abstimmungen
+- **votingAdminKey:** Geheimes Passwort für Admin-Bereich
+
+### Nutzung
+
+**Von Teilnehmern:**
+
+- Voting-Button erscheint im Sessionplan während der konfigurierten Zeitfenster
+- Jeder Teilnehmer kann **eine Stimme pro Tag** abgeben
+- Abstimmung erfolgt via Browser-Fingerprint (anonymisiert)
+- Top 3 Sessions werden mit Medaillen (🥇🥈🥉) angezeigt
+
+### Admin-Bereich
+
+**Zugriff auf Admin-Bereich und Ergebnisse:**
+
+```text
+http://localhost:5173/votes/admin.php?key=DEIN-ADMIN-PASSWORT
+```
+
+**Features:**
+
+- Live-Statistik der des Votings
+- De/aktivieren und Beenden von Votings
+- Übermitteln der Ergebnisse in die `sessions.json` für Winner-Badge-Anzeige (TOP3)
+
+**Deployment:**
+
+Die `votes.json` und `voting-state.json` sollten bei einem Deployment nicht überschrieben werden
+
+---
+
 ## 💻 Entwicklung
 
 ### Befehle
@@ -363,7 +454,7 @@ Hauptnavigation der App:
 - 🇩🇪 Deutsch (`de`)
 - 🇬🇧 Englisch (`en`)
 
-### Konfiguration
+### i18n-Konfiguration
 
 Sprache in `event.json` festlegen:
 
