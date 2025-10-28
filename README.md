@@ -393,6 +393,83 @@ Zusätzlich kann das Voting auch über den Admin-Bereich de/aktiviert oder beend
   - `startTime` / `endTime`: Zeitfenster für Abstimmungen
 - **votingAdminKey:** Geheimes Passwort für Admin-Bereich
 
+### Voting-Logik: Wann wird das Voting-Fenster angezeigt?
+
+Das Voting-Fenster wird nur angezeigt, wenn **alle** folgenden Bedingungen erfüllt sind:
+
+#### 1. Feature-Flag aktiv
+
+```json
+// event.json
+{
+  "features": {
+    "voting": true  // ← Muss auf true stehen
+  }
+}
+```
+
+#### 2. Admin-Status "active"
+
+```json
+// src/votes/voting-state.json
+{
+  "status": "active"  // ← Mögliche Werte: "inactive", "active", "ended"
+}
+```
+
+Der Status kann über den [Admin-Bereich](#admin-bereich) geändert werden.
+
+#### 3. Zeitfenster aktiv
+
+Das aktuelle Datum und die Uhrzeit müssen innerhalb eines konfigurierten Zeitfensters liegen:
+
+```json
+// event.json
+{
+  "features": {
+    "votingSchedule": [
+      {
+        "dayOfWeek": 6,        // Samstag
+        "startTime": "16:00",  // ← Voting öffnet um 16:00 Uhr
+        "endTime": "17:45"     // ← Voting schließt um 17:45 Uhr
+      }
+    ]
+  }
+}
+```
+
+**Prüfung:** System vergleicht aktuellen Wochentag (0=Sonntag, 6=Samstag) und Uhrzeit mit der Konfiguration.
+
+#### 4. GET-Parameter Override (nur für Testing)
+
+Für Entwicklung und Tests kann die Zeitfenster-Prüfung übersprungen werden:
+
+```text
+?vote=samstag  // Zeigt Voting für z. B. Samstag
+```
+
+**Wichtig:** Feature-Flag und Admin-Status müssen trotzdem aktiv sein!
+
+#### Zusammenfassung der Prüfreihenfolge
+
+```plaintext
+1. ✓ voting: true in event.json?
+   └─ Nein → Kein Voting
+   └─ Ja → Weiter zu Schritt 2
+
+2. ✓ status: "active" in voting-state.json?
+   └─ Nein (inactive/ended) → Kein Voting
+   └─ Ja → Weiter zu Schritt 3
+
+3. ✓ GET-Parameter ?vote=... vorhanden?
+   └─ Ja → Voting anzeigen (Zeitfenster übersprungen)
+   └─ Nein → Weiter zu Schritt 4
+
+4. ✓ Aktuelles Datum/Uhrzeit in votingSchedule?
+   └─ Nein → Kein Voting
+   └─ Ja → Voting anzeigen
+```
+
 ### Nutzung
 
 **Von Teilnehmern:**
