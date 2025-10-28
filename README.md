@@ -56,10 +56,13 @@
 git clone <repository-url>
 cd pccampapp
 
-# 2. Entwicklungsserver starten (Docker)
+# 2. Node.js Dependencies
+make install
+
+# 3. Entwicklungsserver starten (Docker)
 make dev-up
 
-# 3. Browser öffnen
+# 4. Browser öffnen
 open http://localhost:5173
 ```
 
