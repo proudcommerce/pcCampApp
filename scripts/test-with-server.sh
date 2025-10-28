@@ -65,7 +65,7 @@ else
     fi
 
     # Production Server starten
-    docker-compose -f docker-compose.prod.yml up -d
+    docker compose -f docker-compose.prod.yml up -d
 
     # Warte auf Server
     echo "⏳ Warte auf Server-Start..."
@@ -118,7 +118,7 @@ fi
 if [ "$SERVER_WAS_RUNNING" = false ]; then
     echo ""
     echo "🛑 Stoppe Production Server..."
-    docker-compose -f docker-compose.prod.yml down
+    docker compose -f docker-compose.prod.yml down
     echo "✅ Server gestoppt"
 fi
 

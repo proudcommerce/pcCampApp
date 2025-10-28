@@ -70,8 +70,8 @@ clean:
 	@echo "✅ Lokale Dateien bereinigt"
 	@echo ""
 	@echo "🐳 Stoppe und entferne Docker Container..."
-	@docker-compose down -v --remove-orphans 2>/dev/null || true
-	@docker-compose -f docker-compose.prod.yml down -v --remove-orphans 2>/dev/null || true
+	@docker compose down -v --remove-orphans 2>/dev/null || true
+	@docker compose -f docker-compose.prod.yml down -v --remove-orphans 2>/dev/null || true
 	@echo "✅ Container gestoppt und entfernt"
 	@echo ""
 	@echo "🗑️  Entferne Docker Images..."
@@ -194,25 +194,25 @@ dev-up:
 	@echo "📁 Serviert: src/ (live-reload aktiv)"
 	@echo "🔄 Caching: deaktiviert (Cache-Control: no-store)"
 	@echo ""
-	@docker-compose up
+	@docker compose up
 
 dev-down:
 	@echo "🛑 Stoppe Development Server..."
-	@docker-compose down
+	@docker compose down
 	@echo "✅ Development Server gestoppt"
 
 dev-rebuild:
 	@echo "🔨 Rebuild Development Docker Image (ohne Cache)..."
-	@docker-compose build --no-cache
+	@docker compose build --no-cache
 	@echo "✅ Image neu gebaut"
 
 dev-logs:
 	@echo "📋 Development Server Logs (Ctrl+C zum Beenden)..."
-	@docker-compose logs -f
+	@docker compose logs -f
 
 dev-remove:
 	@echo "🗑️  Entferne Development Container, Netzwerke und Volumes..."
-	@docker-compose down -v --remove-orphans
+	@docker compose down -v --remove-orphans
 	@echo "✅ Vollständig entfernt"
 
 # =============================================================================
@@ -233,23 +233,23 @@ prod-up:
 	@echo "📁 Serviert: build/ (Production-ready)"
 	@echo "🔍 Teste: Cache-Busting, gehashte Assets, PWA"
 	@echo ""
-	@docker-compose -f docker-compose.prod.yml up
+	@docker compose -f docker-compose.prod.yml up 
 
 prod-down:
 	@echo "🛑 Stoppe Production Server..."
-	@docker-compose -f docker-compose.prod.yml down
+	@docker compose -f docker-compose.prod.yml down
 	@echo "✅ Production Server gestoppt"
 
 prod-rebuild:
 	@echo "🔨 Rebuild Production Docker Image (ohne Cache)..."
-	@docker-compose -f docker-compose.prod.yml build --no-cache
+	@docker compose -f docker-compose.prod.yml build --no-cache
 	@echo "✅ Image neu gebaut"
 
 prod-logs:
 	@echo "📋 Production Server Logs (Ctrl+C zum Beenden)..."
-	@docker-compose -f docker-compose.prod.yml logs -f
+	@docker compose -f docker-compose.prod.yml logs -f
 
 prod-remove:
 	@echo "🗑️  Entferne Production Container, Netzwerke und Volumes..."
-	@docker-compose -f docker-compose.prod.yml down -v --remove-orphans
+	@docker compose -f docker-compose.prod.yml down -v --remove-orphans
 	@echo "✅ Vollständig entfernt"
