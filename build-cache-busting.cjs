@@ -685,7 +685,22 @@ function createTranslationManifest(jsonHashMap) {
   console.log(`   Locales: ${Object.keys(translationMap).join(', ')}`);
 }
 
-function copyStaticFiles() {
+function createUnhashedJsonCopies(jsonHashMap) {
+  // Create unhashed copies of JSON files for PHP backend access
+  // PHP scripts need direct access to sessions.json, but frontend uses hashed versions
+  Object.entries(jsonHashMap).forEach(([originalPath, hashedPath]) => {
+    const hashedFullPath = path.join(BUILD_DIR, hashedPath);
+    const unhashedFullPath = path.join(BUILD_DIR, originalPath);
+
+    if (fs.existsSync(hashedFullPath)) {
+      ensureDir(unhashedFullPath);
+      fs.copyFileSync(hashedFullPath, unhashedFullPath);
+      console.log(`   ✓ ${originalPath} (unhashed copy for PHP)`);
+    }
+  });
+}
+
+function copyStaticFiles(hashMap = {}) {
   console.log('\n📋 Kopiere statische Dateien...');
 
   // Copy event.json for development mode access
@@ -715,8 +730,38 @@ function copyStaticFiles() {
 
     if (fs.existsSync(srcPath)) {
       ensureDir(buildPath);
-      fs.copyFileSync(srcPath, buildPath);
-      console.log(`✓ ${relativePath} kopiert`);
+
+      // Special handling for votes PHP files: adjust paths for production
+      // In src/: votes/ -> src/ -> root/event.json (../../event.json)
+      // In build/: votes/ -> build/event.json (../event.json)
+      if (relativePath.startsWith('votes/') && relativePath.endsWith('.php')) {
+        let content = fs.readFileSync(srcPath, 'utf8');
+
+        // Replace ../../event.json with ../event.json for production build
+        content = content.replace(/\/\.\.\/\.\./g, '/..');
+
+        // Replace asset references with hashed versions (if hashMap is provided)
+        // This is needed for admin.php and results.php that load CSS/JS/images
+        if (typeof hashMap !== 'undefined' && hashMap) {
+          // Replace asset paths: ../assets/app.css → ../assets/app.HASH.css
+          Object.entries(hashMap).forEach(([originalPath, hashedPath]) => {
+            // Only replace assets/ references
+            if (originalPath.startsWith('assets/')) {
+              const originalFilename = path.basename(originalPath);
+              const hashedFilename = path.basename(hashedPath);
+              // Replace pattern: ../assets/filename.ext → ../assets/filename.HASH.ext
+              const regex = new RegExp(`\\.\\./assets/${originalFilename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g');
+              content = content.replace(regex, `../assets/${hashedFilename}`);
+            }
+          });
+        }
+
+        fs.writeFileSync(buildPath, content);
+        console.log(`✓ ${relativePath} kopiert (Pfade angepasst für Production)`);
+      } else {
+        fs.copyFileSync(srcPath, buildPath);
+        console.log(`✓ ${relativePath} kopiert`);
+      }
     } else {
       // Some files like votes.json might not exist yet
       if (!relativePath.includes('votes.json')) {
@@ -748,6 +793,18 @@ async function main() {
     // Generate PWA icons from source icon (must be async)
     const iconHashMap = await generateIcons();
 
+    // Copy favicon for browser (16x16 favicon.png → favicon.ico in root)
+    console.log('\n🔖 Kopiere favicon.ico...');
+    const faviconSource = iconHashMap['assets/favicon.png'];
+    if (faviconSource) {
+      const faviconHashedPath = path.join(BUILD_DIR, faviconSource);
+      const faviconDestPath = path.join(BUILD_DIR, 'favicon.ico');
+      if (fs.existsSync(faviconHashedPath)) {
+        fs.copyFileSync(faviconHashedPath, faviconDestPath);
+        console.log('✓ favicon.ico kopiert (von assets/favicon.png)');
+      }
+    }
+
     // IMPORTANT: Process images FIRST so we can update JSON files with hashed image paths
     console.log('\n🖼 Verarbeite Bilder...');
     const imageHashMap = processImageFiles();
@@ -758,6 +815,10 @@ async function main() {
     // Process all asset types
     console.log('\n📄 Verarbeite JSON-Dateien...');
     const jsonHashMap = processJsonFiles(imageHashMap);
+
+    // Create unhashed copies for PHP backend access
+    console.log('\n📋 Erstelle ungehashte JSON-Kopien für PHP-Backend...');
+    createUnhashedJsonCopies(jsonHashMap);
 
     console.log('\n🎨 Verarbeite CSS-Dateien...');
     const cssHashMap = processCssFiles();
@@ -781,8 +842,8 @@ async function main() {
     console.log('\n🌐 Erstelle Translation-Manifest...');
     createTranslationManifest(jsonHashMap);
 
-    // Copy static files
-    copyStaticFiles();
+    // Copy static files (pass hashMap for PHP asset path replacement)
+    copyStaticFiles(hashMap);
 
     console.log('\n✅ Production Build abgeschlossen!');
     console.log('\n📊 Zusammenfassung:');

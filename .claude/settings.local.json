@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(awk:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(docker compose:*)",
+      "Bash(curl:*)",
+      "Bash(node build-cache-busting.cjs:*)",
+      "Bash(cat:*)",
+      "Bash(BASE_URL=http://localhost:5174 PHP_TESTS_ENABLED=true npx playwright test:*)",
+      "Bash(env BASE_URL=http://localhost:5174 PHP_TESTS_ENABLED=true npx playwright test:*)",
+      "Bash(make test:*)",
+      "Bash(npx playwright:*)",
+      "Bash(BASE_URL=http://localhost:5174 npx playwright test:*)",
+      "Bash(make test-php:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

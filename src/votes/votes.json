@@ -1,10 +1,17 @@
 {
     "samstag": {
-        "sessions": {},
-        "users": {}
+        "sessions": {
+            "60": 1
+        },
+        "users": {
+            "vote_87z822": {
+                "sessionId": "60",
+                "timestamp": 1761667148
+            }
+        }
     },
     "sonntag": {
-        "sessions": {},
-        "users": {}
+        "sessions": [],
+        "users": []
     }
 }

@@ -57,7 +57,8 @@ test.describe('Sessionplan Page', () => {
     await page.waitForLoadState('networkidle');
 
     const title = await page.title();
-    expect(title).toContain('Sessionplan');
+    // Accept both German "Sessionplan" and English "Session Plan"
+    expect(title.toLowerCase()).toMatch(/(sessionplan|session plan)/);
   });
 
   test('Filter-Buttons sollten vorhanden sein', async ({ page }) => {

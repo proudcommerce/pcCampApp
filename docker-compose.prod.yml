@@ -9,6 +9,8 @@ services:
     volumes:
       # Mount build/ directory for production testing
       - ./build:/usr/share/nginx/html:ro
+      # Mount votes/ directory as writable (for voting-state.json and votes.json)
+      - ./build/votes:/usr/share/nginx/html/votes:rw
       # Use production-optimized nginx config
       - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped

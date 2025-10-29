@@ -10,17 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Check voting state
-$stateFile = __DIR__ . '/voting-state.json';
-if (file_exists($stateFile)) {
-    $votingState = json_decode(file_get_contents($stateFile), true);
-    if ($votingState['status'] !== 'active') {
-        http_response_code(403);
-        echo json_encode(['error' => 'Voting is not active', 'status' => $votingState['status']]);
-        exit;
-    }
-}
-
+// Validate input parameters first (before checking voting state)
 $input = json_decode(file_get_contents('php://input'), true);
 
 if (!isset($input['sessionId']) || !isset($input['day']) || !isset($input['userKey'])) {
@@ -33,8 +23,8 @@ $sessionId = $input['sessionId'];
 $day = $input['day'];
 $userKey = $input['userKey'];
 
-// Load event configuration to get valid voting days
-$eventConfigPath = __DIR__ . '/../event.json';
+// Validate day parameter (load allowed days from event config)
+$eventConfigPath = __DIR__ . '/../../event.json';
 $allowedDays = ['samstag', 'sonntag']; // Default fallback
 
 if (file_exists($eventConfigPath)) {
@@ -50,6 +40,17 @@ if (!in_array($day, $allowedDays)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid day', 'allowed_days' => $allowedDays]);
     exit;
+}
+
+// Check voting state after input validation
+$stateFile = __DIR__ . '/voting-state.json';
+if (file_exists($stateFile)) {
+    $votingState = json_decode(file_get_contents($stateFile), true);
+    if ($votingState['status'] !== 'active') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Voting is not active', 'status' => $votingState['status']]);
+        exit;
+    }
 }
 
 $votesFile = __DIR__ . '/votes.json';

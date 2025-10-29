@@ -12,6 +12,7 @@ BASE_URL="http://localhost:5174"
 # Parse Argumente
 HEADED=""
 PROJECT=""
+TEST_FILE=""
 for arg in "$@"; do
     case $arg in
         --headed)
@@ -19,6 +20,9 @@ for arg in "$@"; do
             ;;
         --project=*)
             PROJECT="${arg#*=}"
+            ;;
+        tests/*.spec.js)
+            TEST_FILE="$arg"
             ;;
     esac
 done
@@ -94,7 +98,17 @@ echo "🧪 Führe Playwright-Tests aus..."
 echo ""
 
 # Tests ausführen
-TEST_CMD="BASE_URL=$BASE_URL npx playwright test"
+# Enable PHP tests if voting.spec.js is specified
+if [[ "$TEST_FILE" == *"voting.spec.js"* ]]; then
+    TEST_CMD="BASE_URL=$BASE_URL PHP_TESTS_ENABLED=true npx playwright test"
+else
+    TEST_CMD="BASE_URL=$BASE_URL npx playwright test"
+fi
+
+# Add test file if specified
+if [ -n "$TEST_FILE" ]; then
+    TEST_CMD="$TEST_CMD $TEST_FILE"
+fi
 
 if [ "$HEADED" = "--headed" ]; then
     TEST_CMD="$TEST_CMD --headed"

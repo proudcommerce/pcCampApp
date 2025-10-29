@@ -536,14 +536,14 @@ Die `votes.json` und `voting-state.json` sollten bei einem Deployment nicht übe
 
 | Befehl | Beschreibung |
 |---------|-------------|
-| `make test` | Standard Tests (79 Tests, Port 5174, nginx) |
-| `make test-php` | PHP Tests (24 Tests, Port 5175, PHP-Server) |
+| `make test` | Standard Tests (119 Tests, Port 5174, nginx + PHP-FPM) |
+| `make test-php` | Voting/PHP Tests (23 Tests, Port 5174, nginx + PHP-FPM) |
 | `make test-translations` | Übersetzungs-Tests (42 Tests, DE + EN) |
 | `make test-translations-de` | Übersetzungs-Tests nur Deutsch (21 Tests) |
 | `make test-translations-en` | Übersetzungs-Tests nur Englisch (21 Tests) |
-| `make test-all` | Alle Tests (145 Tests, Standard + PHP + Translations) |
+| `make test-all` | Alle Tests (142 Tests, Standard + PHP + Translations) |
 | `make test-headed` | Standard Tests mit sichtbarem Browser |
-| `make test-php-headed` | PHP Tests mit sichtbarem Browser |
+| `make test-php-headed` | Voting/PHP Tests mit sichtbarem Browser |
 | `make test-report` | HTML Test-Report öffnen |
 
 ---

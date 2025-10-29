@@ -32,8 +32,8 @@ help:
 	@echo "  make prod-remove     - Stoppt und entfernt Container + Volumes"
 	@echo ""
 	@echo "Testing (Production):"
-	@echo "  make test                 - Standard Tests (Port 5174, ohne PHP)"
-	@echo "  make test-php             - PHP Tests (Port 5175, mit PHP-Server)"
+	@echo "  make test                 - Standard Tests (Port 5174, mit PHP-FPM)"
+	@echo "  make test-php             - Voting/PHP Tests (Port 5174, mit PHP-FPM)"
 	@echo "  make test-translations    - Übersetzungs-Tests (DE + EN)"
 	@echo "  make test-translations-de - Übersetzungs-Tests (nur DE)"
 	@echo "  make test-translations-en - Übersetzungs-Tests (nur EN)"
@@ -97,10 +97,21 @@ test-headed:
 	@bash scripts/test-with-server.sh --headed
 
 test-php:
-	@bash scripts/test-php-with-server.sh
+	@echo "╔══════════════════════════════════════════════════════════════╗"
+	@echo "║           PHP/Voting Tests (Port 5174)                       ║"
+	@echo "╚══════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "🐘 PHP-FPM läuft im Production-Container auf Port 5174"
+	@echo "🧪 Führe Voting-Tests mit PHP-Backend aus..."
+	@echo ""
+	@bash scripts/test-with-server.sh tests/voting.spec.js
 
 test-php-headed:
-	@bash scripts/test-php-with-server.sh --headed
+	@echo "╔══════════════════════════════════════════════════════════════╗"
+	@echo "║           PHP/Voting Tests (Port 5174, headed)               ║"
+	@echo "╚══════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@bash scripts/test-with-server.sh tests/voting.spec.js --headed
 
 test-translations:
 	@echo "╔══════════════════════════════════════════════════════════════╗"
