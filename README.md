@@ -17,7 +17,7 @@
 
 ---
 
-**Live-Demo: [https://app.devops-camp.de](https://app.devops-camp.de)**
+**Live: [https://app.devops-camp.de](https://app.devops-camp.de) oder [https://app.joomladay.de](https://app.joomladay.de)**
 
 ---
 
