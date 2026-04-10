@@ -146,18 +146,26 @@ test.describe('Voting Results Page', () => {
     expect(response.status()).toBe(403);
   });
 
-  (phpEnabled ? test : test.skip)('results.php sollte HTML Content-Type haben (mit admin key)', async ({ page }) => {
-    // Load event.json to get admin key
-    const configResponse = await page.request.get('/event.json');
-    const config = await configResponse.json();
-
-    if (config.features?.votingAdminKey) {
-      const response = await page.goto(`/votes/results.php?key=${config.features.votingAdminKey}`);
-      expect(response.status()).toBe(200);
-
-      const contentType = response.headers()['content-type'];
-      expect(contentType).toContain('text/html');
+  (phpEnabled ? test : test.skip)('results.php sollte HTML Content-Type haben (mit admin session)', async ({ page }) => {
+    // Login via admin.php to create session
+    const adminKey = process.env.VOTING_ADMIN_KEY;
+    if (!adminKey) {
+      test.skip();
+      return;
     }
+
+    // POST login to admin.php to establish session
+    await page.goto('/votes/admin.php');
+    await page.fill('input[name="admin_key"]', adminKey);
+    await page.click('button[type="submit"]');
+    await page.waitForLoadState('networkidle');
+
+    // Now access results.php with session cookie
+    const response = await page.goto('/votes/results.php');
+    expect(response.status()).toBe(200);
+
+    const contentType = response.headers()['content-type'];
+    expect(contentType).toContain('text/html');
   });
 });
 

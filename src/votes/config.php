@@ -1,7 +1,7 @@
 <?php
 /**
  * Voting System Configuration Helper
- * Loads admin key from event.json
+ * Loads admin key from VOTING_ADMIN_KEY environment variable
  */
 
 function getAdminKey() {
@@ -11,30 +11,26 @@ function getAdminKey() {
         return $adminKey;
     }
 
-    // Load event.json from root (two levels up: votes/ -> src/ -> root/)
+    // Primary: load from environment variable
+    $envKey = getenv('VOTING_ADMIN_KEY');
+    if ($envKey !== false && $envKey !== '') {
+        $adminKey = $envKey;
+        return $adminKey;
+    }
+
+    // Fallback: load from event.json (deprecated)
     $eventConfigPath = __DIR__ . '/../../event.json';
-
-    if (!file_exists($eventConfigPath)) {
-        error_log("ERROR: event.json not found at {$eventConfigPath}");
-        return null;
+    if (file_exists($eventConfigPath)) {
+        $eventConfig = json_decode(file_get_contents($eventConfigPath), true);
+        if (isset($eventConfig['features']['votingAdminKey']) && !empty($eventConfig['features']['votingAdminKey'])) {
+            $adminKey = $eventConfig['features']['votingAdminKey'];
+            error_log("WARNING: Using votingAdminKey from event.json is deprecated. Set VOTING_ADMIN_KEY environment variable instead.");
+            return $adminKey;
+        }
     }
 
-    $eventConfig = json_decode(file_get_contents($eventConfigPath), true);
-
-    if (!$eventConfig) {
-        error_log("ERROR: Failed to parse event.json");
-        return null;
-    }
-
-    // Get admin key from features.votingAdminKey
-    if (isset($eventConfig['features']['votingAdminKey']) && !empty($eventConfig['features']['votingAdminKey'])) {
-        $adminKey = $eventConfig['features']['votingAdminKey'];
-    } else {
-        error_log("ERROR: votingAdminKey not found or empty in event.json");
-        return null;
-    }
-
-    return $adminKey;
+    error_log("ERROR: VOTING_ADMIN_KEY environment variable not set");
+    return null;
 }
 
 function validateAdminKey($providedKey) {
@@ -45,7 +41,7 @@ function validateAdminKey($providedKey) {
         return false;
     }
 
-    // Validate provided key against configured key
-    return $providedKey === $validKey;
+    // Timing-safe comparison to prevent side-channel attacks
+    return hash_equals($validKey, $providedKey);
 }
 ?>

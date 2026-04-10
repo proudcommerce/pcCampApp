@@ -1,10 +1,10 @@
 <?php
-// Admin authentication - Load admin key from event.json
+session_start();
 require_once __DIR__ . '/config.php';
 
-if (!isset($_GET['key']) || !validateAdminKey($_GET['key'])) {
+if (empty($_SESSION['voting_admin'])) {
     http_response_code(403);
-    echo 'Forbidden';
+    echo 'Forbidden &mdash; <a href="admin.php">Login</a>';
     exit;
 }
 

@@ -6,6 +6,8 @@ services:
     container_name: pccampapp-dev
     ports:
       - "5173:5173"
+    environment:
+      - VOTING_ADMIN_KEY=${VOTING_ADMIN_KEY:-change-me-in-production}
     volumes:
       # Mount entire project root (contains src/ and event.json)
       - ./:/usr/share/nginx/html

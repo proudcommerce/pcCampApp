@@ -5,6 +5,9 @@ RUN apk add --no-cache \
     nginx \
     wget
 
+# Allow environment variables to reach PHP-FPM workers
+RUN sed -i 's/;clear_env = no/clear_env = no/' /usr/local/etc/php-fpm.d/www.conf
+
 # Expose Port 5173 (custom development port)
 EXPOSE 5173
 

@@ -8,9 +8,9 @@
     Header always set X-Frame-Options DENY
     Header always set X-XSS-Protection "1; mode=block"
     
-    # CORS für externe Bilder
+    # CORS nur für GET-Requests (statische Assets)
     Header always set Access-Control-Allow-Origin "*"
-    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Methods "GET, OPTIONS"
     Header always set Access-Control-Allow-Headers "Content-Type"
     
     # Cache Control für PWA Assets

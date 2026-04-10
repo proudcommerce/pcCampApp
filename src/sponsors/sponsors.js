@@ -3,6 +3,9 @@
 // Logo URLs can be absolute paths (e.g., CDN or external hosting)
 
 (async () => {
+  // HTML-Encoding helper to prevent XSS
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
   // Helper-Funktion für Übersetzungen (aus header.js)
   const t = (key) => {
     if (typeof window.t === 'function') {
@@ -53,15 +56,15 @@
         : `./${sponsor.logo}`;
 
       return `
-        <a href="${sponsorUrl}" target="_blank" rel="noopener noreferrer" class="sponsor-card">
-          <img src="${logoSrc}"
-               alt="${sponsor.name}"
+        <a href="${esc(sponsorUrl)}" target="_blank" rel="noopener noreferrer" class="sponsor-card">
+          <img src="${esc(logoSrc)}"
+               alt="${esc(sponsor.name)}"
                loading="lazy"
                onerror="this.style.display='none'; this.parentElement.querySelector('.sponsor-fallback').style.display='flex'">
-          <div class="sponsor-fallback" style="display:none;">${sponsor.name}</div>
-          <h3>${sponsor.name}</h3>
-          ${description ? `<p class="sponsor-description">${description}</p>` : ''}
-          <span class="sponsor-link">${displayUrl}</span>
+          <div class="sponsor-fallback" style="display:none;">${esc(sponsor.name)}</div>
+          <h3>${esc(sponsor.name)}</h3>
+          ${description ? `<p class="sponsor-description">${esc(description)}</p>` : ''}
+          <span class="sponsor-link">${esc(displayUrl)}</span>
         </a>
       `;
     }).join('');

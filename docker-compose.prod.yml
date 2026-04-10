@@ -6,6 +6,8 @@ services:
     container_name: pccampapp-prod
     ports:
       - "5174:5173"
+    environment:
+      - VOTING_ADMIN_KEY=${VOTING_ADMIN_KEY}
     volumes:
       # Mount build/ directory for production testing
       - ./build:/usr/share/nginx/html:ro

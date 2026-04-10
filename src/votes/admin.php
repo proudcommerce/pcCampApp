@@ -1,14 +1,57 @@
 <?php
-// Admin authentication - Load admin key from event.json
+session_start();
 require_once __DIR__ . '/config.php';
 
-if (!isset($_GET['key']) || !validateAdminKey($_GET['key'])) {
-    http_response_code(403);
-    echo 'Forbidden';
+// Handle login POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_key'])) {
+    if (validateAdminKey($_POST['admin_key'])) {
+        $_SESSION['voting_admin'] = true;
+        header('Location: admin.php');
+        exit;
+    }
+    $loginError = true;
+}
+
+// Handle logout
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header('Location: admin.php');
     exit;
 }
 
-$ADMIN_KEY = getAdminKey();
+// Check session auth
+if (empty($_SESSION['voting_admin'])) {
+?>
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voting Admin Login</title>
+<style>
+body { font:16px/1.4 system-ui,-apple-system,sans-serif; background:#f9fafb; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }
+.login-box { background:white; padding:32px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); width:100%; max-width:360px; }
+.login-box h2 { margin:0 0 24px; text-align:center; }
+.login-box input { width:100%; padding:12px; border:1px solid #d1d5db; border-radius:6px; font-size:16px; box-sizing:border-box; }
+.login-box button { width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:6px; font-size:16px; font-weight:600; cursor:pointer; margin-top:12px; }
+.login-box button:hover { background:#2563eb; }
+.login-error { background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:12px; border-radius:6px; margin-bottom:16px; text-align:center; font-size:14px; }
+</style>
+</head>
+<body>
+<form class="login-box" method="POST">
+    <h2>Voting Admin</h2>
+    <?php if (!empty($loginError)): ?>
+        <div class="login-error">Ungültiger Admin-Key</div>
+    <?php endif; ?>
+    <input type="password" name="admin_key" placeholder="Admin-Key eingeben" required autofocus>
+    <button type="submit">Anmelden</button>
+</form>
+</body>
+</html>
+<?php
+    exit;
+}
 
 // Load current voting state (create default if not exists)
 $stateFile = __DIR__ . '/voting-state.json';
@@ -76,7 +119,10 @@ if (file_exists($votesFile)) {
 </nav>
 
 <div class="admin-container">
-    <h1>Voting Administration</h1>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h1 style="margin:0;">Voting Administration</h1>
+        <a href="admin.php?logout" style="color:#6b7280;font-size:14px;">Abmelden</a>
+    </div>
 
     <div id="message-container"></div>
 
@@ -113,7 +159,7 @@ if (file_exists($votesFile)) {
                 <button class="btn btn-danger" onclick="changeStatus('ended')">
                     Beenden
                 </button>
-                <a href="results.php?key=<?= $ADMIN_KEY ?>" class="btn btn-primary" style="text-align:center;text-decoration:none;display:block;background:#6366f1;">
+                <a href="results.php" class="btn btn-primary" style="text-align:center;text-decoration:none;display:block;background:#6366f1;">
                     Ergebnisse anzeigen
                 </a>
             <?php elseif ($votingState['status'] === 'ended'): ?>
@@ -123,7 +169,7 @@ if (file_exists($votesFile)) {
                 <button class="btn btn-secondary" onclick="changeStatus('inactive')">
                     Zurücksetzen (Inaktiv)
                 </button>
-                <a href="results.php?key=<?= $ADMIN_KEY ?>" class="btn btn-primary" style="text-align:center;text-decoration:none;display:block;background:#6366f1;">
+                <a href="results.php" class="btn btn-primary" style="text-align:center;text-decoration:none;display:block;background:#6366f1;">
                     Ergebnisse anzeigen
                 </a>
             <?php endif; ?>
@@ -145,7 +191,6 @@ if (file_exists($votesFile)) {
 
 <script src="../assets/header.js"></script>
 <script>
-const ADMIN_KEY = <?= json_encode($ADMIN_KEY) ?>;
 
 function showMessage(message, type = 'success') {
     const container = document.getElementById('message-container');
@@ -183,7 +228,6 @@ async function changeStatus(newStatus) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                key: ADMIN_KEY,
                 status: newStatus
             })
         });
@@ -216,9 +260,7 @@ async function transferVotes() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                key: ADMIN_KEY
-            })
+            body: JSON.stringify({})
         });
 
         const result = await response.json();

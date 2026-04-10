@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.3] - 2026-04-10
+
+Security-Hardening: Admin-Key aus event.json in Umgebungsvariable verschoben, Session-basierte Admin-Authentifizierung, CORS-Wildcard entfernt, Timing-safe Key-Vergleich, XSS-Schutz in Sponsor-Templates.
+
 ## [1.0.2] - 2025-10-29
 
 Problem Votes-Administration behoben.

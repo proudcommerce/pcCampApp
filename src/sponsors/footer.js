@@ -3,6 +3,9 @@
 // Logo URLs can be absolute paths (e.g., CDN or external hosting)
 
 (async () => {
+  // HTML-Encoding helper to prevent XSS
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
   try {
     // Helper function to determine base path
     function getBasePath() {
@@ -76,9 +79,9 @@
           ? sponsor.logo
           : `${pathPrefix}/${sponsor.logo.replace(/^\.\//, '')}`;
         
-        return `<a href="${sponsor.url}" target="_blank" rel="noopener noreferrer" title="${sponsor.name}">
-          <img src="${logoSrc}" alt="${sponsor.name}" class="sponsor-logo"
-               onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\\'sponsor-fallback\\'>${sponsor.name}</span>'">
+        return `<a href="${esc(sponsor.url)}" target="_blank" rel="noopener noreferrer" title="${esc(sponsor.name)}">
+          <img src="${esc(logoSrc)}" alt="${esc(sponsor.name)}" class="sponsor-logo"
+               onerror="this.style.display='none'; this.parentElement.textContent=this.alt">
         </a>`;
       }).join('');
     }
