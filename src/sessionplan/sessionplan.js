@@ -49,7 +49,8 @@
 
 		try {
 			// Lade sessions.json um verfügbare Tage zu ermitteln
-			const sessionsFileName = './sessions.json';
+			await window.assetHashesReady;
+			const sessionsFileName = './' + window.resolveAsset('sessions.json');
 			const response = await fetch(sessionsFileName, {
 				credentials: 'same-origin',
 				headers: { 'Accept': 'application/json' },
@@ -692,12 +693,10 @@
 		const select = document.getElementById(`${day}-vote`);
 		if (!select) return;
 		
-		// Cache-Hashes werden nicht mehr verwendet
-		
 		// Load session data for specific day with cache busting
 		const timestamp = new Date().getTime();
-		// Verwende Original-Dateiname
-		const sessionsFileName = './sessions.json';
+		await window.assetHashesReady;
+		const sessionsFileName = './' + window.resolveAsset('sessions.json');
 		const sessionData = await fetch(`${sessionsFileName}?t=${timestamp}`).then(r => r.json());
 
 		// Populate dropdown

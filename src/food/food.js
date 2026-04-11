@@ -81,12 +81,8 @@
     if (!menuContainer) return;
 
     try {
-      // Lade Hash-Manifest für Cache Busting
-
-
-      // Verwende gehashte Datei oder Fallback
-      // Verwende Original-Datei
-      const menuFileName = './menue.json';
+      await window.assetHashesReady;
+      const menuFileName = './' + window.resolveAsset('menue.json');
       const response = await fetch(menuFileName, {
         credentials: 'same-origin',
         headers: { 'Accept': 'application/json' }
@@ -145,12 +141,8 @@
     if (!allergensList) return;
 
     try {
-      // Lade Hash-Manifest für Cache Busting
-
-
-      // Verwende gehashte Datei oder Fallback
-      // Verwende Original-Datei
-      const allergensFileName = './allergene.json';
+      await window.assetHashesReady;
+      const allergensFileName = './' + window.resolveAsset('allergene.json');
       const response = await fetch(allergensFileName, {
         credentials: 'same-origin',
         headers: { 'Accept': 'application/json' }

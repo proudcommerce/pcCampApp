@@ -34,6 +34,18 @@ const jsonFiles = [
   'translations/en.json'
 ];
 
+// Admin-verwaltete JSON-Dateien: Beim Build nicht überschreiben wenn sie
+// bereits in build/ existieren (= via Admin geändert, nicht über src/)
+const adminManagedJsonFiles = [
+  'menu.json',
+  'news.json',
+  'sponsors/sponsors.json',
+  'sessionplan/sessions.json',
+  'timetable/timetable.json',
+  'food/menue.json',
+  'food/allergene.json'
+];
+
 // CSS-Dateien
 const cssFiles = [
   'assets/app.css',
@@ -41,7 +53,8 @@ const cssFiles = [
   'food/food.css',
   'timetable/timetable.css',
   'floorplan/floorplan.css',
-  'sponsors/sponsors.css'
+  'sponsors/sponsors.css',
+  'admin/admin.css'
 ];
 
 // JavaScript-Dateien (sw.js NICHT hashen!)
@@ -53,7 +66,8 @@ const jsFiles = [
   'food/food.js',
   'timetable/timetable.js',
   'floorplan/floorplan.js',
-  'sponsors/sponsors.js'
+  'sponsors/sponsors.js',
+  'admin/admin.js'
 ];
 
 // Source icon for PWA icon generation
@@ -98,7 +112,11 @@ const copyOnlyFiles = [
   'votes/votes.json',
   'votes/voting-state.json',
   'votes/votes.json.example',
-  'votes/README.md'
+  'votes/README.md',
+  'admin/index.php',
+  'admin/api.php',
+  'admin/rehash.php',
+  'admin/results.php'
 ];
 
 function generateHash(content) {
@@ -175,8 +193,18 @@ function processJsonFiles(imageHashMap = {}) {
 
   jsonFiles.forEach(relativePath => {
     const srcPath = path.join(SRC_DIR, relativePath);
-    if (fs.existsSync(srcPath)) {
-      let content = fs.readFileSync(srcPath, 'utf8');
+    const buildUnhashedPath = path.join(BUILD_DIR, relativePath);
+    const isAdminManaged = adminManagedJsonFiles.includes(relativePath);
+
+    // Admin-verwaltete Dateien: build/-Version bevorzugen (falls vorhanden)
+    let sourcePath = srcPath;
+    if (isAdminManaged && fs.existsSync(buildUnhashedPath)) {
+      sourcePath = buildUnhashedPath;
+      console.log(`  ↳ ${relativePath}: verwende bestehende build/-Version (Admin-verwaltet)`);
+    }
+
+    if (fs.existsSync(sourcePath)) {
+      let content = fs.readFileSync(sourcePath, 'utf8');
 
       // Replace image paths in JSON content with hashed versions
       if (Object.keys(imageHashMap).length > 0) {
@@ -269,45 +297,18 @@ function processCssFiles() {
   return hashMap;
 }
 
-function processJsFiles(jsonHashMap) {
+function processJsFiles() {
   const hashMap = {};
+
+  // NOTE: JSON filenames are NO LONGER baked into JS at build time.
+  // JS files use resolveAsset() at runtime to look up hashed filenames
+  // from cache-hashes.json. This allows the admin API to rehash JSON
+  // files after edits without needing to rebuild JS/HTML/SW.
 
   jsFiles.forEach(relativePath => {
     const srcPath = path.join(SRC_DIR, relativePath);
     if (fs.existsSync(srcPath)) {
-      let content = fs.readFileSync(srcPath, 'utf8');
-
-      // Replace JSON file references with hashed versions
-      Object.entries(jsonHashMap).forEach(([originalPath, hashedPath]) => {
-        // Replace full path (e.g., 'assets/menu.json' → 'assets/menu.ec9daa78.json')
-        const escapedOriginalPath = originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(['"\`])${escapedOriginalPath}\\1`, 'g');
-        content = content.replace(regex, `$1${hashedPath}$1`);
-
-        // ALSO replace same-directory references (e.g., './sponsors.json' → './sponsors.abc123.json')
-        // This is needed when JS file and JSON file are in the same directory
-        const jsDir = path.dirname(relativePath);
-        const jsonDir = path.dirname(originalPath);
-
-        if (jsDir === jsonDir) {
-          // Files are in same directory - replace ./filename.json references
-          const originalFilename = path.basename(originalPath);
-          const hashedFilename = path.basename(hashedPath);
-          const escapedFilename = originalFilename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const sameDirRegex = new RegExp(`(['"\`])\\./${escapedFilename}\\1`, 'g');
-          content = content.replace(sameDirRegex, `$1./${hashedFilename}$1`);
-        }
-
-        // Replace template string patterns like `${pathPrefix}/sponsors.json`
-        // This handles dynamic paths where directory is a variable but filename is static
-        const originalFilename = path.basename(originalPath);
-        const hashedFilename = path.basename(hashedPath);
-        const escapedOriginalFilename = originalFilename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-        // Pattern: `${anyVariable}/filename.json` → `${anyVariable}/filename.hash.json`
-        const dynamicPathRegex = new RegExp(`(\\$\\{[^}]+\\})/${escapedOriginalFilename}`, 'g');
-        content = content.replace(dynamicPathRegex, `$1/${hashedFilename}`);
-      });
+      const content = fs.readFileSync(srcPath, 'utf8');
 
       const hash = generateHash(content);
       const ext = path.extname(relativePath);
@@ -520,31 +521,8 @@ function updateHtmlFiles(hashMap) {
         }
       }
 
-      // Inline JavaScript JSON references (e.g., const fileName = './sessions.json';)
-      if (originalRelPath.endsWith('.json')) {
-        // Get just the filename for local references
-        const originalFilename = path.basename(originalRelPath);
-        const hashedFilename = path.basename(hashedRelPath);
-
-        // Match patterns like: './sessions.json', "./sessions.json", `./sessions.json`
-        const regex1 = new RegExp(`(['"\`])\\./${originalFilename.replace('.', '\\.')}\\1`, 'g');
-        const newContent1 = content.replace(regex1, `$1./${hashedFilename}$1`);
-        if (newContent1 !== content) {
-          replacements++;
-          content = newContent1;
-        }
-
-        // Also match full paths like: './assets/sponsoren.json', '../assets/menu.json'
-        const regex2 = new RegExp(`(['"\`])(\\.\\./|\\./)${originalRelPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\1`, 'g');
-        const newContent2 = content.replace(regex2, (match, quote, prefix) => {
-          // Keep the same prefix (../ or ./) but use hashed path
-          return `${quote}${prefix}${hashedRelPath}${quote}`;
-        });
-        if (newContent2 !== content) {
-          replacements++;
-          content = newContent2;
-        }
-      }
+      // NOTE: Inline JSON references in HTML are NOT replaced anymore.
+      // JS uses resolveAsset() at runtime to look up hashed filenames from cache-hashes.json.
     });
 
     // Write to build directory
@@ -633,15 +611,21 @@ function updateServiceWorker(hashMap) {
     "'./timetable/index.html'",
     "'./food/index.html'",
     "'./floorplan/index.html'",
-    "'./translations.json'"  // Translation manifest (NOT hashed)
+    "'./translations.json'",  // Translation manifest (NOT hashed)
+    "'./cache-hashes.json'"   // Asset hash manifest for resolveAsset() offline fallback
   ];
 
   // Füge gehashte Assets hinzu
   Object.entries(hashMap).forEach(([originalRelPath, hashedRelPath]) => {
-    // Exclude sessionplan_*.json (dynamisch geladen)
-    if (!originalRelPath.includes('sessionplan_')) {
-      urlsToCache.push(`'./${hashedRelPath}'`);
-    }
+    const isJsonFile = originalRelPath.endsWith('.json');
+    const isTranslationJson = originalRelPath.startsWith('translations/');
+
+    // Runtime-updated JSON files are fetched network-first and cached on demand.
+    // Only static translation JSON files stay in the pre-cache.
+    if (isJsonFile && !isTranslationJson) return;
+    if (originalRelPath.includes('sessionplan_')) return;
+
+    urlsToCache.push(`'./${hashedRelPath}'`);
   });
 
   // Ersetze die urlsToCache-Array-Definition
@@ -703,12 +687,16 @@ function createUnhashedJsonCopies(jsonHashMap) {
 function copyStaticFiles(hashMap = {}) {
   console.log('\n📋 Kopiere statische Dateien...');
 
-  // Copy event.json for development mode access
+  // Copy event.json (only if not already present in build/ from a previous admin session)
   const eventJsonSrc = EVENT_CONFIG_PATH;
   const eventJsonDest = path.join(BUILD_DIR, 'event.json');
-  if (fs.existsSync(eventJsonSrc)) {
-    fs.copyFileSync(eventJsonSrc, eventJsonDest);
-    console.log('✓ event.json kopiert (für Dev-Modus)');
+  if (!fs.existsSync(eventJsonDest)) {
+    if (fs.existsSync(eventJsonSrc)) {
+      fs.copyFileSync(eventJsonSrc, eventJsonDest);
+      console.log('✓ event.json kopiert');
+    }
+  } else {
+    console.log('✓ event.json: bestehende build/-Version beibehalten');
   }
 
   // Generate robots.txt based on SEO config
@@ -731,27 +719,39 @@ function copyStaticFiles(hashMap = {}) {
     if (fs.existsSync(srcPath)) {
       ensureDir(buildPath);
 
-      // Special handling for votes PHP files: adjust paths for production
+      // Special handling for votes + admin PHP files: adjust paths for production
       // In src/: votes/ -> src/ -> root/event.json (../../event.json)
       // In build/: votes/ -> build/event.json (../event.json)
-      if (relativePath.startsWith('votes/') && relativePath.endsWith('.php')) {
+      const needsPhpPathFix = relativePath.endsWith('.php') &&
+        (relativePath.startsWith('votes/') || relativePath.startsWith('admin/'));
+
+      if (needsPhpPathFix) {
         let content = fs.readFileSync(srcPath, 'utf8');
 
         // Replace ../../event.json with ../event.json for production build
         content = content.replace(/\/\.\.\/\.\./g, '/..');
 
-        // Replace asset references with hashed versions (if hashMap is provided)
-        // This is needed for admin.php and results.php that load CSS/JS/images
+        // Replace asset references with hashed versions
         if (typeof hashMap !== 'undefined' && hashMap) {
-          // Replace asset paths: ../assets/app.css → ../assets/app.HASH.css
           Object.entries(hashMap).forEach(([originalPath, hashedPath]) => {
-            // Only replace assets/ references
+            const originalFilename = path.basename(originalPath);
+            const hashedFilename = path.basename(hashedPath);
+            const escapedFilename = originalFilename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            // Cross-directory asset references: ../assets/app.css → ../assets/app.HASH.css
             if (originalPath.startsWith('assets/')) {
-              const originalFilename = path.basename(originalPath);
-              const hashedFilename = path.basename(hashedPath);
-              // Replace pattern: ../assets/filename.ext → ../assets/filename.HASH.ext
-              const regex = new RegExp(`\\.\\./assets/${originalFilename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g');
+              const regex = new RegExp(`\\.\\./assets/${escapedFilename}`, 'g');
               content = content.replace(regex, `../assets/${hashedFilename}`);
+            }
+
+            // Same-directory asset references in admin/: admin.css → admin.HASH.css, admin.js → admin.HASH.js
+            // Only applies when the hashed file sits in the same directory as the PHP file
+            const phpDir = path.dirname(relativePath);
+            const assetDir = path.dirname(originalPath);
+            if (phpDir === assetDir && (originalPath.endsWith('.css') || originalPath.endsWith('.js'))) {
+              // Match bare filename in href="admin.css" or src="admin.js" (not ../... paths)
+              const bareRegex = new RegExp(`(["'])${escapedFilename}\\1`, 'g');
+              content = content.replace(bareRegex, `$1${hashedFilename}$1`);
             }
           });
         }
@@ -771,13 +771,44 @@ function copyStaticFiles(hashMap = {}) {
   });
 }
 
+// Backup admin-managed JSON files before cleaning build/
+function backupAdminData() {
+  const backup = {};
+  adminManagedJsonFiles.forEach(relativePath => {
+    const buildPath = path.join(BUILD_DIR, relativePath);
+    if (fs.existsSync(buildPath)) {
+      backup[relativePath] = fs.readFileSync(buildPath, 'utf8');
+    }
+  });
+  return backup;
+}
+
+// Restore admin-managed JSON files after cleaning build/
+function restoreAdminData(backup) {
+  const restoredCount = Object.keys(backup).length;
+  if (restoredCount === 0) return;
+  console.log(`\n📋 Stelle ${restoredCount} Admin-verwaltete Datei(en) wieder her...`);
+  Object.entries(backup).forEach(([relativePath, content]) => {
+    const buildPath = path.join(BUILD_DIR, relativePath);
+    ensureDir(buildPath);
+    fs.writeFileSync(buildPath, content);
+    console.log(`   ✓ ${relativePath} (Admin-Daten wiederhergestellt)`);
+  });
+}
+
 function cleanBuildDirectory() {
+  // Backup admin-managed data before cleaning
+  const adminBackup = backupAdminData();
+
   if (fs.existsSync(BUILD_DIR)) {
     console.log('🧹 Bereinige altes build/ Verzeichnis...');
     fs.rmSync(BUILD_DIR, { recursive: true, force: true });
     console.log('✓ build/ Verzeichnis bereinigt');
   }
   fs.mkdirSync(BUILD_DIR, { recursive: true });
+
+  // Restore admin-managed data
+  restoreAdminData(adminBackup);
 }
 
 // Hauptfunktion
@@ -824,7 +855,7 @@ async function main() {
     const cssHashMap = processCssFiles();
 
     console.log('\n📜 Verarbeite JavaScript-Dateien...');
-    const jsHashMap = processJsFiles(jsonHashMap);
+    const jsHashMap = processJsFiles();
 
     // Merge all hash maps
     const hashMap = Object.assign({}, jsonHashMap, cssHashMap, jsHashMap, imageHashMap);
@@ -837,6 +868,10 @@ async function main() {
 
     console.log('\n⚙️ Aktualisiere Service Worker...');
     updateServiceWorker(hashMap);
+
+    // Create hash manifest for runtime resolveAsset() lookups
+    console.log('\n📋 Erstelle Hash-Manifest...');
+    createHashManifest(hashMap);
 
     // Create translation manifest for i18n dynamic loading
     console.log('\n🌐 Erstelle Translation-Manifest...');

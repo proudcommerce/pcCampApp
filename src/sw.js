@@ -1,4 +1,4 @@
-const CACHE_NAME = 'event-app-v1';
+const CACHE_NAME = 'event-app-v2';
 const urlsToCache = [
   './',
   './index.html',
@@ -6,13 +6,7 @@ const urlsToCache = [
   './timetable/index.html',
   './food/index.html',
   './floorplan/index.html',
-  './assets/menu.json',
-  './assets/news.json',
-  './sponsors/sponsors.json',
-  // './sessionplan/sessions.json' removed - always fetch fresh to get latest updates
-  './timetable/timetable.json',
-  './food/menue.json',
-  './food/allergene.json',
+  // JSON data files removed from pre-cache - always fetch fresh for admin updates
   './assets/app.css',
   './assets/header.js',
   './assets/favicon.png',
@@ -53,11 +47,31 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('fetch', function(event) {
   const url = new URL(event.request.url);
   
-  // Don't cache session data and votes data - always fetch fresh
-  if ((url.pathname.includes('sessionplan_') && url.pathname.endsWith('.json')) ||
-      url.pathname.includes('sessions.json') ||
-      url.pathname.includes('votes.json') ||
-      url.pathname.includes('votes/')) {
+  // Network-first with cache update for JSON data files
+  // Always fetch fresh, but update cache so offline fallback stays current.
+  // Ignore query strings for cache keys so cache-busting params do not create unbounded entries.
+  if (url.pathname.endsWith('.json') &&
+      !url.pathname.includes('manifest') &&
+      !url.pathname.includes('translations/')) {
+    const cacheKey = url.origin + url.pathname;
+    event.respondWith(
+      fetch(event.request)
+        .then(function(response) {
+          if (response.status === 200) {
+            var responseClone = response.clone();
+            caches.open(CACHE_NAME).then(function(cache) {
+              cache.put(cacheKey, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(function() {
+          return caches.match(cacheKey);
+        })
+    );
+    return;
+  }
+  if (url.pathname.includes('votes/') || url.pathname.includes('admin/')) {
     event.respondWith(fetch(event.request));
     return;
   }

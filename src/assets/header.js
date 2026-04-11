@@ -2,6 +2,59 @@
 let eventConfig = null;
 let translations = null;
 
+// Asset hash manifest for cache-busted JSON filenames
+// Loaded once at startup, used by resolveAsset() across all pages.
+// Skipped in development mode (where cache-hashes.json does not exist) to avoid 404 noise.
+let _assetHashes = {};
+const assetHashesReady = (async () => {
+    // Dev-mode detection: in src/ the title still contains {{EVENT_NAME}} placeholder.
+    // In production build the placeholder has been replaced, so the manifest exists.
+    if (document.title.includes('{{')) return;
+
+    try {
+        const pathname = window.location.pathname;
+        const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
+        const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes', 'admin'];
+        const hasBasePath = segments.length >= 1 && !knownPages.includes(segments[0]);
+        const basePath = hasBasePath ? '/' + segments[0] : '';
+        const isInSubfolder = segments.length >= 1;
+
+        let manifestPath;
+        if (basePath) {
+            manifestPath = basePath + '/cache-hashes.json';
+        } else {
+            manifestPath = isInSubfolder ? '../cache-hashes.json' : './cache-hashes.json';
+        }
+        const resp = await fetch(manifestPath, { cache: 'no-store' });
+        if (resp.ok) _assetHashes = await resp.json();
+    } catch (e) {
+        // Manifest not found — use original filenames
+    }
+})();
+
+/**
+ * Resolve a JSON filename to its cache-busted version via the hash manifest.
+ * Pass just the basename (e.g. 'menu.json', 'sessions.json').
+ * Returns the hashed filename (e.g. 'menu.ec9daa78.json') or the original if not found.
+ */
+function resolveAsset(filename) {
+    if (!_assetHashes || Object.keys(_assetHashes).length === 0) return filename;
+    // Direct match (root-level files like menu.json)
+    if (_assetHashes[filename]) {
+        return _assetHashes[filename].split('/').pop();
+    }
+    // Search by basename (files in subdirectories like sessionplan/sessions.json)
+    for (const [key, value] of Object.entries(_assetHashes)) {
+        if (key.endsWith('/' + filename)) {
+            return value.split('/').pop();
+        }
+    }
+    return filename;
+}
+
+window.resolveAsset = resolveAsset;
+window.assetHashesReady = assetHashesReady;
+
 function getPathDepth() {
     const pathname = window.location.pathname;
     const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
@@ -31,7 +84,7 @@ function getBasePath() {
     // und es mehr als ein Segment gibt, ist das erste Segment der Base-Path
     if (segments.length >= 1) {
         // Prüfe ob das erste Segment ein bekannter Seitenname ist
-        const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes'];
+        const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes', 'admin'];
         if (knownPages.includes(segments[0])) {
             // Es ist eine Seite, kein Base-Path
             return '';
@@ -304,32 +357,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     let menuData = null;
     
     async function loadMenuData() {
+        const cacheKey = 'sessionplan-menu';
+
         try {
             // Lade Event-Konfiguration falls noch nicht geladen
             if (!eventConfig) {
                 eventConfig = await loadEventConfig();
             }
 
-            // Prüfe Cache zuerst
-            const cacheKey = 'sessionplan-menu';
-            const cached = localStorage.getItem(cacheKey);
-            const cacheTime = localStorage.getItem(cacheKey + '-time');
-            const now = Date.now();
-
-            // Cache-TTL aus Konfiguration verwenden
-            const cacheTTL = eventConfig?.performance?.cacheTTL || 3600000;
-            if (cached && cacheTime && (now - parseInt(cacheTime)) < cacheTTL) {
-                menuData = JSON.parse(cached);
-                renderMenuItems();
-                return;
-            }
-
-            // Pfad-Setup
+            // Network-first: immer frisch laden, damit Admin-Änderungen sofort sichtbar werden.
+            // localStorage dient nur als Offline-Fallback im catch-Block.
             const basePath = getBasePath();
             const isInSubfolder = getPathDepth();
 
-            // Verwende Original-Dateinamen (funktioniert in Development & Production)
-            const menuFile = 'menu.json';
+            await window.assetHashesReady;
+            const menuFile = resolveAsset('menu.json');
             let menuPath;
             if (basePath) {
                 menuPath = basePath + '/' + menuFile;
@@ -339,15 +381,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             const response = await fetch(menuPath);
             menuData = await response.json();
 
-            // Speichere im Cache
+            // Speichere im Cache nur als Offline-Fallback
             localStorage.setItem(cacheKey, JSON.stringify(menuData));
-            localStorage.setItem(cacheKey + '-time', now.toString());
 
             renderMenuItems();
         } catch (error) {
             console.error('Fehler beim Laden des Menüs:', error);
-            // Fallback zu Cache falls vorhanden
-            const cached = localStorage.getItem('sessionplan-menu');
+            // Fallback zu Cache falls vorhanden (Offline-Modus)
+            const cached = localStorage.getItem(cacheKey);
             if (cached) {
                 try {
                     menuData = JSON.parse(cached);
@@ -619,8 +660,8 @@ class NewsManager {
             const basePath = getBasePath();
             const isInSubfolder = getPathDepth();
 
-            // Verwende Original-Dateinamen (funktioniert in Development & Production)
-            const newsFile = 'news.json';
+            await window.assetHashesReady;
+            const newsFile = resolveAsset('news.json');
             let newsPath;
             if (basePath) {
                 newsPath = basePath + '/' + newsFile;

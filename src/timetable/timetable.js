@@ -84,12 +84,8 @@
   
   const loadTimetableData = async () => {
     try {
-      // Lade Hash-Manifest für Cache Busting
-      
-      
-      // Verwende gehashte Datei oder Fallback
-      // Verwende Original-Datei
-      const timetableFileName = './timetable.json';
+      await window.assetHashesReady;
+      const timetableFileName = './' + window.resolveAsset('timetable.json');
       const response = await fetch(timetableFileName);
       if (!response.ok) throw new Error('Failed to load timetable data');
       timetableData = await response.json();

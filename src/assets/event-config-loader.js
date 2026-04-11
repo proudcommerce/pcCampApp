@@ -24,7 +24,7 @@
       return '';
     }
 
-    const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes'];
+    const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes', 'admin'];
     if (knownPages.includes(segments[0])) {
       return '';
     }

@@ -4,6 +4,11 @@
             "id": "1",
             "content": "Willkommen zur Event-Demo! Diese App zeigt dir alle Funktionen der PC CampApp.",
             "priority": "medium"
+        },
+        {
+            "id": "243360",
+            "content": "TEST123",
+            "priority": "high"
         }
     ],
     "days": {

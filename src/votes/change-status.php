@@ -12,8 +12,8 @@ require_once __DIR__ . '/config.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Auth: session or key in body
-$authenticated = !empty($_SESSION['voting_admin']);
+// Auth: session (admin or voting) or key in body
+$authenticated = !empty($_SESSION['admin_authenticated']) || !empty($_SESSION['voting_admin']);
 if (!$authenticated && isset($input['key'])) {
     $authenticated = validateAdminKey($input['key']);
 }

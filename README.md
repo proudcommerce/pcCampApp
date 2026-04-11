@@ -1,6 +1,6 @@
 # PC CampApp
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md) [![PWA](https://img.shields.io/badge/PWA-aktiviert-blue.svg)](https://web.dev/progressive-web-apps/) [![Playwright](https://img.shields.io/badge/getestet%20mit-Playwright-45ba4b.svg)](https://playwright.dev/) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.4%2B-777BB4.svg)](https://www.php.net/) [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md) [![PWA](https://img.shields.io/badge/PWA-aktiviert-blue.svg)](https://web.dev/progressive-web-apps/) [![Playwright](https://img.shields.io/badge/getestet%20mit-Playwright-45ba4b.svg)](https://playwright.dev/) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.4%2B-777BB4.svg)](https://www.php.net/) [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 
 ---
 
@@ -11,6 +11,7 @@
 - **🌍 Mehrsprachig** - Integrierte i18n-Unterstützung (Deutsch/Englisch)
 - **⚡ Performance-Optimiert** - Cache-Busting, Service Worker, Lazy Loading
 - **📊 Event-Features** - Sessionpläne, Zeitpläne, Speisekarten, Sponsoren, Voting
+- **✏️ Online Content-Verwaltung** - Event-Daten im Browser bearbeiten, ohne Deployment
 - **🎨 Auto-Branding** - PWA-Icons werden automatisch aus einem einzigen Quellbild generiert
 - **🧪 100% Getestet** - Playwright-Tests für Übersetzungen, PWA, UI/UX
 - **🐳 Docker Ready** - Entwicklungsumgebung mit einem Befehl
@@ -29,6 +30,10 @@
   - [Anpassung für Ihre Veranstaltung](#anpassung-für-ihre-veranstaltung)
   - [Eventspezifische JSON-Dateien](#eventspezifische-json-dateien)
   - [JSON-Dateien für neue Events anpassen](#json-dateien-für-neue-events-anpassen)
+- [Content-Verwaltung (Admin)](#️-content-verwaltung-admin)
+  - [Zugriff](#zugriff)
+  - [Verwaltbare Bereiche](#verwaltbare-bereiche)
+  - [Build-Verhalten](#build-verhalten)
 - [Voting-System](#-voting-system)
   - [Aktivierung](#aktivierung)
   - [Voting-Konfiguration](#voting-konfiguration)
@@ -56,13 +61,16 @@
 git clone <repository-url>
 cd pccampapp
 
-# 2. Node.js Dependencies
+# 2. Environment einrichten
+cp .env.example .env
+
+# 3. Node.js Dependencies
 make install
 
-# 3. Entwicklungsserver starten (Docker)
+# 4. Entwicklungsserver starten (Docker)
 make dev-up
 
-# 4. Browser öffnen
+# 5. Browser öffnen
 open http://localhost:5173
 ```
 
@@ -351,7 +359,57 @@ Hauptnavigation der App:
    - URLs und Beschreibungen aktualisieren
    - WLAN-Informationen anpassen
 
-**Tipp:** Alle JSON-Dateien werden automatisch gehasht und gecacht. Nach Änderungen `make build` ausführen!
+**Tipp:** Alternativ können alle JSON-Dateien über die [Content-Verwaltung](#%EF%B8%8F-content-verwaltung-admin) direkt im Browser bearbeitet werden — ohne Build oder Deployment.
+
+---
+
+## ✏️ Content-Verwaltung (Admin)
+
+Das unified Admin-Panel ermöglicht es, alle Event-Daten (Sessions, Timetable, News, Food, Sponsoren, Navigation) **und** das Voting direkt im Browser zu verwalten — ohne Build, ohne Deployment, ohne Commit.
+
+### Zugriff
+
+```text
+http://localhost:5173/admin/
+```
+
+Beim Aufruf erscheint ein **Login-Formular**, das den Admin-Key via PHP-Session validiert. Der Key wird aus der `VOTING_ADMIN_KEY` Umgebungsvariable gelesen (siehe [.env.example](.env.example)).
+
+**Abmelden** über den Logout-Link oben rechts im Admin-Panel (`/admin/?logout`).
+
+> **Legacy:** Der alte Query-Parameter `?key=DEIN-KEY` funktioniert noch als Backwards-Compat-Fallback, wird aber nicht empfohlen (Key erscheint in Logs und Browser-History).
+
+### Verwaltbare Bereiche
+
+| Bereich | Datei | Beschreibung |
+|---------|-------|-------------|
+| Sessions | `sessions.json` | Sessionplan nach Tagen und Zeitslots |
+| Timetable | `timetable.json` | Event-Zeitplan |
+| News | `news.json` | Permanente und tagesspezifische Ankündigungen |
+| Food | `menue.json` | Speisekarten mit Allergenen |
+| Allergene | `allergene.json` | Allergen-Codes und Beschreibungen |
+| Sponsors | `sponsors.json` | Sponsoren-Liste |
+| Menu | `menu.json` | Navigation der App |
+| Voting | — | Voting-Status steuern (aktivieren/deaktivieren/beenden), Ergebnisse anzeigen, Votes in `sessions.json` übertragen |
+
+Der frühere separate Voting-Admin (`/votes/admin.php`) leitet jetzt auf `/admin/` weiter.
+
+**Features:**
+
+- **Strukturierter Editor** — Formulare für jede Resource (Felder, Checkboxen, Auswahlen)
+- **Raw JSON Editor** — Umschaltbar für direktes JSON-Editing
+- **Backup/Restore** — Vor jedem Speichern wird automatisch ein Backup erstellt
+- **Sofort live** — Änderungen sind nach dem Speichern direkt für alle User sichtbar (Service Worker network-first für JSON)
+- **Runtime-Cache-Busting** — `rehash.php` aktualisiert `cache-hashes.json` und bumped die SW-Cache-Version automatisch
+- **Tastaturkürzel** — `Ctrl+S` / `Cmd+S` zum Speichern
+
+### Build-Verhalten
+
+Admin-Änderungen überleben einen `make build`:
+
+- Beim Build werden Admin-verwaltete JSON-Dateien aus `build/` gesichert
+- Nach dem Build werden sie automatisch wiederhergestellt
+- Nur wenn keine `build/`-Version existiert (erster Build), wird `src/` verwendet
 
 ---
 
@@ -361,7 +419,7 @@ Das Voting-System ermöglicht es Teilnehmern, Sessions zu bewerten und die belie
 
 ### Aktivierung
 
-Das Voting-System kann über `event.json` die zeitgesteuer aktiviert werden:
+Das Voting-System kann über `event.json` zeitgesteuert aktiviert werden:
 
 ```json
 {
@@ -375,13 +433,14 @@ Das Voting-System kann über `event.json` die zeitgesteuer aktiviert werden:
         "startTime": "16:00",
         "endTime": "17:45"
       }
-    ],
-    "votingAdminKey": "dein-geheimes-admin-passwort"
+    ]
   }
 }
 ```
 
-Zusätzlich kann das Voting auch über den Admin-Bereich de/aktiviert oder beendet werden.
+Der **Admin-Key** wird separat über die `VOTING_ADMIN_KEY` Umgebungsvariable gesetzt (siehe [.env.example](.env.example)) — **nicht mehr in `event.json`**. Zusätzlich kann das Voting auch über den [Admin-Bereich](#️-content-verwaltung-admin) de/aktiviert oder beendet werden.
+
+> **Legacy:** `features.votingAdminKey` in `event.json` funktioniert noch als Deprecated-Fallback, loggt aber eine Warnung. Bei neuen Installationen ausschließlich die Umgebungsvariable verwenden.
 
 ### Voting-Konfiguration
 
@@ -391,7 +450,7 @@ Zusätzlich kann das Voting auch über den Admin-Bereich de/aktiviert oder beend
   - `dayLabel`: Anzeige-Name (z.B. "Samstag")
   - `dayOfWeek`: Wochentag als Zahl (0=Sonntag, 6=Samstag)
   - `startTime` / `endTime`: Zeitfenster für Abstimmungen
-- **votingAdminKey:** Geheimes Passwort für Admin-Bereich
+- **VOTING_ADMIN_KEY** (env): Geheimes Passwort für Admin-Bereich — in `.env` setzen
 
 ### Voting-Logik: Wann wird das Voting-Fenster angezeigt?
 
@@ -481,21 +540,24 @@ Für Entwicklung und Tests kann die Zeitfenster-Prüfung übersprungen werden:
 
 ### Admin-Bereich
 
-**Zugriff auf Admin-Bereich und Ergebnisse:**
+Voting wird seit v2.0.0 im **unified Admin-Panel** verwaltet — siehe [Content-Verwaltung (Admin)](#️-content-verwaltung-admin).
 
 ```text
-http://localhost:5173/votes/admin.php?key=DEIN-ADMIN-PASSWORT
+http://localhost:5173/admin/
 ```
 
-**Features:**
+Im Admin-Panel befindet sich der Tab **"Voting"**, der die folgenden Funktionen bereitstellt:
 
-- Live-Statistik der des Votings
+- Live-Statistik des aktuellen Votings
 - De/aktivieren und Beenden von Votings
-- Übermitteln der Ergebnisse in die `sessions.json` für Winner-Badge-Anzeige (TOP3)
+- Übermitteln der Ergebnisse in die `sessions.json` für Winner-Badge-Anzeige (TOP 3)
+- Ergebnis-Ansicht mit Medaillen-Ranking (`/admin/results.php`)
+
+Der alte Einstiegspunkt `/votes/admin.php` leitet automatisch auf `/admin/` weiter.
 
 **Deployment:**
 
-Die `votes.json` und `voting-state.json` sollten bei einem Deployment nicht überschrieben werden
+Die `votes.json` und `voting-state.json` sollten bei einem Deployment nicht überschrieben werden.
 
 ---
 
@@ -609,7 +671,7 @@ Sprache in `event.json` festlegen:
 
 - **Frontend:** Vanilla JavaScript (keine Frameworks!)
 - **Styling:** Reines CSS (keine Präprozessoren)
-- **Backend:** PHP (nur Voting-System)
+- **Backend:** PHP (Voting-System + Content-Verwaltung)
 - **PWA:** Service Worker, Web App Manifest
 - **Build:** Node.js (Cache-Busting, Icon-Generierung)
 - **Testing:** Playwright (Cross-Browser)
@@ -619,9 +681,9 @@ Sprache in `event.json` festlegen:
 
 **3-Schichten-Caching-System:**
 
-1. **Service Worker Cache** - Offline-Funktionalität
-2. **localStorage Cache** - JSON-Daten (1-Stunden-TTL)
-3. **Cache Busting** - MD5-gehashte Dateinamen
+1. **Service Worker Cache** — Network-first für JSON-Daten (damit Admin-Änderungen sofort sichtbar werden), Cache-first für statische Assets (HTML, CSS, JS, Bilder)
+2. **localStorage Cache** — reiner Offline-Fallback für JSON-Daten (wird bei jedem erfolgreichen Fetch aktualisiert, aber nicht als Primärquelle verwendet)
+3. **Cache Busting** — MD5-gehashte Dateinamen, zur Laufzeit aufgelöst via `cache-hashes.json` und `resolveAsset()` — ermöglicht Rehashing ohne Rebuild nach Admin-Edits
 
 Beispiel:
 
@@ -629,7 +691,7 @@ Beispiel:
 - `menu.json` → `menu.ec9daa78.json`
 - `header.js` → `header.e3796179.js`
 
-Alle Hash-Updates erfolgen automatisch während des Builds!
+Hash-Updates erfolgen beim Build **und** zur Laufzeit (nach Admin-Edits via [rehash.php](src/admin/rehash.php)).
 
 ### PWA-Features
 

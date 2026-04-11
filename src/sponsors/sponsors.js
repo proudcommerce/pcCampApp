@@ -22,9 +22,8 @@
   });
 
   try {
-    // Load sponsor data from current directory
-    // Build script will replace with hashed filename
-    const sponsorsFileName = './sponsors.json';
+    await window.assetHashesReady;
+    const sponsorsFileName = './' + window.resolveAsset('sponsors.json');
     const response = await fetch(sponsorsFileName);
 
     if (!response.ok) {

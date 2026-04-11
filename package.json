@@ -1,6 +1,6 @@
 {
   "name": "pccampapp",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "Config-driven Progressive Web App for BarCamps and Unconferences",
   "type": "module",
   "scripts": {

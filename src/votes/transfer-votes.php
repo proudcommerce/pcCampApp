@@ -9,11 +9,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../admin/rehash.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Auth: session or key in body
-$authenticated = !empty($_SESSION['voting_admin']);
+// Auth: session (admin or voting) or key in body
+$authenticated = !empty($_SESSION['admin_authenticated']) || !empty($_SESSION['voting_admin']);
 if (!$authenticated && isset($input['key'])) {
     $authenticated = validateAdminKey($input['key']);
 }
@@ -89,6 +90,9 @@ if (file_put_contents($sessionsFile, json_encode($sessionsData, JSON_PRETTY_PRIN
     echo json_encode(['error' => 'Failed to save sessions.json']);
     exit;
 }
+
+// Rehash sessions.json for cache busting
+rehashJsonFile($sessionsFile, 'sessionplan/sessions.json');
 
 echo json_encode([
     'success' => true,

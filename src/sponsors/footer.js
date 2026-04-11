@@ -16,7 +16,7 @@
         return '';
       }
 
-      const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes'];
+      const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes', 'admin'];
       if (knownPages.includes(segments[0])) {
         return '';
       }
@@ -66,8 +66,8 @@
       pathPrefix = isInSubfolder ? '../sponsors' : './sponsors';
     }
 
-    // Verwende Original-Datei (wird vom Build-Script durch gehashte Version ersetzt)
-    const sponsorsFileName = `${pathPrefix}/sponsors.json`;
+    await window.assetHashesReady;
+    const sponsorsFileName = `${pathPrefix}/${window.resolveAsset('sponsors.json')}`;
     const response = await fetch(sponsorsFileName);
     const data = await response.json();
     const container = document.getElementById('sponsorsContainer');
