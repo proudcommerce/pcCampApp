@@ -5,14 +5,13 @@ services:
       dockerfile: Dockerfile
     container_name: pccampapp-prod
     ports:
-      - "5174:5173"
+      - "${PROD_PORT:-5174}:5173"
     environment:
       - VOTING_ADMIN_KEY=${VOTING_ADMIN_KEY}
     volumes:
-      # Mount build/ directory as writable (for admin content management)
-      - ./build:/usr/share/nginx/html:rw
-      # Use production-optimized nginx config
-      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      # Code kommt komplett aus dem Image.
+      # Nur der laufzeit-aenderbare Content wird vom Host gemountet.
+      - ./content:/usr/share/nginx/html/content:rw
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173/index.html"]

@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Load auth from existing votes config
 require_once __DIR__ . '/../votes/config.php';
 require_once __DIR__ . '/rehash.php';
+require_once __DIR__ . '/content-paths.php';
 
 // Parse request body
 $input = json_decode(file_get_contents('php://input'), true);
@@ -55,18 +56,19 @@ if (!$action || !$resource) {
     exit;
 }
 
-// Resource to file path mapping
+// Resource to file path mapping — all content lives in the content/ volume.
 $resourceMap = [
-    'sessions'  => __DIR__ . '/../sessionplan/sessions.json',
-    'timetable' => __DIR__ . '/../timetable/timetable.json',
-    'news'      => __DIR__ . '/../news.json',
-    'food'      => __DIR__ . '/../food/menue.json',
-    'allergene' => __DIR__ . '/../food/allergene.json',
-    'sponsors'  => __DIR__ . '/../sponsors/sponsors.json',
-    'menu'      => __DIR__ . '/../menu.json',
+    'sessions'  => contentPath('sessionplan/sessions.json'),
+    'timetable' => contentPath('timetable/timetable.json'),
+    'news'      => contentPath('news.json'),
+    'food'      => contentPath('food/menue.json'),
+    'allergene' => contentPath('food/allergene.json'),
+    'sponsors'  => contentPath('sponsors/sponsors.json'),
+    'menu'      => contentPath('menu.json'),
+    'event'     => contentPath('event.json'),
 ];
 
-// Root-relative paths for cache-hashes.json manifest keys
+// Relative keys used in content-hashes.json (relative to content/ root).
 $resourceManifestKeys = [
     'sessions'  => 'sessionplan/sessions.json',
     'timetable' => 'timetable/timetable.json',
@@ -75,6 +77,7 @@ $resourceManifestKeys = [
     'allergene' => 'food/allergene.json',
     'sponsors'  => 'sponsors/sponsors.json',
     'menu'      => 'menu.json',
+    'event'     => 'event.json',
 ];
 
 if (!isset($resourceMap[$resource])) {

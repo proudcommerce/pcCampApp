@@ -85,8 +85,7 @@
   const loadTimetableData = async () => {
     try {
       await window.assetHashesReady;
-      const timetableFileName = './' + window.resolveAsset('timetable.json');
-      const response = await fetch(timetableFileName);
+      const response = await fetch(window.contentUrl('timetable/timetable.json'));
       if (!response.ok) throw new Error('Failed to load timetable data');
       timetableData = await response.json();
     } catch (error) {

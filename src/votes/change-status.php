@@ -9,6 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../admin/content-paths.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -38,7 +39,10 @@ if (!in_array($newStatus, $allowedStatuses)) {
     exit;
 }
 
-$stateFile = __DIR__ . '/voting-state.json';
+$stateFile = contentPath('voting/voting-state.json');
+if (!is_dir(dirname($stateFile))) {
+    mkdir(dirname($stateFile), 0755, true);
+}
 
 $votingState = [
     'status' => $newStatus,

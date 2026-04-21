@@ -50,7 +50,7 @@
 		try {
 			// Lade sessions.json um verfügbare Tage zu ermitteln
 			await window.assetHashesReady;
-			const sessionsFileName = './' + window.resolveAsset('sessions.json');
+			const sessionsFileName = window.contentUrl('sessionplan/sessions.json');
 			const response = await fetch(sessionsFileName, {
 				credentials: 'same-origin',
 				headers: { 'Accept': 'application/json' },
@@ -679,7 +679,7 @@
 	const loadVotes = async () => {
 		try {
 			const timestamp = new Date().getTime();
-			const response = await fetch(`../votes/votes.json?t=${timestamp}`);
+			const response = await fetch(window.contentUrl('voting/votes.json') + `?t=${timestamp}`);
 			if (response.ok) {
 				votesData = await response.json();
 			}
@@ -696,8 +696,7 @@
 		// Load session data for specific day with cache busting
 		const timestamp = new Date().getTime();
 		await window.assetHashesReady;
-		const sessionsFileName = './' + window.resolveAsset('sessions.json');
-		const sessionData = await fetch(`${sessionsFileName}?t=${timestamp}`).then(r => r.json());
+		const sessionData = await fetch(window.contentUrl('sessionplan/sessions.json') + `?t=${timestamp}`).then(r => r.json());
 
 		// Populate dropdown
 		const daySessions = sessionData[day] || {};
@@ -783,8 +782,7 @@
 		// Load event configuration if not already loaded
 		if (!window.eventConfig) {
 			try {
-				const configPath = '../event.json';
-				const response = await fetch(configPath);
+				const response = await fetch(window.contentUrl('event.json'));
 				window.eventConfig = await response.json();
 			} catch (error) {
 				console.error('Failed to load event config:', error);
@@ -800,7 +798,7 @@
 
 		// Check voting-state.json for admin-controlled status
 		try {
-			const stateResponse = await fetch('../votes/voting-state.json');
+			const stateResponse = await fetch(window.contentUrl('voting/voting-state.json'));
 			if (stateResponse.ok) {
 				const votingState = await stateResponse.json();
 				if (votingState.status !== 'active') {

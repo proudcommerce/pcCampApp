@@ -33,13 +33,13 @@ test.describe('Voting UI Components', () => {
 
 test.describe('Voting State Management', () => {
   test('voting-state.json sollte erreichbar sein (wenn vorhanden)', async ({ page }) => {
-    const response = await page.goto('/votes/voting-state.json');
+    const response = await page.goto('/content/voting/voting-state.json');
     // voting-state.json is a runtime file, may not exist yet (404 is acceptable)
     expect([200, 404]).toContain(response.status());
   });
 
   test('voting-state.json sollte gültiges JSON sein (wenn vorhanden)', async ({ page }) => {
-    const response = await page.goto('/votes/voting-state.json');
+    const response = await page.goto('/content/voting/voting-state.json');
 
     if (response.status() === 200) {
       const state = await response.json();
@@ -56,7 +56,7 @@ test.describe('Voting State Management', () => {
 
 test.describe('Voting Configuration', () => {
   test('event.json sollte voting Feature konfiguriert haben', async ({ page }) => {
-    const response = await page.goto('/event.json');
+    const response = await page.goto('/content/event.json');
     const config = await response.json();
 
     expect(config).toHaveProperty('features');
@@ -65,7 +65,7 @@ test.describe('Voting Configuration', () => {
   });
 
   test('event.json sollte votingSchedule haben wenn voting aktiv', async ({ page }) => {
-    const response = await page.goto('/event.json');
+    const response = await page.goto('/content/event.json');
     const config = await response.json();
 
     if (config.features.voting === true) {
@@ -207,7 +207,7 @@ test.describe('Voting Functionality', () => {
     await page.waitForTimeout(2000);
 
     // Load event config to check voting feature
-    const configResponse = await page.request.get('/event.json');
+    const configResponse = await page.request.get('/content/event.json');
     const config = await configResponse.json();
 
     const votingSection = page.locator('#voting-section');
@@ -279,13 +279,13 @@ test.describe('Voting URL Override (Testing Feature)', () => {
 
 test.describe('Voting Data Persistence', () => {
   test('votes.json sollte erreichbar sein', async ({ page }) => {
-    const response = await page.goto('/votes/votes.json');
+    const response = await page.goto('/content/voting/votes.json');
     // Should return 200 (may be empty but file exists)
     expect([200, 404]).toContain(response.status());
   });
 
   test('votes.json sollte gültiges JSON sein (wenn vorhanden)', async ({ page }) => {
-    const response = await page.goto('/votes/votes.json');
+    const response = await page.goto('/content/voting/votes.json');
 
     if (response.status() === 200) {
       const votes = await response.json();

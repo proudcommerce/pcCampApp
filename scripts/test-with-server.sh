@@ -61,15 +61,8 @@ else
     echo "⚠️  Server nicht verfügbar auf $BASE_URL"
     echo "🚀 Starte Production Server..."
 
-    # Production Build erstellen falls nicht vorhanden
-    if [ ! -d "build" ]; then
-        echo "📦 Erstelle Production Build..."
-        node build-cache-busting.cjs
-        echo ""
-    fi
-
-    # Production Server starten
-    docker compose -f docker-compose.prod.yml up -d
+    # Production Server starten (Multi-Stage Build im Image)
+    docker compose -f docker-compose.prod.yml up -d --build
 
     # Warte auf Server
     echo "⏳ Warte auf Server-Start..."

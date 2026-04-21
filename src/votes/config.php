@@ -19,7 +19,8 @@ function getAdminKey() {
     }
 
     // Fallback: load from event.json (deprecated)
-    $eventConfigPath = __DIR__ . '/../../event.json';
+    require_once __DIR__ . '/../admin/content-paths.php';
+    $eventConfigPath = contentPath('event.json');
     if (file_exists($eventConfigPath)) {
         $eventConfig = json_decode(file_get_contents($eventConfigPath), true);
         if (isset($eventConfig['features']['votingAdminKey']) && !empty($eventConfig['features']['votingAdminKey'])) {

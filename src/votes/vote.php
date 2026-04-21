@@ -1,13 +1,14 @@
 <?php
 header('Content-Type: application/json');
 
+require_once __DIR__ . '/../admin/content-paths.php';
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
-// Validate input parameters first (before checking voting state)
 $input = json_decode(file_get_contents('php://input'), true);
 
 if (!isset($input['sessionId']) || !isset($input['day']) || !isset($input['userKey'])) {
@@ -20,9 +21,8 @@ $sessionId = $input['sessionId'];
 $day = $input['day'];
 $userKey = $input['userKey'];
 
-// Validate day parameter (load allowed days from event config)
-$eventConfigPath = __DIR__ . '/../../event.json';
-$allowedDays = ['samstag', 'sonntag']; // Default fallback
+$eventConfigPath = contentPath('event.json');
+$allowedDays = ['samstag', 'sonntag'];
 
 if (file_exists($eventConfigPath)) {
     $eventConfig = json_decode(file_get_contents($eventConfigPath), true);
@@ -39,8 +39,7 @@ if (!in_array($day, $allowedDays)) {
     exit;
 }
 
-// Check voting state after input validation
-$stateFile = __DIR__ . '/voting-state.json';
+$stateFile = contentPath('voting/voting-state.json');
 if (file_exists($stateFile)) {
     $votingState = json_decode(file_get_contents($stateFile), true);
     if ($votingState['status'] !== 'active') {
@@ -50,7 +49,7 @@ if (file_exists($stateFile)) {
     }
 }
 
-$votesFile = __DIR__ . '/votes.json';
+$votesFile = contentPath('voting/votes.json');
 $votes = [];
 
 if (file_exists($votesFile)) {
@@ -88,5 +87,3 @@ echo json_encode([
     'message' => 'Vote recorded successfully',
     'votes' => $votes[$day]
 ]);
-?>
-

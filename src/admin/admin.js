@@ -30,8 +30,12 @@
     food: 'Food',
     allergene: 'Allergene',
     sponsors: 'Sponsors',
-    menu: 'Menu'
+    menu: 'Menu',
+    event: 'Event-Config'
   };
+
+  // Resources that only support the raw JSON editor (no structured view).
+  const rawOnlyResources = new Set(['event']);
 
   // ─── API Helper ───────────────────────────────────────────────
 
@@ -80,11 +84,14 @@
       return;
     }
 
-    // Content tabs: show editor, hide voting panel
+    // Content tabs: show editor, hide voting panel.
+    const forceRaw = rawOnlyResources.has(resource);
+    const effectiveRaw = isRawMode || forceRaw;
     votingPanel.style.display = 'none';
     editorToolbar.style.display = '';
-    structuredEditor.style.display = isRawMode ? 'none' : '';
-    rawEditor.style.display = isRawMode ? '' : 'none';
+    structuredEditor.style.display = effectiveRaw ? 'none' : '';
+    rawEditor.style.display = effectiveRaw ? '' : 'none';
+    if (modeToggle) modeToggle.disabled = forceRaw;
 
     resourceLabel.textContent = resourceNames[resource] || resource;
     structuredEditor.innerHTML = '';
@@ -105,7 +112,8 @@
   // ─── Rendering Dispatch ───────────────────────────────────────
 
   function renderEditor() {
-    if (isRawMode) {
+    const effectiveRaw = isRawMode || rawOnlyResources.has(currentResource);
+    if (effectiveRaw) {
       jsonTextarea.value = JSON.stringify(currentData, null, 2);
       jsonError.style.display = 'none';
     } else {
@@ -135,7 +143,8 @@
   // ─── Collect Data from Structured Editor ──────────────────────
 
   function collectData() {
-    if (isRawMode) {
+    const effectiveRaw = isRawMode || rawOnlyResources.has(currentResource);
+    if (effectiveRaw) {
       try {
         const parsed = JSON.parse(jsonTextarea.value);
         jsonError.style.display = 'none';

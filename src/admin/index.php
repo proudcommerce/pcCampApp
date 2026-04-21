@@ -5,6 +5,7 @@
  */
 session_start();
 require_once __DIR__ . '/../votes/config.php';
+require_once __DIR__ . '/content-paths.php';
 
 // Handle login POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_key'])) {
@@ -68,7 +69,10 @@ body { font:16px/1.4 system-ui,-apple-system,sans-serif; background:#f9fafb; dis
 // Authenticated — load voting state for the Voting tab
 $ADMIN_KEY = getAdminKey();
 
-$stateFile = __DIR__ . '/../votes/voting-state.json';
+$stateFile = contentPath('voting/voting-state.json');
+if (!is_dir(dirname($stateFile))) {
+    mkdir(dirname($stateFile), 0755, true);
+}
 if (!file_exists($stateFile)) {
     $votingState = ['status' => 'inactive', 'lastUpdated' => null, 'updatedBy' => 'system'];
     file_put_contents($stateFile, json_encode($votingState, JSON_PRETTY_PRINT));
@@ -109,6 +113,7 @@ if (!file_exists($stateFile)) {
         <button class="admin-tab" data-resource="allergene">Allergene</button>
         <button class="admin-tab" data-resource="sponsors">Sponsors</button>
         <button class="admin-tab" data-resource="menu">Menu</button>
+        <button class="admin-tab" data-resource="event">Event</button>
         <button class="admin-tab" data-resource="voting">Voting</button>
     </div>
 

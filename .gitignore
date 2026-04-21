@@ -161,20 +161,18 @@ playwright/.cache/
 # Build output (deployment-ready)
 build/
 
-# Cache manifests generated during build
-src/cache-hashes.json
+# Runtime content (admin-edited JSONs, voting data, hash manifests).
+# Seeded from seed/ on first container start.
+content/
+
+# Backup files created by admin save alongside edited JSONs
+*.backup
 
 # Auto-generated PWA icons (generated from src/assets/icon.png)
 src/assets/favicon.png
 src/assets/icon-144.png
 src/assets/icon-192.png
 src/assets/icon-512.png
-
-# Voting data (contains user votes)
-#src/votes/votes.json
-
-# Voting state (admin-controlled)
-#src/votes/voting-state.json
 
 # Build scripts (nicht für GitLab CI)
 build-css.sh

@@ -2,16 +2,20 @@ services:
   pccampapp-dev:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: pccampapp-dev
     ports:
-      - "5173:5173"
+      - "${DEV_PORT:-5173}:5173"
     environment:
       - VOTING_ADMIN_KEY=${VOTING_ADMIN_KEY:-change-me-in-production}
     volumes:
-      # Mount entire project root (contains src/ and event.json)
-      - ./:/usr/share/nginx/html
-      # Override nginx config
+      # Code live-reloadable aus src/
+      - ./src:/usr/share/nginx/html:rw
+      # Persistenter Content (JSONs, Voting-Daten, Hash-Manifest)
+      - ./content:/usr/share/nginx/html/content:rw
+      # Seeds fuer Erst-Initialisierung eines leeren content/
+      - ./seed:/app/seed:ro
+      # Dev-nginx-Config
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped
     healthcheck:

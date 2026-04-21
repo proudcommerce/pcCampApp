@@ -225,7 +225,7 @@ cp src/votes/votes.json.example src/votes/votes.json
 ### Test voting in development:
 ```bash
 # Start dev server
-make dev-up
+make dev-start
 
 # Open browser to sessionplan page
 # Wait for voting time window (or use ?vote=samstag)

@@ -6,7 +6,7 @@
  * Generates all PWA icons from the source icon (src/assets/icon.png)
  * without running the full build process.
  *
- * This is needed for development mode (make dev-up) to prevent
+ * This is needed for development mode (make dev-start) to prevent
  * console errors when manifest.json references icons that don't exist.
  *
  * In production builds, this is integrated into build-cache-busting.js

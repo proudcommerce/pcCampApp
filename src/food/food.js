@@ -82,8 +82,7 @@
 
     try {
       await window.assetHashesReady;
-      const menuFileName = './' + window.resolveAsset('menue.json');
-      const response = await fetch(menuFileName, {
+      const response = await fetch(window.contentUrl('food/menue.json'), {
         credentials: 'same-origin',
         headers: { 'Accept': 'application/json' }
       });
@@ -142,8 +141,7 @@
 
     try {
       await window.assetHashesReady;
-      const allergensFileName = './' + window.resolveAsset('allergene.json');
-      const response = await fetch(allergensFileName, {
+      const response = await fetch(window.contentUrl('food/allergene.json'), {
         credentials: 'same-origin',
         headers: { 'Accept': 'application/json' }
       });

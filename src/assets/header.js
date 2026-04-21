@@ -2,57 +2,62 @@
 let eventConfig = null;
 let translations = null;
 
-// Asset hash manifest for cache-busted JSON filenames
-// Loaded once at startup, used by resolveAsset() across all pages.
-// Skipped in development mode (where cache-hashes.json does not exist) to avoid 404 noise.
+// Two separate hash manifests:
+//   /assets-hashes.json      → immutable code assets (CSS/JS/images), shipped in the image.
+//   /content/content-hashes.json → admin-edited content, lives in the content volume.
+// Both are loaded once at startup. Missing manifests are tolerated (dev mode).
 let _assetHashes = {};
+let _contentHashes = {};
+
+function _computeBasePath() {
+    const pathname = window.location.pathname;
+    const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
+    const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes', 'admin'];
+    const hasBasePath = segments.length >= 1 && !knownPages.includes(segments[0]);
+    return hasBasePath ? '/' + segments[0] : '';
+}
+
 const assetHashesReady = (async () => {
-    // Dev-mode detection: in src/ the title still contains {{EVENT_NAME}} placeholder.
-    // In production build the placeholder has been replaced, so the manifest exists.
-    if (document.title.includes('{{')) return;
+    const basePath = _computeBasePath();
 
+    // Code-asset manifest (absolute path works in dev and prod).
     try {
-        const pathname = window.location.pathname;
-        const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
-        const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes', 'admin'];
-        const hasBasePath = segments.length >= 1 && !knownPages.includes(segments[0]);
-        const basePath = hasBasePath ? '/' + segments[0] : '';
-        const isInSubfolder = segments.length >= 1;
-
-        let manifestPath;
-        if (basePath) {
-            manifestPath = basePath + '/cache-hashes.json';
-        } else {
-            manifestPath = isInSubfolder ? '../cache-hashes.json' : './cache-hashes.json';
-        }
-        const resp = await fetch(manifestPath, { cache: 'no-store' });
+        const resp = await fetch(basePath + '/assets-hashes.json', { cache: 'no-store' });
         if (resp.ok) _assetHashes = await resp.json();
-    } catch (e) {
-        // Manifest not found — use original filenames
-    }
+    } catch (e) { /* dev mode — manifest absent */ }
+
+    // Content manifest (only present in prod after first admin rehash).
+    try {
+        const resp = await fetch(basePath + '/content/content-hashes.json', { cache: 'no-store' });
+        if (resp.ok) _contentHashes = await resp.json();
+    } catch (e) { /* no admin edits yet — unhashed paths work fine */ }
 })();
 
 /**
- * Resolve a JSON filename to its cache-busted version via the hash manifest.
- * Pass just the basename (e.g. 'menu.json', 'sessions.json').
- * Returns the hashed filename (e.g. 'menu.ec9daa78.json') or the original if not found.
+ * Resolve a code-asset filename (e.g. 'app.css') to its cache-busted version.
  */
 function resolveAsset(filename) {
     if (!_assetHashes || Object.keys(_assetHashes).length === 0) return filename;
-    // Direct match (root-level files like menu.json)
-    if (_assetHashes[filename]) {
-        return _assetHashes[filename].split('/').pop();
-    }
-    // Search by basename (files in subdirectories like sessionplan/sessions.json)
+    if (_assetHashes[filename]) return _assetHashes[filename].split('/').pop();
     for (const [key, value] of Object.entries(_assetHashes)) {
-        if (key.endsWith('/' + filename)) {
-            return value.split('/').pop();
-        }
+        if (key.endsWith('/' + filename)) return value.split('/').pop();
     }
     return filename;
 }
 
+/**
+ * Build a URL for a file in the content volume, honouring both the base path
+ * (sub-directory deployments) and the content hash manifest (cache-busting).
+ * Pass the relative path inside content/ (e.g. 'menu.json', 'sessionplan/sessions.json').
+ */
+function contentUrl(relativePath) {
+    const hashed = _contentHashes[relativePath];
+    const finalPath = hashed || relativePath;
+    return _computeBasePath() + '/content/' + finalPath;
+}
+
 window.resolveAsset = resolveAsset;
+window.contentUrl = contentUrl;
 window.assetHashesReady = assetHashesReady;
 
 function getPathDepth() {
@@ -98,27 +103,8 @@ function getBasePath() {
 
 async function loadEventConfig() {
     try {
-        const pathname = window.location.pathname;
-        const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
-        const basePath = getBasePath();
-
-        let configPath;
-        if (basePath) {
-            // We have a base path (e.g. /build)
-            // Always use absolute path from base
-            configPath = basePath + '/event.json';
-        } else {
-            // No base path
-            if (segments.length === 0) {
-                // We're at real root (/)
-                configPath = './event.json';
-            } else {
-                // We're in subdirectory (/sessionplan/)
-                configPath = '../event.json';
-            }
-        }
-
-        const response = await fetch(configPath);
+        await window.assetHashesReady;
+        const response = await fetch(contentUrl('event.json'));
         eventConfig = await response.json();
         return eventConfig;
     } catch (error) {
@@ -371,14 +357,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const isInSubfolder = getPathDepth();
 
             await window.assetHashesReady;
-            const menuFile = resolveAsset('menu.json');
-            let menuPath;
-            if (basePath) {
-                menuPath = basePath + '/' + menuFile;
-            } else {
-                menuPath = isInSubfolder ? '../' + menuFile : './' + menuFile;
-            }
-            const response = await fetch(menuPath);
+            const response = await fetch(contentUrl('menu.json'));
             menuData = await response.json();
 
             // Speichere im Cache nur als Offline-Fallback
@@ -661,14 +640,7 @@ class NewsManager {
             const isInSubfolder = getPathDepth();
 
             await window.assetHashesReady;
-            const newsFile = resolveAsset('news.json');
-            let newsPath;
-            if (basePath) {
-                newsPath = basePath + '/' + newsFile;
-            } else {
-                newsPath = isInSubfolder ? '../' + newsFile : './' + newsFile;
-            }
-            const response = await fetch(`${newsPath}?t=${Date.now()}`);
+            const response = await fetch(contentUrl('news.json') + `?t=${Date.now()}`);
             this.newsData = await response.json();
 
             this.renderNews();

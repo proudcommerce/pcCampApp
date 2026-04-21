@@ -210,7 +210,7 @@ test:
 
 ```bash
 # Starte Dev-Server vor Tests:
-make dev-up
+make dev-start
 
 # In separatem Terminal:
 make test

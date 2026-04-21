@@ -1,24 +1,32 @@
 <?php
 /**
- * JSON Cache-Busting Rehash Utility
+ * Content Cache-Busting Utility
  *
- * After an admin edit or vote transfer writes a JSON file, this function:
- * 1. Computes a new content hash (MD5, first 8 chars — same algo as build script)
- * 2. Deletes old hashed copies, writes the new one
- * 3. Updates cache-hashes.json so the frontend resolveAsset() picks up the change
- * 4. Bumps the Service Worker CACHE_NAME so clients reinstall and get fresh data
+ * After an admin edit (or a vote transfer) writes a JSON file in the content/
+ * volume, this function:
+ *   1. Computes a new content hash (MD5, first 8 chars — same algo as the build).
+ *   2. Deletes stale hashed copies and writes a fresh one alongside the unhashed file.
+ *   3. Updates content/content-hashes.json so the frontend resolveAsset() picks it up.
+ *   4. Bumps content/sw-version.txt so the Service Worker forms a new CACHE_NAME.
  *
- * Only runs in production (when cache-hashes.json exists in the build root).
- * In development mode it's a no-op.
+ * Code assets (CSS/JS/HTML) are hashed at image build time; their manifest lives
+ * in /assets-hashes.json and is never touched at runtime.
  */
 
-function rehashJsonFile($file, $manifestKey) {
-    $buildRoot = dirname(__DIR__); // e.g. build/ (called from build/admin/ or build/votes/)
-    $manifestPath = $buildRoot . '/cache-hashes.json';
-    $lockPath = $buildRoot . '/.rehash.lock';
+require_once __DIR__ . '/content-paths.php';
 
-    // Only run in production build environment
-    if (!file_exists($manifestPath)) return;
+function rehashJsonFile($file, $manifestKey) {
+    $contentRoot = contentRoot();
+    $manifestPath = $contentRoot . '/content-hashes.json';
+    $swVersionPath = $contentRoot . '/sw-version.txt';
+    $lockPath = $contentRoot . '/.rehash.lock';
+
+    // File must live inside the content volume.
+    $realFile = realpath($file);
+    $realRoot = realpath($contentRoot);
+    if (!$realFile || !$realRoot || strpos($realFile, $realRoot) !== 0) {
+        return;
+    }
 
     $lockHandle = fopen($lockPath, 'c');
     if (!$lockHandle) return;
@@ -34,43 +42,28 @@ function rehashJsonFile($file, $manifestKey) {
     $ext = pathinfo($file, PATHINFO_EXTENSION);
     $base = pathinfo($file, PATHINFO_FILENAME);
 
-    // Delete old hashed versions (e.g. sessions.*.json) but keep the unhashed original
+    // Clean up previous hashed versions, keep the unhashed original.
     foreach (glob($dir . '/' . $base . '.*.' . $ext) as $oldFile) {
         if ($oldFile !== $file) {
             unlink($oldFile);
         }
     }
 
-    // Write new hashed version
+    // Write the new hashed copy.
     $hashedFilename = $base . '.' . $hash . '.' . $ext;
     file_put_contents($dir . '/' . $hashedFilename, $content);
 
-    // Update cache-hashes.json
-    $manifest = json_decode(file_get_contents($manifestPath), true) ?: [];
+    // Update the content manifest (relative paths, content/-root).
+    $manifest = file_exists($manifestPath)
+        ? (json_decode(file_get_contents($manifestPath), true) ?: [])
+        : [];
     $manifestDir = dirname($manifestKey);
     $manifest[$manifestKey] = ($manifestDir !== '.' ? $manifestDir . '/' : '') . $hashedFilename;
     file_put_contents($manifestPath, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
-    // Bump SW cache version to trigger reinstall on clients
-    $swPath = $buildRoot . '/sw.js';
-    if (file_exists($swPath)) {
-        $swContent = file_get_contents($swPath);
-
-        // Update CACHE_NAME with new timestamp
-        $swContent = preg_replace(
-            "/const CACHE_NAME = '[^']*';/",
-            "const CACHE_NAME = 'event-app-v" . time() . "';",
-            $swContent
-        );
-
-        // Update the hashed JSON URL in urlsToCache
-        $oldPattern = '/\'\.\/' . preg_quote($manifestDir !== '.' ? $manifestDir . '/' : '', '/')
-            . preg_quote($base, '/') . '\.[a-f0-9]{8}\.' . preg_quote($ext, '/') . '\'/';
-        $newUrl = "'./" . ($manifestDir !== '.' ? $manifestDir . '/' : '') . $hashedFilename . "'";
-        $swContent = preg_replace($oldPattern, $newUrl, $swContent);
-
-        file_put_contents($swPath, $swContent);
-    }
+    // Bump the runtime SW version. sw.js in the image reads this and combines
+    // it with its build-time BUILD_VERSION to form the cache key.
+    file_put_contents($swVersionPath, (string) time());
 
     flock($lockHandle, LOCK_UN);
     fclose($lockHandle);

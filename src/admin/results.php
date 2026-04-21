@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../votes/config.php';
+require_once __DIR__ . '/content-paths.php';
 
 if (empty($_SESSION['admin_authenticated'])) {
     http_response_code(403);
@@ -8,7 +9,7 @@ if (empty($_SESSION['admin_authenticated'])) {
     exit;
 }
 
-$votesFile = __DIR__ . '/../votes/votes.json';
+$votesFile = contentPath('voting/votes.json');
 $votes = [];
 
 if (file_exists($votesFile)) {
@@ -16,7 +17,7 @@ if (file_exists($votesFile)) {
 }
 
 // Load event configuration to get configured voting days
-$eventConfigPath = __DIR__ . '/../../event.json';
+$eventConfigPath = contentPath('event.json');
 $votingDays = [];
 if (file_exists($eventConfigPath)) {
     $eventConfig = json_decode(file_get_contents($eventConfigPath), true);
@@ -39,7 +40,7 @@ if (empty($votingDays)) {
 }
 
 // Get session data
-$sessionsData = json_decode(file_get_contents(__DIR__ . '/../sessionplan/sessions.json'), true) ?: [];
+$sessionsData = json_decode(file_get_contents(contentPath('sessionplan/sessions.json')), true) ?: [];
 
 // Helper function to get session info with time slot
 function getSessionInfo($sessionId, $sessionsData) {

@@ -1,0 +1,23 @@
+# Dev runtime: serves src/ live-mounted. No Node build step — developers edit
+# files and the browser hot-reloads (hard refresh). Content comes from the
+# ./content volume, seeded on first start from /app/seed.
+FROM php:8.2-fpm-alpine
+
+RUN apk add --no-cache nginx wget
+
+RUN sed -i 's/;clear_env = no/clear_env = no/' /usr/local/etc/php-fpm.d/www.conf
+
+EXPOSE 5173
+
+RUN mkdir -p /run/nginx /usr/share/nginx/html
+
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+WORKDIR /usr/share/nginx/html
+
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget --quiet --tries=1 --spider http://localhost:5173/ || exit 1
+
+ENTRYPOINT ["/docker-entrypoint.sh"]

@@ -15,46 +15,16 @@
 
   console.log('🔧 Development mode detected - loading event.json...');
 
-  // Helper function to determine base path
   function getBasePath() {
     const pathname = window.location.pathname;
     const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
-
-    if (segments.length === 0) {
-      return '';
-    }
-
     const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes', 'admin'];
-    if (knownPages.includes(segments[0])) {
-      return '';
-    }
-
+    if (segments.length === 0) return '';
+    if (knownPages.includes(segments[0])) return '';
     return '/' + segments[0];
   }
 
-  // Determine correct path to event.json
-  function getEventConfigPath() {
-    const pathname = window.location.pathname;
-    const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
-    const basePath = getBasePath();
-
-    if (basePath) {
-      // We have a base path (e.g. /build)
-      // Always use absolute path from base
-      return basePath + '/event.json';
-    } else {
-      // No base path
-      if (segments.length === 0) {
-        // We're at real root (/)
-        return './event.json';
-      } else {
-        // We're in subdirectory (/sessionplan/)
-        return '../event.json';
-      }
-    }
-  }
-
-  const configPath = getEventConfigPath();
+  const configPath = getBasePath() + '/content/event.json';
   console.log('📍 Loading event.json from:', configPath);
 
   // Fetch event.json from correct path

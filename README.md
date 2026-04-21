@@ -1,6 +1,6 @@
 # PC CampApp
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md) [![PWA](https://img.shields.io/badge/PWA-aktiviert-blue.svg)](https://web.dev/progressive-web-apps/) [![Playwright](https://img.shields.io/badge/getestet%20mit-Playwright-45ba4b.svg)](https://playwright.dev/) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.4%2B-777BB4.svg)](https://www.php.net/) [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
+[Version](CHANGELOG.md) [PWA](https://web.dev/progressive-web-apps/) [Playwright](https://playwright.dev/) [License](LICENSE) [PHP](https://www.php.net/) [Docker](https://www.docker.com/)
 
 ---
 
@@ -18,7 +18,7 @@
 
 ---
 
-**Live: [https://app.devops-camp.de](https://app.devops-camp.de) oder [https://app.joomladay.de](https://app.joomladay.de)**
+**Live: [https://app.devops-camp.de](https://app.devops-camp.de) oder [https://app.joomladay.de**](https://app.joomladay.de)
 
 ---
 
@@ -38,7 +38,7 @@
   - [Aktivierung](#aktivierung)
   - [Voting-Konfiguration](#voting-konfiguration)
   - [Nutzung](#nutzung)
-  - [Admin-Bereich](#admin-bereich)
+  - [Admin-Bereichserver](#admin-bereich)
   - [Deployment](#deployment)
 - [Entwicklung](#-entwicklung)
   - [Befehle](#befehle)
@@ -54,61 +54,103 @@
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (lokal, Entwicklung)
 
 ```bash
-# 1. Repository klonen
 git clone <repository-url>
 cd pccampapp
-
-# 2. Environment einrichten
 cp .env.example .env
 
-# 3. Node.js Dependencies
-make install
-
-# 4. Entwicklungsserver starten (Docker)
-make dev-up
-
-# 5. Browser öffnen
+# Dev-Container starten — src/ live-mount, Live-Reload, Port 5173
+make dev-start
 open http://localhost:5173
 ```
 
-**Das war's!** Die App läuft jetzt mit Live-Reload.
+Kein lokales Node/npm noetig — alles laeuft im Container. Fuer lokale
+Playwright-Tests auf dem Host zusaetzlich: `make install` (Playwright-Browser).
+
+### Produktion lokal testen
 
 ```bash
-# 1. Live-Preview starten (Docker)
-make prod-up
-
-# 2. Browser öffnen
+# Multi-Stage Build als Docker-Image, Port 5174 (Foreground)
+make dev-prod-start
 open http://localhost:5174
-
-# Build erstellen (/build-Ordner)
-# wird auch mit prod-up erstellt
-make build
 ```
 
-**Build-Inhalt auf Server laden!** Die App läuft jetzt als PWA.
+`make dev-prod-start` baut exakt das Image, das auch auf den Server geht.
+
+---
+
+## 📦 Deployment (Server)
+
+Auf dem Ziel-Server brauchst du nur **Docker** (`docker compose`). Kein Node,
+kein PHP, keine Build-Toolchain:
+
+```bash
+# 1. Repo oder einfach nur diese Dateien klonen:
+#    Dockerfile, docker-compose.prod.yml, nginx.prod.conf,
+#    docker-entrypoint.sh, src/, seed/, build-cache-busting.cjs,
+#    generate-icons.js, package*.json, event.schema.json
+git clone <repository-url>
+cd pccampapp
+
+# 2. Environment setzen (sicherer Admin-Key!)
+cp .env.example .env
+vim .env   # VOTING_ADMIN_KEY=<random>
+
+# 3. Bauen und starten — Multi-Stage-Build erstellt das Image aus der Node-Stage,
+#    content/ wird beim ersten Start aus seed/ geseedet.
+make prod-start
+
+# 4. Reverse-Proxy (nginx/Caddy/Traefik) vorschalten und Port 5174 bzw. PROD_PORT
+#    auf deine Domain mit TLS routen.
+```
+
+**Persistente Daten:** Alle admin-pflegbaren Inhalte (`event.json`, `menu.json`,
+`sessions.json`, `votes.json`, Hash-Manifest, SW-Version, …) liegen im
+Host-Verzeichnis `./content/`. Das ist der einzige Pfad, den du beim Deploy
+sichern musst.
+
+```bash
+# Backup
+tar cf content-backup-$(date +%F).tar content/
+
+# Restore
+make prod-stop
+tar xf content-backup-YYYY-MM-DD.tar
+make prod-start
+```
+
+**Updates (neue App-Version ausrollen):**
+
+```bash
+git pull
+make prod-start
+```
+
+Das Image wird neu gebaut, `content/` bleibt unveraendert — Admin-Aenderungen
+ueberleben jedes Update. Service Worker invalidiert automatisch (neue
+`BUILD_VERSION` im Image + bestehende `content/sw-version.txt`).
 
 ---
 
 ## 🚀 Screenshots
 
-<details>
 
-<summary>Screenshots anzeigen</summary>
 
-![pccampapp1](docs/screenshots/pccampapp1.jpeg)
+Screenshots anzeigen
 
-![pccampapp2](docs/screenshots/pccampapp2.jpeg)
+pccampapp1
 
-![pccampapp3](docs/screenshots/pccampapp3.jpeg)
+pccampapp2
 
-![pccampapp4](docs/screenshots/pccampapp4.jpeg)
+pccampapp3
 
-![pccampapp5](docs/screenshots/pccampapp5.jpeg)
+pccampapp4
 
-</details>
+pccampapp5
+
+
 
 ---
 
@@ -329,35 +371,30 @@ Hauptnavigation der App:
 **Schritt-für-Schritt-Anleitung:**
 
 1. **Sessionplan aktualisieren** (`src/sessionplan/sessions.json`):
-   - Tage anpassen (z.B. `samstag`, `sonntag` → `freitag`, `samstag`)
-   - Zeitslots anpassen (z.B. `11:00 - 12:00` → `10:00 - 11:00`)
-   - Raum-Namen aktualisieren
-   - Session-Titel, Hosts und IDs anpassen
-
+  - Tage anpassen (z.B. `samstag`, `sonntag` → `freitag`, `samstag`)
+  - Zeitslots anpassen (z.B. `11:00 - 12:00` → `10:00 - 11:00`)
+  - Raum-Namen aktualisieren
+  - Session-Titel, Hosts und IDs anpassen
 2. **Zeitplan erstellen** (`src/timetable/timetable.json`):
-   - Event-Tage definieren
-   - Zeitslots mit Räumen und Aktivitäten hinzufügen
-   - Struktur: `"Tag": { "Zeit": [{"room": "Raum", "title": "Aktivität"}] }`
-
+  - Event-Tage definieren
+  - Zeitslots mit Räumen und Aktivitäten hinzufügen
+  - Struktur: `"Tag": { "Zeit": [{"room": "Raum", "title": "Aktivität"}] }`
 3. **News konfigurieren** (`src/news.json`):
-   - Permanente News in `permanent` Array
-   - Tages-spezifische News in `days` Objekt
-   - Zeitfenster mit `timeFrom`/`timeTo` (optional)
-   - Prioritäten: `high`, `medium`, `low`
-
+  - Permanente News in `permanent` Array
+  - Tages-spezifische News in `days` Objekt
+  - Zeitfenster mit `timeFrom`/`timeTo` (optional)
+  - Prioritäten: `high`, `medium`, `low`
 4. **Speisekarten erstellen** (`src/food/menue.json`):
-   - Mahlzeiten nach Tagen strukturieren
-   - Allergen-Codes aus `allergene.json` verwenden
-   - Varianten für verschiedene Optionen
-
+  - Mahlzeiten nach Tagen strukturieren
+  - Allergen-Codes aus `allergene.json` verwenden
+  - Varianten für verschiedene Optionen
 5. **Sponsoren hinzufügen** (`src/sponsors/sponsors.json`):
-   - Logo-Dateien in `src/sponsors/` ablegen
-   - URLs und Beschreibungen anpassen
-
+  - Logo-Dateien in `src/sponsors/` ablegen
+  - URLs und Beschreibungen anpassen
 6. **Navigation anpassen** (`src/menu.json`):
-   - Menüpunkte aktivieren/deaktivieren
-   - URLs und Beschreibungen aktualisieren
-   - WLAN-Informationen anpassen
+  - Menüpunkte aktivieren/deaktivieren
+  - URLs und Beschreibungen aktualisieren
+  - WLAN-Informationen anpassen
 
 **Tipp:** Alternativ können alle JSON-Dateien über die [Content-Verwaltung](#%EF%B8%8F-content-verwaltung-admin) direkt im Browser bearbeitet werden — ohne Build oder Deployment.
 
@@ -381,16 +418,18 @@ Beim Aufruf erscheint ein **Login-Formular**, das den Admin-Key via PHP-Session 
 
 ### Verwaltbare Bereiche
 
-| Bereich | Datei | Beschreibung |
-|---------|-------|-------------|
-| Sessions | `sessions.json` | Sessionplan nach Tagen und Zeitslots |
-| Timetable | `timetable.json` | Event-Zeitplan |
-| News | `news.json` | Permanente und tagesspezifische Ankündigungen |
-| Food | `menue.json` | Speisekarten mit Allergenen |
-| Allergene | `allergene.json` | Allergen-Codes und Beschreibungen |
-| Sponsors | `sponsors.json` | Sponsoren-Liste |
-| Menu | `menu.json` | Navigation der App |
-| Voting | — | Voting-Status steuern (aktivieren/deaktivieren/beenden), Ergebnisse anzeigen, Votes in `sessions.json` übertragen |
+
+| Bereich   | Datei            | Beschreibung                                                                                                      |
+| --------- | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Sessions  | `sessions.json`  | Sessionplan nach Tagen und Zeitslots                                                                              |
+| Timetable | `timetable.json` | Event-Zeitplan                                                                                                    |
+| News      | `news.json`      | Permanente und tagesspezifische Ankündigungen                                                                     |
+| Food      | `menue.json`     | Speisekarten mit Allergenen                                                                                       |
+| Allergene | `allergene.json` | Allergen-Codes und Beschreibungen                                                                                 |
+| Sponsors  | `sponsors.json`  | Sponsoren-Liste                                                                                                   |
+| Menu      | `menu.json`      | Navigation der App                                                                                                |
+| Voting    | —                | Voting-Status steuern (aktivieren/deaktivieren/beenden), Ergebnisse anzeigen, Votes in `sessions.json` übertragen |
+
 
 Der frühere separate Voting-Admin (`/votes/admin.php`) leitet jetzt auf `/admin/` weiter.
 
@@ -567,46 +606,66 @@ Die `votes.json` und `voting-state.json` sollten bei einem Deployment nicht übe
 
 #### Setup & Build
 
-| Befehl | Beschreibung |
-|---------|-------------|
-| `make install` | Node.js Dependencies installieren |
-| `make build` | Produktionsversion bauen (Cache-Busting) |
-| `make clean` | Vollständige Bereinigung (node_modules, build, Docker) |
-| `make generate-icons` | PWA-Icons aus icon.png generieren |
+
+| Befehl                | Beschreibung                                           |
+| --------------------- | ------------------------------------------------------ |
+| `make install`        | Node.js Dependencies installieren                      |
+| `make build`          | Produktionsversion bauen (Cache-Busting)               |
+| `make clean`          | Vollständige Bereinigung (node_modules, build, Docker) |
+| `make generate-icons` | PWA-Icons aus icon.png generieren                      |
+
 
 #### Development (Port 5173 - src/)
 
-| Befehl | Beschreibung |
-|---------|-------------|
-| `make dev-up` | Entwicklungsserver starten |
-| `make dev-down` | Entwicklungsserver stoppen |
-| `make dev-rebuild` | Docker Image neu bauen (ohne Cache) |
-| `make dev-logs` | Live-Logs anzeigen |
-| `make dev-remove` | Container + Volumes entfernen |
 
-#### Production Testing (Port 5174 - build/)
+| Befehl            | Beschreibung                        |
+| ----------------- | ----------------------------------- |
+| `make dev-start`  | Entwicklungsserver starten          |
+| `make dev-stop`   | Entwicklungsserver stoppen          |
+| `make dev-build`  | Docker Image neu bauen (ohne Cache) |
+| `make dev-logs`   | Live-Logs anzeigen                  |
+| `make dev-remove` | Container + Volumes entfernen       |
 
-| Befehl | Beschreibung |
-|---------|-------------|
-| `make prod-up` | Production-Test-Server starten (inkl. Build) |
-| `make prod-down` | Production-Test-Server stoppen |
-| `make prod-rebuild` | Docker Image neu bauen (ohne Cache) |
-| `make prod-logs` | Live-Logs anzeigen |
-| `make prod-remove` | Container + Volumes entfernen |
+
+#### Dev-Prod (Port 5174 - lokaler Prod-Test, Foreground)
+
+
+| Befehl                 | Beschreibung                                 |
+| ---------------------- | -------------------------------------------- |
+| `make dev-prod-start`  | Lokaler Prod-Test starten (inkl. Build)      |
+| `make dev-prod-stop`   | Lokaler Prod-Test stoppen                    |
+| `make dev-prod-build`  | Docker Image neu bauen (ohne Cache)          |
+| `make dev-prod-logs`   | Live-Logs anzeigen                           |
+| `make dev-prod-remove` | Container + Volumes entfernen                |
+
+
+#### Production (Port 5174 - Server-Deployment, Detached)
+
+
+| Befehl             | Beschreibung                                 |
+| ------------------ | -------------------------------------------- |
+| `make prod-start`  | Prod-Container im Hintergrund (inkl. Build)  |
+| `make prod-stop`   | Prod-Container stoppen                       |
+| `make prod-build`  | Docker Image neu bauen (ohne Cache)          |
+| `make prod-logs`   | Live-Logs anzeigen                           |
+| `make prod-remove` | Container + Volumes entfernen                |
+
 
 #### Testing
 
-| Befehl | Beschreibung |
-|---------|-------------|
-| `make test` | Standard Tests (119 Tests, Port 5174, nginx + PHP-FPM) |
-| `make test-php` | Voting/PHP Tests (23 Tests, Port 5174, nginx + PHP-FPM) |
-| `make test-translations` | Übersetzungs-Tests (42 Tests, DE + EN) |
-| `make test-translations-de` | Übersetzungs-Tests nur Deutsch (21 Tests) |
-| `make test-translations-en` | Übersetzungs-Tests nur Englisch (21 Tests) |
-| `make test-all` | Alle Tests (142 Tests, Standard + PHP + Translations) |
-| `make test-headed` | Standard Tests mit sichtbarem Browser |
-| `make test-php-headed` | Voting/PHP Tests mit sichtbarem Browser |
-| `make test-report` | HTML Test-Report öffnen |
+
+| Befehl                      | Beschreibung                                            |
+| --------------------------- | ------------------------------------------------------- |
+| `make test`                 | Standard Tests (119 Tests, Port 5174, nginx + PHP-FPM)  |
+| `make test-php`             | Voting/PHP Tests (23 Tests, Port 5174, nginx + PHP-FPM) |
+| `make test-translations`    | Übersetzungs-Tests (42 Tests, DE + EN)                  |
+| `make test-translations-de` | Übersetzungs-Tests nur Deutsch (21 Tests)               |
+| `make test-translations-en` | Übersetzungs-Tests nur Englisch (21 Tests)              |
+| `make test-all`             | Alle Tests (142 Tests, Standard + PHP + Translations)   |
+| `make test-headed`          | Standard Tests mit sichtbarem Browser                   |
+| `make test-php-headed`      | Voting/PHP Tests mit sichtbarem Browser                 |
+| `make test-report`          | HTML Test-Report öffnen                                 |
+
 
 ---
 
@@ -632,36 +691,29 @@ Sprache in `event.json` festlegen:
 ### Übersetzungen hinzufügen
 
 1. Schlüssel zu `src/translations/de.json` hinzufügen:
-
-   ```json
+  ```json
    {
      "myFeature": {
        "title": "Mein Feature"
      }
    }
-   ```
-
+  ```
 2. Denselben Schlüssel zu `src/translations/en.json` hinzufügen:
-
-   ```json
+  ```json
    {
      "myFeature": {
        "title": "My Feature"
      }
    }
-   ```
-
+  ```
 3. In HTML verwenden:
-
-   ```html
+  ```html
    <h1 data-i18n="myFeature.title">My Feature</h1>
-   ```
-
+  ```
 4. Überprüfen:
-
-   ```bash
+  ```bash
    make test
-   ```
+  ```
 
 ---
 

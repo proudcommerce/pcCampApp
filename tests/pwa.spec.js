@@ -217,7 +217,7 @@ test.describe('Cache-Busting', () => {
     const jsonRequests = [];
 
     page.on('request', request => {
-      if (request.url().endsWith('.json') && !request.url().includes('event.json')) {
+      if (request.url().endsWith('.json') && !request.url().includes('/content/event.json')) {
         jsonRequests.push(request.url());
       }
     });

@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/../admin/rehash.php';
+require_once __DIR__ . '/../admin/content-paths.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -25,7 +26,7 @@ if (!$authenticated) {
 }
 
 // Check if voting is ended
-$stateFile = __DIR__ . '/voting-state.json';
+$stateFile = contentPath('voting/voting-state.json');
 if (!file_exists($stateFile)) {
     http_response_code(400);
     echo json_encode(['error' => 'Voting state file not found. Please use admin panel to initialize voting system.']);
@@ -41,7 +42,7 @@ if ($votingState['status'] !== 'ended') {
 }
 
 // Load votes.json
-$votesFile = __DIR__ . '/votes.json';
+$votesFile = contentPath('voting/votes.json');
 if (!file_exists($votesFile)) {
     http_response_code(404);
     echo json_encode(['error' => 'Votes file not found']);
@@ -51,7 +52,7 @@ if (!file_exists($votesFile)) {
 $votesData = json_decode(file_get_contents($votesFile), true);
 
 // Load sessions.json
-$sessionsFile = __DIR__ . '/../sessionplan/sessions.json';
+$sessionsFile = contentPath('sessionplan/sessions.json');
 if (!file_exists($sessionsFile)) {
     http_response_code(404);
     echo json_encode(['error' => 'Sessions file not found']);

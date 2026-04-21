@@ -23,8 +23,7 @@
 
   try {
     await window.assetHashesReady;
-    const sponsorsFileName = './' + window.resolveAsset('sponsors.json');
-    const response = await fetch(sponsorsFileName);
+    const response = await fetch(window.contentUrl('sponsors/sponsors.json'));
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -49,10 +48,11 @@
       const displayUrl = sponsorUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
       const description = sponsor.beschreibung || '';
       
-      // Resolve logo path: absolute URLs stay as-is, relative paths are resolved to current directory
+      // Resolve logo path: absolute URLs stay as-is; relative filenames resolve against
+      // the code asset manifest (placeholder etc. live in src/sponsors/).
       const logoSrc = sponsor.logo.startsWith('http://') || sponsor.logo.startsWith('https://') || sponsor.logo.startsWith('/')
         ? sponsor.logo
-        : `./${sponsor.logo}`;
+        : `./${window.resolveAsset(sponsor.logo.replace(/^\.\//, ''))}`;
 
       return `
         <a href="${esc(sponsorUrl)}" target="_blank" rel="noopener noreferrer" class="sponsor-card">
