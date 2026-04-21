@@ -1,7 +1,7 @@
 <?php
-session_start();
 require_once __DIR__ . '/../votes/config.php';
 require_once __DIR__ . '/content-paths.php';
+startHardenedSession();
 
 if (empty($_SESSION['admin_authenticated'])) {
     http_response_code(403);

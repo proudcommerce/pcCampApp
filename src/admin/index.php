@@ -3,9 +3,9 @@
  * Admin Dashboard - Unified Content & Voting Management
  * Session-based authentication with login form
  */
-session_start();
 require_once __DIR__ . '/../votes/config.php';
 require_once __DIR__ . '/content-paths.php';
+startHardenedSession();
 
 // Handle login POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_key'])) {

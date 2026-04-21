@@ -4,6 +4,30 @@
  * Loads admin key from VOTING_ADMIN_KEY environment variable
  */
 
+/**
+ * Start a PHP session with hardened cookie flags.
+ * Must be called BEFORE session_start() — idempotent and safe to call
+ * even when the session is already active (no-op in that case).
+ *
+ * Secure is derived from the request scheme so the flag is also active
+ * when the container runs behind a TLS-terminating reverse proxy.
+ */
+function startHardenedSession() {
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return;
+    }
+    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'secure'   => $secure,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+}
+
 function getAdminKey() {
     static $adminKey = null;
 

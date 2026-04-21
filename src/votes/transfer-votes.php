@@ -1,5 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../admin/rehash.php';
+require_once __DIR__ . '/../admin/content-paths.php';
+startHardenedSession();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -7,10 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
-
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/../admin/rehash.php';
-require_once __DIR__ . '/../admin/content-paths.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 
