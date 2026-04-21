@@ -32,6 +32,12 @@ if (!$input) {
 
 // Validate admin key
 if (!isset($input['key']) || !validateAdminKey($input['key'])) {
+    error_log(sprintf(
+        '[admin-api-fail] action=%s resource=%s ip=%s',
+        $input['action'] ?? '-',
+        $input['resource'] ?? '-',
+        $_SERVER['REMOTE_ADDR'] ?? '-'
+    ));
     http_response_code(403);
     echo json_encode(['error' => 'Invalid admin key']);
     exit;

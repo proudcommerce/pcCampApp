@@ -15,6 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_key'])) {
         exit;
     }
     $loginError = true;
+    error_log(sprintf(
+        '[admin-login-fail] ip=%s ua=%s',
+        $_SERVER['REMOTE_ADDR'] ?? '-',
+        substr($_SERVER['HTTP_USER_AGENT'] ?? '-', 0, 120)
+    ));
 }
 
 // Handle logout
