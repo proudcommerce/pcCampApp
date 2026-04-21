@@ -95,6 +95,17 @@ if (!file_exists($targetFile)) {
     exit;
 }
 
+// Backups live in content/.backups/ — nginx blocks /content/.* dotfile access,
+// so previous versions (which may contain secrets like a deprecated votingAdminKey)
+// stay off the public web root.
+function backupPathFor($resource) {
+    $dir = contentRoot() . '/.backups';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0750, true);
+    }
+    return $dir . '/' . $resource . '.json.backup';
+}
+
 // Dispatch action
 switch ($action) {
     case 'get':
@@ -124,7 +135,7 @@ function handleGet($file, $resource) {
         return;
     }
 
-    $backupExists = file_exists($file . '.backup');
+    $backupExists = file_exists(backupPathFor($resource));
 
     echo json_encode([
         'success'      => true,
@@ -169,8 +180,8 @@ function handleUpdate($file, $resource, $data) {
     // Read current content for backup
     $currentContent = stream_get_contents($fp);
 
-    // Create backup
-    file_put_contents($file . '.backup', $currentContent);
+    // Create backup outside the web-served content root.
+    file_put_contents(backupPathFor($resource), $currentContent);
 
     // Write new content
     $newContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
@@ -200,7 +211,7 @@ function handleUpdate($file, $resource, $data) {
  * RESET - Restore from backup
  */
 function handleReset($file, $resource) {
-    $backupFile = $file . '.backup';
+    $backupFile = backupPathFor($resource);
 
     if (!file_exists($backupFile)) {
         http_response_code(404);
