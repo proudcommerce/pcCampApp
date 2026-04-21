@@ -1,143 +1,73 @@
 {
     "samstag": {
-        "11:00 - 12:00": [
+        "14:00 - 15:00": [
             {
                 "id": "10",
-                "room": "Raum Alpha",
-                "title": "Einführung in moderne Entwicklungsmethoden",
-                "host": "Max Mustermann",
+                "room": "Hangar",
+                "title": "Vom Start-Up zur europäischen Home & Living Brand",
+                "host": "Martin Gittel (Loberon)",
                 "votes": 0,
                 "cancelled": false
             },
             {
                 "id": "20",
-                "room": "Raum Beta",
-                "title": "Best Practices für Teamarbeit",
-                "host": "Lisa Schmidt",
-                "votes": 0,
-                "cancelled": false
-            },
-            {
-                "id": "30",
-                "room": "Raum Gamma",
-                "title": "Cloud-Infrastruktur für Einsteiger",
-                "host": "Thomas Weber",
+                "room": "Team Space",
+                "title": "Dead or alive? Wenn im E-Commerce nichts schief gehen darf",
+                "host": "Andreas Krause (Mr. Pixel)",
                 "votes": 0,
                 "cancelled": false
             }
         ],
-        "12:00 - 13:00": [
+        "15:00 - 16:00": [
             {
-                "id": "40",
-                "room": "Raum Alpha",
-                "title": "Container-Technologien im Überblick",
-                "host": "Anna Müller",
+                "id": "30",
+                "room": "Hangar",
+                "title": "Vom ersten Klick bis zur KI – Wie eine moderne Daten-Wertschöpfungskette entsteht",
+                "host": "Martin Kloos (tractionwise)",
                 "votes": 0,
                 "cancelled": false
             },
             {
+                "id": "40",
+                "room": "Team Space",
+                "title": "Automatische Auftragsfreigabe im ERP & InvoiceSensei",
+                "host": "Tobias Merkl (Proud Commerce)",
+                "votes": 0,
+                "cancelled": false
+            }
+        ],
+        "16:00 - 17:00": [
+            {
                 "id": "50",
-                "room": "Raum Beta",
-                "title": "Automatisierung im Entwicklungsprozess",
-                "host": "Michael Klein",
+                "room": "Hangar",
+                "title": "Wie KI unseren Agenturalltag auf den Kopf stellt",
+                "host": "Stefan Peter Roos (Proud Commerce)",
                 "votes": 0,
                 "cancelled": false
             },
             {
                 "id": "60",
-                "room": "Raum Gamma",
-                "title": "Sicherheit in modernen Anwendungen",
-                "host": "Sarah Wagner",
+                "room": "Team Space",
+                "title": "Mehr Umsatz, weniger Aufwand – wie du Shopware automatisiert für dich arbeiten lässt",
+                "host": "Tina Otto (netlogix)",
                 "votes": 0,
                 "cancelled": false
             }
         ],
-        "14:00 - 15:00": [
+        "17:00 - 18:00": [
             {
                 "id": "70",
-                "room": "Raum Alpha",
-                "title": "Monitoring und Logging Strategien",
-                "host": "Peter Schneider",
+                "room": "Hangar",
+                "title": "Digital Experience Plattform (DXP) trifft E-Commerce",
+                "host": "Andreas Förthner (netlogix)",
                 "votes": 0,
                 "cancelled": false
             },
             {
                 "id": "80",
-                "room": "Raum Beta",
-                "title": "Agile Methoden in der Praxis",
-                "host": "Julia Hoffmann",
-                "votes": 0,
-                "cancelled": false
-            },
-            {
-                "id": "90",
-                "room": "Raum Gamma",
-                "title": "API-Design und Dokumentation",
-                "host": "Martin Fischer",
-                "votes": 0,
-                "cancelled": false
-            }
-        ]
-    },
-    "sonntag": {
-        "10:00 - 11:00": [
-            {
-                "id": "100",
-                "room": "Raum Alpha",
-                "title": "Erfahrungsaustausch: Projektmanagement",
-                "host": "Claudia Becker",
-                "votes": 0,
-                "cancelled": false
-            },
-            {
-                "id": "110",
-                "room": "Raum Beta",
-                "title": "Open Source: Chancen und Herausforderungen",
-                "host": "Daniel Richter",
-                "votes": 0,
-                "cancelled": false
-            },
-            {
-                "id": "120",
-                "room": "Raum Gamma",
-                "title": "Performance-Optimierung",
-                "host": "Laura Zimmermann",
-                "votes": 0,
-                "cancelled": false
-            }
-        ],
-        "11:00 - 12:00": [
-            {
-                "id": "130",
-                "room": "Raum Alpha",
-                "title": "Testing-Strategien für große Projekte",
-                "host": "Sebastian König",
-                "votes": 0,
-                "cancelled": false
-            },
-            {
-                "id": "140",
-                "room": "Raum Beta",
-                "title": "Datenbanken: SQL vs. NoSQL",
-                "host": "Nina Schäfer",
-                "votes": 0,
-                "cancelled": false
-            },
-            {
-                "id": "150",
-                "room": "Raum Gamma",
-                "title": "Barrierefreiheit im Web",
-                "host": "Frank Meyer",
-                "votes": 0,
-                "cancelled": false
-            }
-        ],
-        "14:00 - 15:00": [
-            {
-                "id": "160",
-                "room": "Raum Alpha",
-                "title": "Abschluss und Feedback",
-                "host": "Organisationsteam",
+                "room": "Team Space",
+                "title": "AI-Automatisierung im eCommerce-Marketing",
+                "host": "Kevin Flurschütz (KFL Consulting)",
                 "votes": 0,
                 "cancelled": false
             }

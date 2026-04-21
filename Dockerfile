@@ -20,10 +20,26 @@ RUN node build-cache-busting.cjs
 # =============================================================================
 FROM php:8.2-fpm-alpine
 
-RUN apk add --no-cache nginx wget
+RUN apk add --no-cache nginx wget libpng libjpeg-turbo freetype libwebp
+
+# GD extension — used at runtime by src/admin/upload.php to resize the uploaded
+# logo into PWA icons (favicon + 144/192/512) that land in the content volume.
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+        libpng-dev libjpeg-turbo-dev freetype-dev libwebp-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j"$(nproc)" gd \
+    && apk del .build-deps
 
 # Let env vars (VOTING_ADMIN_KEY etc.) reach PHP-FPM workers.
 RUN sed -i 's/;clear_env = no/clear_env = no/' /usr/local/etc/php-fpm.d/www.conf
+
+# Admin file uploads (logo/floorplan/sponsor-logo) bis 5 MB; nginx deckelt bei
+# gleichem Wert via client_max_body_size.
+RUN { \
+    echo 'upload_max_filesize = 5M'; \
+    echo 'post_max_size = 6M'; \
+    echo 'memory_limit = 64M'; \
+  } > /usr/local/etc/php/conf.d/uploads.ini
 
 EXPOSE 5173
 

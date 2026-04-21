@@ -5,6 +5,18 @@ window.addEventListener('translationsLoaded', () => {
   }
 });
 
+// Floorplan image lives in the content/ volume so admins can swap it without
+// a rebuild. Resolve via contentUrl once the hash manifest is available.
+(async () => {
+  try {
+    await window.assetHashesReady;
+    const img = document.getElementById('floorplanImage');
+    if (img) img.src = window.contentUrl('floorplan/floorplan.jpg');
+  } catch (e) {
+    console.error('Failed to resolve floorplan image:', e);
+  }
+})();
+
 // Floorplan Zoom-Funktionalität
 function toggleZoom() {
   const img = document.getElementById('floorplanImage');

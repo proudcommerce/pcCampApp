@@ -161,23 +161,28 @@ Die gesamte App ist **konfigurationsgesteuert** über eine einzige Datei: `event
 ### Anpassung für Ihre Veranstaltung
 
 ```bash
-# 1. Event-Konfiguration bearbeiten
-vim event.json
+# 1. Event-Konfiguration bearbeiten (Seed-Vorlage fuer frische Deployments)
+vim seed/event.json
 
-# 2. Branding-Assets ersetzen (nur 2 Dateien!)
-cp ihr-logo.png src/assets/logo.png
-cp ihr-icon.png src/assets/icon.png  # PWA-Icons werden automatisch generiert!
+# 2. Nur PWA-Icon-Quelle ist noch Code (Image-gebacken, generiert 16/144/192/512)
+cp ihr-icon.png src/assets/icon.png
 
-# 3. Eventspezifische Inhalte aktualisieren
-vim src/sessionplan/sessions.json    # Sessionplan-Daten
-vim src/timetable/timetable.json     # Zeitplan-Daten
-vim src/news.json                    # Event-News
-vim src/menu.json                    # Navigation
-vim src/food/menue.json              # Speisekarten
-vim src/food/allergene.json          # Allergen-Informationen
-vim src/sponsors/sponsors.json       # Sponsoren-Liste
+# 3. Eventspezifische Inhalte aktualisieren (Seed — kopiert beim ersten Start
+#    ins Laufzeit-Volume content/; spaetere Admin-Edits leben dort)
+vim seed/sessionplan/sessions.json   # Sessionplan-Daten
+vim seed/timetable/timetable.json    # Zeitplan-Daten
+vim seed/news.json                   # Event-News
+vim seed/menu.json                   # Navigation
+vim seed/food/menue.json             # Speisekarten
+vim seed/food/allergene.json         # Allergen-Informationen
+vim seed/sponsors/sponsors.json      # Sponsoren-Liste
 
-# 4. Bauen & deployen
+# 4. Event-Grafiken (content — tauschbar ohne Rebuild, Admin-Upload moeglich)
+cp ihr-logo.png      seed/assets/logo.png                        # Header/Brand
+cp ihr-floorplan.jpg seed/floorplan/floorplan.jpg                # Raumplan
+cp ihr-sponsor.png   seed/sponsors/logos/sponsor-placeholder.png # Sponsor-Logo
+
+# 5. Bauen & deployen
 make build
 ```
 
@@ -190,9 +195,9 @@ make build
 
 ### Eventspezifische JSON-Dateien
 
-Die App verwendet mehrere JSON-Dateien für eventspezifische Inhalte. Diese müssen für jede neue Veranstaltung angepasst werden:
+Die App verwendet mehrere JSON-Dateien für eventspezifische Inhalte. Diese müssen für jede neue Veranstaltung angepasst werden. Quelle dafür ist der `seed/`-Ordner — beim ersten Container-Start wird er nach `content/` kopiert; ab dann leben alle Admin-Edits (und hochgeladene Grafiken) ausschließlich im `content/`-Volume.
 
-#### 📅 Sessionplan (`src/sessionplan/sessions.json`)
+#### 📅 Sessionplan (`seed/sessionplan/sessions.json`)
 
 Strukturiert Sessions nach Tagen und Zeitslots:
 
@@ -225,7 +230,7 @@ Strukturiert Sessions nach Tagen und Zeitslots:
 }
 ```
 
-#### ⏰ Zeitplan (`src/timetable/timetable.json`)
+#### ⏰ Zeitplan (`seed/timetable/timetable.json`)
 
 Zeitplan für das gesamte Event:
 
@@ -250,7 +255,7 @@ Zeitplan für das gesamte Event:
 }
 ```
 
-#### 📰 News (`src/news.json`)
+#### 📰 News (`seed/news.json`)
 
 Event-News mit Zeitfenstern:
 
@@ -277,7 +282,7 @@ Event-News mit Zeitfenstern:
 }
 ```
 
-#### 🍽️ Speisekarten (`src/food/menue.json`)
+#### 🍽️ Speisekarten (`seed/food/menue.json`)
 
 Menü nach Tagen und Mahlzeiten:
 
@@ -310,7 +315,7 @@ Menü nach Tagen und Mahlzeiten:
 }
 ```
 
-#### 🚨 Allergene (`src/food/allergene.json`)
+#### 🚨 Allergene (`seed/food/allergene.json`)
 
 Allergen-Codes und Beschreibungen:
 
@@ -324,16 +329,22 @@ Allergen-Codes und Beschreibungen:
 }
 ```
 
-#### ⭐ Sponsoren (`src/sponsors/sponsors.json`)
+#### ⭐ Sponsoren (`seed/sponsors/sponsors.json`)
 
-Sponsoren-Liste:
+Sponsoren-Liste. Das Feld `logo` akzeptiert zwei Varianten:
+
+- **Lokal** — Pfad relativ zu `content/sponsors/`, z. B. `"logos/foo.png"`. Die
+  Datei wird aus dem Content-Volume ausgeliefert (Seed: `seed/sponsors/logos/`,
+  Laufzeit/Admin: `content/sponsors/logos/`).
+- **Extern** — absolute URL (`https://…`) oder absoluter Pfad (`/…`) auf ein
+  CDN- oder extern gehostetes Logo. Wird 1:1 in den `<img src>` uebernommen.
 
 ```json
 {
   "sponsors": [
     {
       "name": "Sponsor 1",
-      "logo": "sponsor-placeholder.png",
+      "logo": "logos/sponsor-placeholder.png",
       "url": "https://example.com",
       "beschreibung": "Beschreibung des Sponsors"
     }
@@ -341,7 +352,22 @@ Sponsoren-Liste:
 }
 ```
 
-#### 🧭 Navigation (`src/menu.json`)
+#### 🗺️ Floorplan (`seed/floorplan/floorplan.jpg`)
+
+Das Floorplan-Bild lebt im Content-Volume (`content/floorplan/floorplan.jpg`).
+Austausch ohne Rebuild — per Admin-Upload (Tab **Event** → **Branding &
+Medien**), per Volume-Zugriff oder Ersatzdatei im Seed.
+
+#### 🖼️ App-Logo (`seed/assets/logo.png`)
+
+Das Header-/Brand-Logo lebt ebenfalls im Content-Volume
+(`content/assets/logo.png`). Der Pfad wird in `event.json` als
+`branding.logo` hinterlegt — akzeptiert relative Pfade (relativ zu
+`content/`) oder absolute URLs (CDN). Admin-Upload im Tab **Event** →
+**Branding & Medien** bumpt dabei `sw-version.txt`, sodass Clients beim
+naechsten Reload das neue Logo aus einem frischen Service-Worker-Cache ziehen.
+
+#### 🧭 Navigation (`seed/menu.json`)
 
 Hauptnavigation der App:
 
@@ -370,28 +396,35 @@ Hauptnavigation der App:
 
 **Schritt-für-Schritt-Anleitung:**
 
-1. **Sessionplan aktualisieren** (`src/sessionplan/sessions.json`):
+> Hinweis: Alle Pfade beziehen sich auf `seed/` — die Vorlage fuer frische
+> Deployments. Nach dem ersten Start sind Aenderungen ueber den Admin-Bereich
+> im laufenden Container persistent und landen im `content/`-Volume.
+
+1. **Sessionplan aktualisieren** (`seed/sessionplan/sessions.json`):
   - Tage anpassen (z.B. `samstag`, `sonntag` → `freitag`, `samstag`)
   - Zeitslots anpassen (z.B. `11:00 - 12:00` → `10:00 - 11:00`)
   - Raum-Namen aktualisieren
   - Session-Titel, Hosts und IDs anpassen
-2. **Zeitplan erstellen** (`src/timetable/timetable.json`):
+2. **Zeitplan erstellen** (`seed/timetable/timetable.json`):
   - Event-Tage definieren
   - Zeitslots mit Räumen und Aktivitäten hinzufügen
   - Struktur: `"Tag": { "Zeit": [{"room": "Raum", "title": "Aktivität"}] }`
-3. **News konfigurieren** (`src/news.json`):
+3. **News konfigurieren** (`seed/news.json`):
   - Permanente News in `permanent` Array
   - Tages-spezifische News in `days` Objekt
   - Zeitfenster mit `timeFrom`/`timeTo` (optional)
   - Prioritäten: `high`, `medium`, `low`
-4. **Speisekarten erstellen** (`src/food/menue.json`):
+4. **Speisekarten erstellen** (`seed/food/menue.json`):
   - Mahlzeiten nach Tagen strukturieren
   - Allergen-Codes aus `allergene.json` verwenden
   - Varianten für verschiedene Optionen
-5. **Sponsoren hinzufügen** (`src/sponsors/sponsors.json`):
-  - Logo-Dateien in `src/sponsors/` ablegen
+5. **Sponsoren hinzufügen** (`seed/sponsors/sponsors.json`):
+  - Entweder: Logo-Datei nach `seed/sponsors/logos/` legen (im Betrieb: `content/sponsors/logos/`) und als `"logo": "logos/dateiname.png"` referenzieren
+  - Oder: Extern hostet — `"logo": "https://cdn.example.com/logo.png"` (auch absolute Pfade `/…` moeglich); wird 1:1 verwendet
   - URLs und Beschreibungen anpassen
-6. **Navigation anpassen** (`src/menu.json`):
+6. **Floorplan austauschen** (`seed/floorplan/floorplan.jpg`):
+  - Bild ersetzen; wird zur Laufzeit aus `content/floorplan/floorplan.jpg` ausgeliefert
+7. **Navigation anpassen** (`seed/menu.json`):
   - Menüpunkte aktivieren/deaktivieren
   - URLs und Beschreibungen aktualisieren
   - WLAN-Informationen anpassen
@@ -428,6 +461,7 @@ Beim Aufruf erscheint ein **Login-Formular**, das den Admin-Key via PHP-Session 
 | Allergene | `allergene.json` | Allergen-Codes und Beschreibungen                                                                                 |
 | Sponsors  | `sponsors.json`  | Sponsoren-Liste                                                                                                   |
 | Menu      | `menu.json`      | Navigation der App                                                                                                |
+| Event     | `event.json`     | Event-Konfiguration (Raw-JSON-Editor) + Upload von App-Logo und Floorplan-Bild (Branding & Medien)                |
 | Voting    | —                | Voting-Status steuern (aktivieren/deaktivieren/beenden), Ergebnisse anzeigen, Votes in `sessions.json` übertragen |
 
 

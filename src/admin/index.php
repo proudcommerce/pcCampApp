@@ -91,7 +91,7 @@ if (!file_exists($stateFile)) {
 </head>
 <body>
 
-<div class="header"><div class="bar container"><a class="brand" href="../"><img src="../assets/logo.png" alt=""></a><button id="burger" class="burger" aria-label="Menü"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button></div></div>
+<div class="header"><div class="bar container"><a class="brand" href="../"><img src="<?= htmlspecialchars(brandLogoUrl(), ENT_QUOTES) ?>" alt=""></a><button id="burger" class="burger" aria-label="Menü"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button></div></div>
 <nav id="nav-drawer" class="drawer container">
   <div id="navItems"></div>
 </nav>
@@ -131,6 +131,25 @@ if (!file_exists($stateFile)) {
                 <button id="btn-save" class="btn btn-primary">
                     Speichern
                 </button>
+            </div>
+        </div>
+
+        <!-- Assets-Panel (Upload fuer Binaerdateien, nur im Event-Tab sichtbar) -->
+        <div id="assets-panel" class="assets-panel" style="display:none;">
+            <h3 class="assets-panel-title">Branding &amp; Medien</h3>
+            <div class="assets-grid">
+                <div class="asset-slot" data-target="logo">
+                    <label>App-Logo</label>
+                    <img class="asset-preview" src="" alt="Logo-Preview">
+                    <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-upload-target="logo">
+                    <p class="asset-hint">PNG/JPG/WebP, max. 5&nbsp;MB. Die Originaldatei wird gespeichert; der Header skaliert das Logo proportional auf max. 45&nbsp;px Hoehe. Uebersteuert <code>branding.logo</code>.</p>
+                </div>
+                <div class="asset-slot" data-target="floorplan">
+                    <label>Floorplan</label>
+                    <img class="asset-preview" src="" alt="Floorplan-Preview">
+                    <input type="file" accept="image/jpeg" data-upload-target="floorplan">
+                    <p class="asset-hint">JPEG, max. 5&nbsp;MB. Wird als <code>content/floorplan/floorplan.jpg</code> abgelegt.</p>
+                </div>
             </div>
         </div>
 

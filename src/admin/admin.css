@@ -717,3 +717,56 @@
         padding: 10px;
     }
 }
+
+/* Assets-Panel (Binary-Uploads im Event-Tab) */
+.assets-panel {
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fdfdfe;
+}
+.assets-panel-title {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+.assets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+.asset-slot {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.asset-slot label {
+    font-weight: 600;
+    font-size: 13px;
+    color: #374151;
+}
+.asset-preview {
+    width: 100%;
+    max-height: 120px;
+    object-fit: contain;
+    background: #f3f4f6;
+    border-radius: 4px;
+    padding: 4px;
+}
+.asset-slot input[type="file"] {
+    font-size: 12px;
+}
+.asset-hint {
+    margin: 0;
+    font-size: 11px;
+    color: #6b7280;
+}
+.asset-hint code {
+    background: #f3f4f6;
+    padding: 1px 4px;
+    border-radius: 3px;
+}

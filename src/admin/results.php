@@ -152,7 +152,7 @@ body { background:#f9fafb; }
 </head>
 <body>
 
-<div class="header"><div class="bar container"><a class="brand" href="../"><img src="../assets/logo.png" alt=""></a><button id="burger" class="burger" aria-label="Menü"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button></div></div>
+<div class="header"><div class="bar container"><a class="brand" href="../"><img src="<?= htmlspecialchars(brandLogoUrl(), ENT_QUOTES) ?>" alt=""></a><button id="burger" class="burger" aria-label="Menü"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button></div></div>
 <nav id="nav-drawer" class="drawer container">
   <div id="navItems"></div>
 </nav>

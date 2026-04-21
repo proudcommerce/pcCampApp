@@ -335,6 +335,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    // Brand-Logo aus branding.logo aufloesen (content/ oder absolute URL).
+    // Fallback auf content/assets/logo.png wenn kein Wert gesetzt ist.
+    const brandImg = document.querySelector('img[data-brand-logo]');
+    if (brandImg) {
+        const configured = (eventConfig && eventConfig.branding && eventConfig.branding.logo) || 'assets/logo.png';
+        const rel = String(configured).replace(/^\.\//, '');
+        const logoSrc = /^(https?:\/\/|\/)/i.test(rel) ? rel : contentUrl(rel);
+        brandImg.src = logoSrc;
+    }
+
     // Burger-Menü-Implementierung
     const navItems = document.getElementById('navItems');
     const oldBurger = document.getElementById('burger');

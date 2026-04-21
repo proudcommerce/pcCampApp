@@ -60,11 +60,9 @@ const GENERATED_ICONS = [
   { size: 512, name: 'icon-512.png' }
 ];
 
-const imageFiles = [
-  'assets/logo.png',
-  'floorplan/floorplan-min.jpg',
-  'sponsors/sponsor-placeholder.png'
-];
+// All event-owned images (logo, floorplan, sponsor logos) live in the content/
+// volume and are served via window.contentUrl() — no build-time hashing needed.
+const imageFiles = [];
 
 const htmlFiles = [
   'index.html',
@@ -92,7 +90,8 @@ const copyOnlyFiles = [
   'votes/README.md',
   'admin/api.php',
   'admin/rehash.php',
-  'admin/content-paths.php'
+  'admin/content-paths.php',
+  'admin/upload.php'
 ];
 
 function generateHash(content) {
@@ -113,8 +112,12 @@ async function generateIcons() {
     process.exit(1);
   }
 
+  // Icons bleiben bewusst ungehasht und unter festem Namen — das erlaubt
+  // Admin-Logo-Uploads, ihre resizes per nginx try_files /content$uri $uri
+  // vor den Build-Default zu legen, ohne manifest.json / HTML neu bauen zu muessen.
+  // Cache-Invalidation laeuft ueber BUILD_VERSION + content/sw-version.txt im SW.
   console.log(`\n🎨 Generating PWA icons from ${SOURCE_ICON}...`);
-  const iconHashMap = {};
+  const iconPaths = [];
 
   for (const icon of GENERATED_ICONS) {
     const buffer = await sharp(sourceIconPath)
@@ -125,22 +128,15 @@ async function generateIcons() {
       .png()
       .toBuffer();
 
-    const hash = generateHash(buffer);
-    const baseName = path.basename(icon.name, '.png');
-    const hashedName = `${baseName}.${hash}.png`;
-    const outputPath = path.join(BUILD_DIR, 'assets', hashedName);
-
+    const outputPath = path.join(BUILD_DIR, 'assets', icon.name);
     ensureDir(outputPath);
     fs.writeFileSync(outputPath, buffer);
 
-    const originalPath = `assets/${icon.name}`;
-    const hashedPath = `assets/${hashedName}`;
-    iconHashMap[originalPath] = hashedPath;
-
-    console.log(`   ✓ ${icon.size}x${icon.size}: ${icon.name} → ${hashedName}`);
+    iconPaths.push(`assets/${icon.name}`);
+    console.log(`   ✓ ${icon.size}x${icon.size}: ${icon.name}`);
   }
 
-  return iconHashMap;
+  return iconPaths;
 }
 
 function processJsonFiles() {
@@ -359,7 +355,7 @@ function updateHtmlFiles(hashMap) {
   });
 }
 
-function updateManifestJson(hashMap) {
+function updateManifestJson() {
   const manifest = {
     name: eventConfig.pwa.manifestName,
     short_name: eventConfig.pwa.manifestShortName,
@@ -376,16 +372,12 @@ function updateManifestJson(hashMap) {
 
   GENERATED_ICONS.forEach(icon => {
     if (icon.size === 16) return;
-    const iconPath = `assets/${icon.name}`;
-    const hashedPath = hashMap[iconPath];
-    if (hashedPath) {
-      manifest.icons.push({
-        src: '/' + hashedPath,
-        sizes: `${icon.size}x${icon.size}`,
-        type: 'image/png',
-        purpose: icon.size === 144 ? 'any' : 'any maskable'
-      });
-    }
+    manifest.icons.push({
+      src: `/assets/${icon.name}`,
+      sizes: `${icon.size}x${icon.size}`,
+      type: 'image/png',
+      purpose: icon.size === 144 ? 'any' : 'any maskable'
+    });
   });
 
   if (eventConfig.pwa.categories) {
@@ -398,7 +390,7 @@ function updateManifestJson(hashMap) {
   console.log('✓ manifest.json generiert');
 }
 
-function updateServiceWorker(hashMap) {
+function updateServiceWorker(hashMap, iconPaths = []) {
   const srcSwPath = path.join(SRC_DIR, 'sw.js');
   if (!fs.existsSync(srcSwPath)) {
     console.warn('⚠ sw.js nicht gefunden');
@@ -432,6 +424,12 @@ function updateServiceWorker(hashMap) {
     const isTranslationJson = originalRelPath.startsWith('translations/');
     if (isJsonFile && !isTranslationJson) return;
     urlsToCache.push(`'./${hashedRelPath}'`);
+  });
+
+  // Icons werden ungehasht ausgeliefert (nginx try_files faellt auf
+  // content/assets/ vor dem Build-Default zurueck).
+  iconPaths.forEach(iconRelPath => {
+    urlsToCache.push(`'./${iconRelPath}'`);
   });
 
   const urlsToCacheString = `const urlsToCache = [\n  ${urlsToCache.join(',\n  ')}\n];`;
@@ -509,22 +507,18 @@ async function main() {
   try {
     cleanBuildDirectory();
 
-    const iconHashMap = await generateIcons();
+    const iconPaths = await generateIcons();
 
     console.log('\n🔖 Kopiere favicon.ico...');
-    const faviconSource = iconHashMap['assets/favicon.png'];
-    if (faviconSource) {
-      const faviconHashedPath = path.join(BUILD_DIR, faviconSource);
-      const faviconDestPath = path.join(BUILD_DIR, 'favicon.ico');
-      if (fs.existsSync(faviconHashedPath)) {
-        fs.copyFileSync(faviconHashedPath, faviconDestPath);
-        console.log('✓ favicon.ico kopiert');
-      }
+    const faviconBuildPath = path.join(BUILD_DIR, 'assets/favicon.png');
+    const faviconDestPath = path.join(BUILD_DIR, 'favicon.ico');
+    if (fs.existsSync(faviconBuildPath)) {
+      fs.copyFileSync(faviconBuildPath, faviconDestPath);
+      console.log('✓ favicon.ico kopiert');
     }
 
     console.log('\n🖼 Verarbeite Bilder...');
     const imageHashMap = processImageFiles();
-    Object.assign(imageHashMap, iconHashMap);
 
     console.log('\n📄 Verarbeite JSON-Dateien (Code-Teil)...');
     const jsonHashMap = processJsonFiles();
@@ -541,10 +535,10 @@ async function main() {
     updateHtmlFiles(hashMap);
 
     console.log('\n📱 Aktualisiere PWA Manifest...');
-    updateManifestJson(hashMap);
+    updateManifestJson();
 
     console.log('\n⚙️ Aktualisiere Service Worker...');
-    updateServiceWorker(hashMap);
+    updateServiceWorker(hashMap, iconPaths);
 
     console.log('\n📋 Erstelle Assets-Hash-Manifest...');
     createAssetsHashManifest(hashMap);

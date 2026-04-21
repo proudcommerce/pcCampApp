@@ -14,11 +14,9 @@ const urlsToCache = [
   './assets/app.css',
   './assets/header.js',
   './assets/favicon.png',
-  './assets/logo.png',
   './assets/icon-144.png',
   './assets/icon-192.png',
-  './assets/icon-512.png',
-  './floorplan/floorplan-min.jpg'
+  './assets/icon-512.png'
 ];
 
 async function resolveCacheName() {
@@ -60,6 +58,12 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('fetch', function(event) {
   const url = new URL(event.request.url);
 
+  // Nicht-GET (POST/PUT/DELETE) sowie alle Admin/Votes-Endpoints komplett dem
+  // Browser ueberlassen — respondWith(fetch(event.request)) zerstoert bei
+  // multipart-Bodies den Request-Stream (Upload-Issue).
+  if (event.request.method !== 'GET') return;
+  if (url.pathname.includes('/votes/') || url.pathname.includes('/admin/')) return;
+
   // Network-first with cache update for JSON data files (content volume + code JSONs).
   // Translations and manifest are cached alongside code assets (cache-first).
   if (url.pathname.endsWith('.json') &&
@@ -81,11 +85,6 @@ self.addEventListener('fetch', function(event) {
           return caches.match(cacheKey);
         })
     );
-    return;
-  }
-
-  if (url.pathname.includes('/votes/') || url.pathname.includes('/admin/')) {
-    event.respondWith(fetch(event.request));
     return;
   }
 

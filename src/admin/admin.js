@@ -21,6 +21,7 @@
   const messageContainer = document.getElementById('message-container');
   const editorToolbar = document.getElementById('editor-toolbar');
   const votingPanel = document.getElementById('voting-panel');
+  const assetsPanel = document.getElementById('assets-panel');
 
   // Resource display names
   const resourceNames = {
@@ -74,6 +75,9 @@
       tab.classList.toggle('active', tab.dataset.resource === resource);
     });
 
+    // Assets-Panel nur im Event-Tab (Uploads fuer Logo/Floorplan)
+    if (assetsPanel) assetsPanel.style.display = resource === 'event' ? '' : 'none';
+
     // Voting tab: show voting panel, hide content editor
     if (resource === 'voting') {
       editorToolbar.style.display = 'none';
@@ -103,6 +107,7 @@
 
       loading.classList.remove('visible');
       renderEditor();
+      if (resource === 'event') refreshAssetPreviews();
     } catch (err) {
       loading.classList.remove('visible');
       showMessage('Fehler beim Laden: ' + err.message, 'error');
@@ -828,7 +833,7 @@
     structuredEditor.appendChild(h('button', {
       className: 'btn-add',
       onClick: () => {
-        sponsors.push({ name: '', logo: 'sponsor-placeholder.png', url: '', beschreibung: '' });
+        sponsors.push({ name: '', logo: 'logos/sponsor-placeholder.png', url: '', beschreibung: '' });
         renderEditor();
       }
     }, '+ Sponsor hinzufügen'));
@@ -955,6 +960,80 @@
       save();
     }
   });
+
+  // ─── Binary Uploads (Logo, Floorplan) ─────────────────────────
+
+  async function uploadAsset(target, file) {
+    const form = new FormData();
+    form.append('target', target);
+    form.append('file', file);
+
+    const response = await fetch('./upload.php', {
+      method: 'POST',
+      body: form,
+      credentials: 'same-origin'
+    });
+    const text = await response.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      // Server liefert kein JSON → meist nginx-Fehlerseite oder SPA-Fallback
+      // (wenn upload.php im laufenden Container fehlt). Zeige Status + Preview.
+      throw new Error('Server lieferte kein JSON (HTTP ' + response.status + '). Antwort-Preview: ' + text.slice(0, 140));
+    }
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Upload fehlgeschlagen (HTTP ' + response.status + ')');
+    }
+    return result;
+  }
+
+  function refreshAssetPreviews() {
+    if (!assetsPanel) return;
+    assetsPanel.querySelectorAll('.asset-preview').forEach(img => {
+      const slot = img.closest('.asset-slot');
+      const target = slot && slot.dataset.target;
+      const cacheBust = '?t=' + Date.now();
+      if (target === 'logo') {
+        const configured = (currentData && currentData.branding && currentData.branding.logo) || 'assets/logo.png';
+        const rel = String(configured).replace(/^\.\//, '');
+        img.src = /^(https?:\/\/|\/)/i.test(rel) ? rel : '/content/' + rel + cacheBust;
+      } else if (target === 'floorplan') {
+        img.src = '/content/floorplan/floorplan.jpg' + cacheBust;
+      }
+    });
+  }
+
+  if (assetsPanel) {
+    assetsPanel.querySelectorAll('input[type="file"][data-upload-target]').forEach(input => {
+      input.addEventListener('change', async () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const target = input.dataset.uploadTarget;
+        input.disabled = true;
+        try {
+          const res = await uploadAsset(target, file);
+          if (target === 'logo') {
+            // branding.logo im aktuell editierten JSON mitfuehren, damit Save
+            // den neuen Pfad persistiert.
+            currentData = currentData || {};
+            currentData.branding = currentData.branding || {};
+            currentData.branding.logo = res.path;
+            if (isRawMode || rawOnlyResources.has(currentResource)) {
+              jsonTextarea.value = JSON.stringify(currentData, null, 2);
+            }
+          }
+          showMessage('Upload erfolgreich: ' + res.path, 'success');
+          refreshAssetPreviews();
+        } catch (err) {
+          showMessage('Upload-Fehler: ' + err.message, 'error');
+        } finally {
+          input.disabled = false;
+          input.value = '';
+        }
+      });
+    });
+  }
 
   // ─── Init ─────────────────────────────────────────────────────
 

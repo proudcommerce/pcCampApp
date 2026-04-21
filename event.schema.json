@@ -51,7 +51,7 @@
       "properties": {
         "logo": {
           "type": "string",
-          "description": "Path to event logo (relative to src/)"
+          "description": "Logo-Quelle: Pfad relativ zum content/-Volume (z.B. \"assets/logo.png\") oder absolute URL (https://...). Beim Admin-Upload wird dieses Feld automatisch aktualisiert."
         },
         "sourceIcon": {
           "type": "string",
