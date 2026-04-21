@@ -168,6 +168,14 @@ content/
 # Backup files created by admin save alongside edited JSONs
 *.backup
 
+# Secrets and keying material — must never land in the repo
+*.sql
+*.sql.gz
+*.pem
+*.key
+*.p12
+*.pfx
+
 # Auto-generated PWA icons (generated from src/assets/icon.png)
 src/assets/favicon.png
 src/assets/icon-144.png
