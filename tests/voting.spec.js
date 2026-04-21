@@ -306,15 +306,15 @@ test.describe('Voting Security', () => {
   const phpEnabled = process.env.PHP_TESTS_ENABLED === 'true';
 
   (phpEnabled ? test : test.skip)('Admin-Bereiche sollten ohne Key geschützt sein', async ({ page }) => {
-    const adminPages = [
-      '/votes/results.php',
-      '/votes/admin.php'
-    ];
+    // /votes/results.php leitet weiter zu /admin/results.php — dort 403 ohne Session.
+    const resultsResponse = await page.goto('/votes/results.php');
+    expect(resultsResponse.status()).toBe(403);
 
-    for (const url of adminPages) {
-      const response = await page.goto(url);
-      expect(response.status()).toBe(403);
-    }
+    // /votes/admin.php leitet zu /admin/ → Login-Formular (200),
+    // Admin-UI darf ohne Auth nicht erreichbar sein.
+    await page.goto('/votes/admin.php');
+    await expect(page.locator('form input[name="admin_key"]')).toBeVisible();
+    await expect(page.locator('.admin-tabs')).toHaveCount(0);
   });
 
   test('UserKey sollte persistent über Seitenaufrufe bleiben', async ({ page }) => {
