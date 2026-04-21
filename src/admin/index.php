@@ -10,6 +10,7 @@ startHardenedSession();
 // Handle login POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_key'])) {
     if (validateAdminKey($_POST['admin_key'])) {
+        session_regenerate_id(true);
         $_SESSION['admin_authenticated'] = true;
         header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?'));
         exit;
