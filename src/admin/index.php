@@ -24,13 +24,6 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-// Also accept ?key= parameter for backwards compatibility
-if (empty($_SESSION['admin_authenticated'])) {
-    if (isset($_GET['key']) && validateAdminKey($_GET['key'])) {
-        $_SESSION['admin_authenticated'] = true;
-    }
-}
-
 // Show login form if not authenticated
 if (empty($_SESSION['admin_authenticated'])) {
 ?>
