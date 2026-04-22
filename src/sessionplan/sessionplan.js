@@ -376,11 +376,17 @@
 		
 		// Prüfe, ob alle Sessions Votes haben (auch 0 Votes zählen)
 		const allHaveVotes = allSessions.every(session => session.hasOwnProperty('votes'));
-		
+
 		if (!allHaveVotes || allSessions.length === 0) {
 			return [];
 		}
-		
+
+		// Keine Medaillen zeigen, solange niemand tatsächlich gevotet hat
+		const hasAnyVotes = allSessions.some(session => (session.votes || 0) > 0);
+		if (!hasAnyVotes) {
+			return [];
+		}
+
 		// Sortiere nach Vote-Anzahl (absteigend) und nimm die Top 3
 		return allSessions
 			.sort((a, b) => (b.votes || 0) - (a.votes || 0))

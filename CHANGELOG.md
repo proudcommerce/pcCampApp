@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.6] - 2026-04-22
+
+Fix Sessionplan zeigte Medaillen-Icons (🥇🥈🥉) auf Sessions an, obwohl noch kein Voting stattgefunden hatte. Ursache: `getTopSessions()` in `src/sessionplan/sessionplan.js` prüfte nur, ob alle Sessions ein `votes`-Property besitzen — nicht, ob tatsächlich Stimmen abgegeben wurden. Da die Seed-Daten bereits `"votes": 0` enthalten, bekam die erste Session der stabilen Sortierung automatisch Gold (Silber/Bronze analog in zugeklappten Zeitslots). Fix: Zusätzlicher Check, dass mindestens eine Session `votes > 0` hat, sonst leeres Top-Array.
+
 ## [3.0.5] - 2026-04-22
 
 Restliche Modul-CSS auf das in 3.0.4 eingefuehrte Token-System gezogen. `src/sessionplan/sessionplan.css`, `src/food/food.css`, `src/floorplan/floorplan.css`, `src/sponsors/sponsors.css` sowie Drawer-Divider/Footer-Hintergrund und Favorite-Idle-Icon in `src/assets/app.css` nutzen jetzt durchgaengig `var(--color-primary|text|text-strong|text-soft|text-muted|border|surface|surface-alt|danger|favorite)` statt hartkodierter Hex-Werte. Hauptursache war der Sessionplan-Grouping-Toggle: `.grouping-btn.active` war hart auf `#3b82f6` (Tailwind-Blau) gesetzt und ignorierte die Event-Primaerfarbe aus `content/assets/custom.css` — aktive Tabs „Nach Uhrzeit" / „Nach Raeumen" ziehen jetzt `--color-primary`. Gleichzeitig Cancelled-Badge (→ `--color-danger`), Favorites-Filter-Herz (→ `--color-favorite`), Sponsor-Karten-Border/Hover/Fallback (→ `--color-primary`), Food-Meal-Ueberschrift (→ `--color-primary`) und Floorplan-Zoom-Hint (→ `--color-primary`) ueberschreibbar gemacht. README um den Abschnitt „Custom Styles / Branding-Farben" mit Token-Liste und Beispiel ergaenzt. Admin-CSS bleibt bewusst aus dem Override-Scope (eigene Farbpalette).
