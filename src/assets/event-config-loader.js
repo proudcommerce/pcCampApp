@@ -15,14 +15,16 @@
 
   console.log('🔧 Development mode detected - loading event.json...');
 
-  function getBasePath() {
+  // Zentrale Definition liegt in header.js (window.getBasePath). Fallback auf
+  // eine identische Lokalkopie, falls header.js (noch) nicht geladen ist.
+  const getBasePath = window.getBasePath || (() => {
     const pathname = window.location.pathname;
     const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
     const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes', 'admin'];
     if (segments.length === 0) return '';
     if (knownPages.includes(segments[0])) return '';
     return '/' + segments[0];
-  }
+  });
 
   const configPath = getBasePath() + '/content/event.json';
   console.log('📍 Loading event.json from:', configPath);
@@ -89,11 +91,12 @@
         });
 
         if (hasPlaceholder) {
-          if (text.includes('<a') && node.parentElement && node.parentElement.classList.contains('copyright-left')) {
-            node.parentElement.innerHTML = text;
-          } else {
-            node.textContent = text;
-          }
+          // Fruehere Version hat hier node.parentElement.innerHTML = text gesetzt,
+          // wenn der Copyright-Text ein `<a>` enthalten hat. Das war eine
+          // XSS-Senke fuer Admin-Content. Wir rendern Text jetzt immer als
+          // textContent — wenn ein Link gebraucht wird, muss der im Template
+          // stehen, nicht im JSON-Text.
+          node.textContent = text;
         }
       });
 

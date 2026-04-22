@@ -14,10 +14,11 @@
  * pick up the new asset via a fresh Service Worker cache.
  */
 
-// Admin-Upload-Debug: alle Fehler sofort anzeigen + loggen, damit ein
-// Worker-Crash/PHP-Fatal nicht als nginx-500 verpufft. (Nur dieser Endpoint.)
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+// Keine Debug-Ausgaben an den Client — Fehler landen nur im Server-Log.
+// (Frueher stand hier display_errors=1, was interne Pfade/Fehlertexte an den
+// Browser geschickt hat.)
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 ini_set('log_errors', '1');
 error_reporting(E_ALL);
 error_log('[admin-upload] entry method=' . ($_SERVER['REQUEST_METHOD'] ?? '-')
@@ -26,8 +27,8 @@ error_log('[admin-upload] entry method=' . ($_SERVER['REQUEST_METHOD'] ?? '-')
 
 header('Content-Type: application/json');
 
-// Fatal-Errors in ein sauberes JSON verpacken, damit das Frontend nicht auf
-// einer nginx-500-HTML-Seite sitzen bleibt.
+// Fatal-Errors in ein sauberes JSON verpacken — Details nur ins Log, nicht
+// in die Response. Frontend bekommt eine generische Meldung.
 register_shutdown_function(function () {
     $err = error_get_last();
     if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR], true)) {
@@ -36,10 +37,7 @@ register_shutdown_function(function () {
             header('Content-Type: application/json');
         }
         error_log('[admin-upload-fatal] ' . $err['message'] . ' in ' . $err['file'] . ':' . $err['line']);
-        echo "\n" . json_encode([
-            'error' => 'Server error: ' . $err['message'],
-            'where' => basename($err['file']) . ':' . $err['line'],
-        ]);
+        echo json_encode(['error' => 'Internal server error']);
     }
 });
 
@@ -49,10 +47,7 @@ set_exception_handler(function ($e) {
         header('Content-Type: application/json');
     }
     error_log('[admin-upload-exception] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-    echo json_encode([
-        'error' => 'Exception: ' . $e->getMessage(),
-        'where' => basename($e->getFile()) . ':' . $e->getLine(),
-    ]);
+    echo json_encode(['error' => 'Internal server error']);
     exit;
 });
 
@@ -72,6 +67,8 @@ if (empty($_SESSION['admin_authenticated'])) {
     echo json_encode(['error' => 'Not authenticated']);
     exit;
 }
+
+requireCsrfToken();
 
 $target = $_POST['target'] ?? null;
 if (!in_array($target, ['logo', 'floorplan', 'sponsor-logo'], true)) {

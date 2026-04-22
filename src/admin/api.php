@@ -3,8 +3,9 @@
  * Admin API - Content Management for pcCampApp
  * Provides CRUD operations for all JSON data files.
  *
+ * Auth: Session-basiert (admin_authenticated) + X-CSRF-Token Header.
  * Usage: POST /admin/api.php
- * Body: { "key": "admin-key", "action": "get|update|reset", "resource": "...", "data": {...} }
+ * Body: { "action": "get|update|reset", "resource": "...", "data": {...} }
  */
 
 header('Content-Type: application/json');
@@ -16,10 +17,27 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Load auth from existing votes config
 require_once __DIR__ . '/../votes/config.php';
 require_once __DIR__ . '/rehash.php';
 require_once __DIR__ . '/content-paths.php';
+require_once __DIR__ . '/schemas.php';
+startHardenedSession();
+
+// Session auth
+if (empty($_SESSION['admin_authenticated'])) {
+    error_log(sprintf(
+        '[admin-api-unauth] ip=%s',
+        $_SERVER['REMOTE_ADDR'] ?? '-'
+    ));
+    http_response_code(403);
+    echo json_encode(['error' => 'Not authenticated']);
+    exit;
+}
+
+// CSRF-Schutz fuer alle mutierenden Requests. GET als Unterart von 'action'
+// ist zwar kein echtes Lese-GET, dient aber dem gleichen UI — also gleich
+// abgesichert.
+requireCsrfToken();
 
 // Parse request body
 $input = json_decode(file_get_contents('php://input'), true);
@@ -27,19 +45,6 @@ $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid JSON body']);
-    exit;
-}
-
-// Validate admin key
-if (!isset($input['key']) || !validateAdminKey($input['key'])) {
-    error_log(sprintf(
-        '[admin-api-fail] action=%s resource=%s ip=%s',
-        $input['action'] ?? '-',
-        $input['resource'] ?? '-',
-        $_SERVER['REMOTE_ADDR'] ?? '-'
-    ));
-    http_response_code(403);
-    echo json_encode(['error' => 'Invalid admin key']);
     exit;
 }
 
@@ -156,6 +161,16 @@ function handleUpdate($file, $resource, $data) {
     if (!is_array($data)) {
         http_response_code(400);
         echo json_encode(['error' => 'Data must be a JSON object or array']);
+        return;
+    }
+
+    // Resource-spezifische Struktur-/Content-Validierung (Schema-light).
+    // Lehnt u.a. javascript:-Links und ungueltige URL-Protokolle ab.
+    $validationError = validateResourcePayload($resource, $data);
+    if ($validationError !== null) {
+        error_log(sprintf('[admin-api-validation] resource=%s error=%s', $resource, $validationError));
+        http_response_code(422);
+        echo json_encode(['error' => 'Validation failed: ' . $validationError]);
         return;
     }
 

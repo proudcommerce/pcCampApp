@@ -423,16 +423,18 @@
 					const timeText = item.timeSlot ? `${item.timeSlot}` : '';
 					li.appendChild(el('div','room',timeText));
 					const titleHost = el('div');
-					
+
 					// Titel mit Badge für entfallene Sessions und Medaillen für Top-Sessions
 					const titleDiv = el('div','title',item?.title ?? '');
 					if (item?.cancelled) {
-						titleDiv.innerHTML = `${item?.title ?? ''} <span class="cancelled-badge">${t('sessionplan.cancelledBadge')}</span>`;
+						titleDiv.appendChild(document.createTextNode(' '));
+						const badge = el('span', 'cancelled-badge', t('sessionplan.cancelledBadge'));
+						titleDiv.appendChild(badge);
 						li.classList.add('cancelled');
 					} else if (topSessionIds.includes(item?.id)) {
 						const rank = topSessionIds.indexOf(item.id) + 1;
 						const medalIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
-						titleDiv.innerHTML = `${item?.title ?? ''} ${medalIcon}`;
+						titleDiv.appendChild(document.createTextNode(' ' + medalIcon));
 					}
 					titleHost.appendChild(titleDiv);
 
@@ -480,12 +482,14 @@
 					// Titel mit Badge für entfallene Sessions und Medaillen für Top-Sessions
 					const titleDiv = el('div','title',item?.title ?? '');
 					if (item?.cancelled) {
-						titleDiv.innerHTML = `${item?.title ?? ''} <span class="cancelled-badge">${t('sessionplan.cancelledBadge')}</span>`;
+						titleDiv.appendChild(document.createTextNode(' '));
+						const badge = el('span', 'cancelled-badge', t('sessionplan.cancelledBadge'));
+						titleDiv.appendChild(badge);
 						li.classList.add('cancelled');
 					} else if (topSessionIds.includes(item?.id)) {
 						const rank = topSessionIds.indexOf(item.id) + 1;
 						const medalIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
-						titleDiv.innerHTML = `${item?.title ?? ''} ${medalIcon}`;
+						titleDiv.appendChild(document.createTextNode(' ' + medalIcon));
 					}
 					titleHost.appendChild(titleDiv);
 					
@@ -673,15 +677,23 @@
 	};
 
 	const userKey = generateUserKey();
-	let votesData = {}; // Wird dynamisch initialisiert
+	let votesData = {}; // aggregates-only, vom Server geliefert
+	let ownVote = { hasVoted: false, sessionId: null };
 
-	// Load votes data
-	const loadVotes = async () => {
+	// Holt aggregate Vote-Zaehler und den eigenen Vote-Status ueber status.php.
+	// Server liefert bewusst KEINE fremden userKeys mehr an den Client.
+	const loadVotes = async (day) => {
 		try {
-			const timestamp = new Date().getTime();
-			const response = await fetch(window.contentUrl('voting/votes.json') + `?t=${timestamp}`);
+			const response = await fetch('../votes/status.php', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'same-origin',
+				body: JSON.stringify({ day, userKey })
+			});
 			if (response.ok) {
-				votesData = await response.json();
+				const payload = await response.json();
+				votesData = payload.aggregates || {};
+				ownVote = payload.ownVote || { hasVoted: false, sessionId: null };
 			}
 		} catch (error) {
 			console.error('Failed to load votes:', error);
@@ -751,8 +763,11 @@
 				button.style.background = '#6b7280';
 				select.disabled = true;
 
-				// Update votes data
-				votesData[day] = result.votes;
+				// Update aggregates + eigener Vote-Status aus Response
+				if (result.sessions) {
+					votesData[day] = { sessions: result.sessions };
+				}
+				ownVote = { hasVoted: true, sessionId: select.value };
 			} else {
 				if (response.status === 409) {
 					console.warn('User already voted - this might be a false positive. UserKey:', userKey);
@@ -859,22 +874,41 @@
 		return { show: false, day: null, dayLabel: null };
 	};
 
-	// Create voting UI for specific day
+	// Create voting UI for specific day.
+	// DOM-Konstruktion statt innerHTML — `day` kommt via votingSchedule aus
+	// event.json und ist zwar schema-validiert, aber defense in depth: wir
+	// interpretieren den Wert nie als HTML.
 	const createVotingUI = (day, dayLabel) => {
 		const container = document.getElementById('voting-container');
-		// set header to include day
 		const header = document.querySelector('#voting-section h3');
 		if (header) header.textContent = `${t('voting.title')} ${dayLabel}`;
 
-		container.innerHTML = `
-			<div class="voting-day">
-				<select id="${day}-vote" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:4px;">
-					<option value="">${t('voting.selectPlaceholder')}</option>
-				</select>
-				<button id="${day}-submit" style="width:100%;margin-top:8px;padding:12px 16px;background:#6b7280;color:white;border:none;border-radius:4px;cursor:not-allowed;font-size:16px;" disabled>${t('voting.submitButton')}</button>
-				<div id="${day}-status" style="margin-top:8px;font-size:0.9em;"></div>
-			</div>
-		`;
+		container.replaceChildren();
+		const wrapper = document.createElement('div');
+		wrapper.className = 'voting-day';
+
+		const select = document.createElement('select');
+		select.id = `${day}-vote`;
+		select.style.cssText = 'width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:4px;';
+		const placeholder = document.createElement('option');
+		placeholder.value = '';
+		placeholder.textContent = t('voting.selectPlaceholder');
+		select.appendChild(placeholder);
+		wrapper.appendChild(select);
+
+		const button = document.createElement('button');
+		button.id = `${day}-submit`;
+		button.disabled = true;
+		button.style.cssText = 'width:100%;margin-top:8px;padding:12px 16px;background:#6b7280;color:white;border:none;border-radius:4px;cursor:not-allowed;font-size:16px;';
+		button.textContent = t('voting.submitButton');
+		wrapper.appendChild(button);
+
+		const status = document.createElement('div');
+		status.id = `${day}-status`;
+		status.style.cssText = 'margin-top:8px;font-size:0.9em;';
+		wrapper.appendChild(status);
+
+		container.appendChild(wrapper);
 	};
 
 	// Debug function to reset user identity (for troubleshooting)
@@ -901,25 +935,22 @@
 		// Show voting section and create UI for current day
 		document.getElementById('voting-section').style.display = 'block';
 		createVotingUI(votingInfo.day, votingInfo.dayLabel);
-		
-		await loadVotes();
+
+		await loadVotes(votingInfo.day);
 		await populateDropdowns(votingInfo.day);
-		
-	// Check if user already voted
-	console.log('Checking vote status for userKey:', userKey);
-	console.log('Votes data for', votingInfo.day, ':', votesData[votingInfo.day]);
-	
-	if (votesData[votingInfo.day].users && votesData[votingInfo.day].users[userKey]) {
-		console.log('User has already voted for', votingInfo.day);
+
+	// Server entscheidet, ob der Nutzer schon gevotet hat. Kein Scannen mehr
+	// durch fremde userKeys — das war der Voting-Data-Leak.
+	console.log('Own vote status for', votingInfo.day, ':', ownVote);
+
+	if (ownVote.hasVoted) {
 		const select = document.getElementById(`${votingInfo.day}-vote`);
 		const button = document.getElementById(`${votingInfo.day}-submit`);
-		select.value = votesData[votingInfo.day].users[userKey].sessionId;
+		if (ownVote.sessionId) select.value = ownVote.sessionId;
 		select.disabled = true;
 		button.textContent = t('voting.alreadyVoted');
 		button.style.background = '#6b7280';
 		button.disabled = true;
-	} else {
-		console.log('User has not voted yet for', votingInfo.day);
 	}
 
 		// Add event listeners

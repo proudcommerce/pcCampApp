@@ -445,9 +445,7 @@ http://localhost:5173/admin/
 
 Beim Aufruf erscheint ein **Login-Formular**, das den Admin-Key via PHP-Session validiert. Der Key wird aus der `VOTING_ADMIN_KEY` Umgebungsvariable gelesen (siehe [.env.example](.env.example)).
 
-**Abmelden** über den Logout-Link oben rechts im Admin-Panel (`/admin/?logout`).
-
-> **Legacy:** Der alte Query-Parameter `?key=DEIN-KEY` funktioniert noch als Backwards-Compat-Fallback, wird aber nicht empfohlen (Key erscheint in Logs und Browser-History).
+**Abmelden** über den Logout-Button oben rechts im Admin-Panel (POST-Form mit CSRF-Token; kein GET-Endpoint).
 
 ### Verwaltbare Bereiche
 
@@ -473,7 +471,7 @@ Der frühere separate Voting-Admin (`/votes/admin.php`) leitet jetzt auf `/admin
 - **Raw JSON Editor** — Umschaltbar für direktes JSON-Editing
 - **Backup/Restore** — Vor jedem Speichern wird automatisch ein Backup erstellt
 - **Sofort live** — Änderungen sind nach dem Speichern direkt für alle User sichtbar (Service Worker network-first für JSON)
-- **Runtime-Cache-Busting** — `rehash.php` aktualisiert `cache-hashes.json` und bumped die SW-Cache-Version automatisch
+- **Runtime-Cache-Busting** — `rehash.php` aktualisiert `content/content-hashes.json` und bumped die SW-Cache-Version automatisch
 - **Tastaturkürzel** — `Ctrl+S` / `Cmd+S` zum Speichern
 
 ### Build-Verhalten
@@ -511,9 +509,7 @@ Das Voting-System kann über `event.json` zeitgesteuert aktiviert werden:
 }
 ```
 
-Der **Admin-Key** wird separat über die `VOTING_ADMIN_KEY` Umgebungsvariable gesetzt (siehe [.env.example](.env.example)) — **nicht mehr in `event.json`**. Zusätzlich kann das Voting auch über den [Admin-Bereich](#️-content-verwaltung-admin) de/aktiviert oder beendet werden.
-
-> **Legacy:** `features.votingAdminKey` in `event.json` funktioniert noch als Deprecated-Fallback, loggt aber eine Warnung. Bei neuen Installationen ausschließlich die Umgebungsvariable verwenden.
+Der **Admin-Key** wird ausschließlich über die `VOTING_ADMIN_KEY` Umgebungsvariable gesetzt (siehe [.env.example](.env.example)) — **nicht mehr in `event.json`**. Der frühere `features.votingAdminKey`-Fallback ist entfernt; der Admin-API-Schema-Validator lehnt das Feld beim Speichern aktiv ab. Zusätzlich kann das Voting auch über den [Admin-Bereich](#️-content-verwaltung-admin) de/aktiviert oder beendet werden.
 
 ### Voting-Konfiguration
 
@@ -543,7 +539,7 @@ Das Voting-Fenster wird nur angezeigt, wenn **alle** folgenden Bedingungen erfü
 #### 2. Admin-Status "active"
 
 ```json
-// src/votes/voting-state.json
+// content/voting/voting-state.json
 {
   "status": "active"  // ← Mögliche Werte: "inactive", "active", "ended"
 }
@@ -769,7 +765,7 @@ Sprache in `event.json` festlegen:
 
 1. **Service Worker Cache** — Network-first für JSON-Daten (damit Admin-Änderungen sofort sichtbar werden), Cache-first für statische Assets (HTML, CSS, JS, Bilder)
 2. **localStorage Cache** — reiner Offline-Fallback für JSON-Daten (wird bei jedem erfolgreichen Fetch aktualisiert, aber nicht als Primärquelle verwendet)
-3. **Cache Busting** — MD5-gehashte Dateinamen, zur Laufzeit aufgelöst via `cache-hashes.json` und `resolveAsset()` — ermöglicht Rehashing ohne Rebuild nach Admin-Edits
+3. **Cache Busting** — MD5-gehashte Dateinamen, zur Laufzeit aufgelöst via `assets-hashes.json` (Code-Assets, Image-Build) und `content/content-hashes.json` (Content-Volume, Runtime-Rehash) — ermöglicht Rehashing ohne Rebuild nach Admin-Edits
 
 Beispiel:
 

@@ -17,6 +17,10 @@ function _computeBasePath() {
     return hasBasePath ? '/' + segments[0] : '';
 }
 
+// Export fuer andere Module (event-config-loader.js), damit Subfolder-Deploys
+// nur an EINER Stelle definiert sind und nicht auseinanderlaufen.
+window.getBasePath = _computeBasePath;
+
 const assetHashesReady = (async () => {
     const basePath = _computeBasePath();
 
@@ -1239,20 +1243,38 @@ class PWAManager {
         const installPrefix = t('pwa.iosInstallPrefix');
         const installText = t('pwa.iosInstallPrompt');
 
-        iosBanner.innerHTML = `
-            <div class="ios-banner-content">
-                <span class="ios-banner-text"><b>${eventName} ${installPrefix}</b><br>${installText}</span>
-            </div>
-            <button class="ios-banner-close">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        `;
-        
-        // Event Listener für Close-Button
-        const closeButton = iosBanner.querySelector('.ios-banner-close');
+        // DOM-Konstruktion statt innerHTML — eventName kommt aus Admin-editierbarer
+        // event.json und darf nicht als HTML interpretiert werden.
+        const bannerContent = document.createElement('div');
+        bannerContent.className = 'ios-banner-content';
+        const bannerText = document.createElement('span');
+        bannerText.className = 'ios-banner-text';
+        const boldPart = document.createElement('b');
+        boldPart.textContent = `${eventName} ${installPrefix}`;
+        bannerText.appendChild(boldPart);
+        bannerText.appendChild(document.createElement('br'));
+        bannerText.appendChild(document.createTextNode(installText));
+        bannerContent.appendChild(bannerText);
+        iosBanner.appendChild(bannerContent);
+
+        const closeButton = document.createElement('button');
+        closeButton.className = 'ios-banner-close';
+        const closeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        closeSvg.setAttribute('width', '16');
+        closeSvg.setAttribute('height', '16');
+        closeSvg.setAttribute('viewBox', '0 0 24 24');
+        closeSvg.setAttribute('fill', 'none');
+        closeSvg.setAttribute('stroke', 'currentColor');
+        closeSvg.setAttribute('stroke-width', '2');
+        [[18,6,6,18],[6,6,18,18]].forEach(([x1,y1,x2,y2]) => {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+            closeSvg.appendChild(line);
+        });
+        closeButton.appendChild(closeSvg);
+        iosBanner.appendChild(closeButton);
+
         closeButton.addEventListener('click', closeBanner);
         
         document.body.appendChild(iosBanner);

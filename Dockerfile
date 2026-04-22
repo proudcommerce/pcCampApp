@@ -20,7 +20,7 @@ RUN node build-cache-busting.cjs
 # =============================================================================
 FROM php:8.2-fpm-alpine
 
-RUN apk add --no-cache nginx wget libpng libjpeg-turbo freetype libwebp
+RUN apk add --no-cache nginx wget libpng libjpeg-turbo freetype libwebp su-exec
 
 # GD extension — used at runtime by src/admin/upload.php to resize the uploaded
 # logo into PWA icons (favicon + 144/192/512) that land in the content volume.
@@ -41,11 +41,22 @@ RUN { \
     echo 'memory_limit = 64M'; \
   } > /usr/local/etc/php/conf.d/uploads.ini
 
+# PHP-FPM-Worker + nginx-Worker laufen als non-root 'nginx'-User. Ohne diese
+# Zeilen startet PHP-FPM seine Worker als 'www-data'; wir konsolidieren auf
+# den nginx-User, damit Schreibrechte im Content-Volume konsistent sind.
+RUN sed -i \
+        -e 's/^user = www-data/user = nginx/' \
+        -e 's/^group = www-data/group = nginx/' \
+        -e 's/^listen.owner = www-data/listen.owner = nginx/' \
+        -e 's/^listen.group = www-data/listen.group = nginx/' \
+        /usr/local/etc/php-fpm.d/www.conf
+
 EXPOSE 5173
 
 COPY --from=builder /app/build /usr/share/nginx/html
 COPY --from=builder /app/seed /app/seed
 COPY nginx.prod.conf /etc/nginx/nginx.conf
+COPY nginx.security-headers.conf /etc/nginx/nginx.security-headers.conf
 RUN mkdir -p /run/nginx
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh

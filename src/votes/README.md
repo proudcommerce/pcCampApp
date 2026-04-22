@@ -84,18 +84,20 @@ POST /votes/vote.php
 
 **Access:**
 ```
-/votes/results.php?key=SECRET_KEY
+/votes/results.php   (nur via authentisierter Admin-Session erreichbar)
 ```
 
 **Features:**
-- Protected by secret key (configured in PHP file)
+- Session-basierte Auth ueber `/admin/` — kein Key in der URL
 - Shows top voted sessions per day
 - Displays session titles, hosts, rooms, and vote counts
 - Winner badge for top session
 
 **Security:**
-- Secret key required: `littGEEGsfdaxsd6Oe6DiJF`
-- Returns 403 Forbidden without valid key
+- Admin-Key wird ausschliesslich ueber die Environment-Variable
+  `VOTING_ADMIN_KEY` konfiguriert und nie ins Repo oder in `event.json`
+  geschrieben.
+- Ohne Admin-Session liefert der Endpoint 403.
 
 ## Data Flow
 
@@ -235,7 +237,7 @@ make dev-start
 
 ### View results:
 ```
-http://localhost:5173/votes/results.php?key=littGEEGsfdaxsd6Oe6DiJF
+http://localhost:5173/admin/   (Login -> Tab "Voting" -> "Ergebnisse anzeigen")
 ```
 
 ### Reset votes for new event:

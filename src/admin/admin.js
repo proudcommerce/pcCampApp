@@ -1,13 +1,17 @@
 /**
  * Admin Content Management UI
  * Provides structured editors for all JSON data resources.
- * ADMIN_KEY is injected by index.php via <script> tag.
+ * Auth: Session-Cookie + CSRF-Token (aus <meta name="csrf-token">).
  */
 (() => {
   // State
   let currentResource = 'sessions';
   let currentData = null;
   let isRawMode = false;
+
+  // CSRF-Token kommt aus dem Meta-Tag in index.php. Wird bei jedem mutierenden
+  // Request als X-CSRF-Token Header mitgesendet. Kein Admin-Secret mehr im DOM.
+  const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
   // DOM elements
   const structuredEditor = document.getElementById('structured-editor');
@@ -41,17 +45,21 @@
   // ─── API Helper ───────────────────────────────────────────────
 
   async function apiCall(action, resource, data) {
-    const body = { key: ADMIN_KEY, action, resource };
+    const body = { action, resource };
     if (data !== undefined) body.data = data;
 
     const response = await fetch('./api.php', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': CSRF_TOKEN
+      },
       body: JSON.stringify(body)
     });
 
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'API error');
+    const result = await response.json().catch(() => ({ error: 'Ungültige Server-Antwort' }));
+    if (!response.ok) throw new Error(result.error || ('HTTP ' + response.status));
     return result;
   }
 
@@ -429,6 +437,24 @@
   }
 
   function collectSessions() {
+    // Vote-Zaehler aus dem aktuell geladenen Datensatz per Session-ID mitziehen.
+    // Vorher stand hier hart `votes: 0` — das hat uebertragene Voting-Ergebnisse
+    // bei jedem Strukturedit zerstoert.
+    const previousVotesById = {};
+    if (currentData && typeof currentData === 'object') {
+      Object.values(currentData).forEach(daySlots => {
+        if (!daySlots || typeof daySlots !== 'object') return;
+        Object.values(daySlots).forEach(sessions => {
+          if (!Array.isArray(sessions)) return;
+          sessions.forEach(s => {
+            if (s && typeof s === 'object' && s.id != null) {
+              previousVotesById[s.id] = Number.isFinite(s.votes) ? s.votes : 0;
+            }
+          });
+        });
+      });
+    }
+
     const data = {};
     structuredEditor.querySelectorAll('[data-day-content]').forEach(dayDiv => {
       const day = dayDiv.getAttribute('data-day-content');
@@ -439,12 +465,13 @@
         const sessions = [];
 
         group.querySelectorAll('.item-card[data-type="session"]').forEach(card => {
+          const id = card.querySelector('[data-name="id"]').value;
           sessions.push({
-            id: card.querySelector('[data-name="id"]').value,
+            id,
             room: card.querySelector('[data-name="room"]').value,
             title: card.querySelector('[data-name="title"]').value,
             host: card.querySelector('[data-name="host"]').value,
-            votes: 0,
+            votes: previousVotesById[id] ?? 0,
             cancelled: card.querySelector('[data-name="cancelled"]').checked
           });
         });
@@ -971,7 +998,8 @@
     const response = await fetch('./upload.php', {
       method: 'POST',
       body: form,
-      credentials: 'same-origin'
+      credentials: 'same-origin',
+      headers: { 'X-CSRF-Token': CSRF_TOKEN }
     });
     const text = await response.text();
     let result;

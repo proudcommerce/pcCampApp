@@ -12,6 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_key'])) {
     if (validateAdminKey($_POST['admin_key'])) {
         session_regenerate_id(true);
         $_SESSION['admin_authenticated'] = true;
+        // Fresh CSRF-Token fuer die neue authentisierte Session.
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?'));
         exit;
     }
@@ -23,8 +25,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_key'])) {
     ));
 }
 
-// Handle logout
-if (isset($_GET['logout'])) {
+// Handle logout — POST only, CSRF-guarded. Vermeidet Drive-by-Logouts per GET/IMG.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
+    if (!empty($_SESSION['admin_authenticated'])) {
+        requireCsrfToken();
+    }
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+    }
     session_destroy();
     header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?'));
     exit;
@@ -51,7 +61,7 @@ body { font:16px/1.4 system-ui,-apple-system,sans-serif; background:#f9fafb; dis
 </style>
 </head>
 <body>
-<form class="login-box" method="POST">
+<form class="login-box" method="POST" autocomplete="off">
     <h2>Admin</h2>
     <?php if (!empty($loginError)): ?>
         <div class="login-error">Ungültiger Admin-Key</div>
@@ -65,8 +75,8 @@ body { font:16px/1.4 system-ui,-apple-system,sans-serif; background:#f9fafb; dis
     exit;
 }
 
-// Authenticated — load voting state for the Voting tab
-$ADMIN_KEY = getAdminKey();
+// Authenticated — prepare CSRF token + load voting state for the Voting tab
+$CSRF_TOKEN = getCsrfToken();
 
 $stateFile = contentPath('voting/voting-state.json');
 if (!is_dir(dirname($stateFile))) {
@@ -85,6 +95,7 @@ if (!file_exists($stateFile)) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<meta name="csrf-token" content="<?= htmlspecialchars($CSRF_TOKEN, ENT_QUOTES) ?>">
 <title>Admin - PC CampApp</title>
 <link rel="stylesheet" href="../assets/app.css">
 <link rel="stylesheet" href="admin.css">
@@ -99,7 +110,11 @@ if (!file_exists($stateFile)) {
 <div class="admin-container">
     <div class="admin-header">
         <h1>Administration</h1>
-        <a href="?logout" class="admin-logout">Abmelden</a>
+        <form method="POST" style="display:inline;margin:0;">
+            <input type="hidden" name="logout" value="1">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($CSRF_TOKEN, ENT_QUOTES) ?>">
+            <button type="submit" class="admin-logout" id="btn-logout">Abmelden</button>
+        </form>
     </div>
     <div id="message-container"></div>
 
@@ -220,9 +235,11 @@ if (!file_exists($stateFile)) {
 
 <script src="../assets/header.js"></script>
 <script>
-const ADMIN_KEY = <?= json_encode($ADMIN_KEY) ?>;
+// CSRF-Token wird aus <meta name="csrf-token"> gelesen und von admin.js in
+// jedem mutierenden Request als X-CSRF-Token Header mitgeschickt. Kein Admin-
+// Secret mehr im DOM — Auth laeuft ueber die HttpOnly-Session-Cookie.
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-// Voting functions (inline, no separate JS file needed)
 function showMessage(text, type) {
     const container = document.getElementById('message-container');
     const div = document.createElement('div');
@@ -243,7 +260,11 @@ async function changeVotingStatus(newStatus) {
     try {
         const response = await fetch('../votes/change-status.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': CSRF_TOKEN
+            },
+            credentials: 'same-origin',
             body: JSON.stringify({ status: newStatus })
         });
         const result = await response.json();
@@ -263,7 +284,11 @@ async function transferVotes() {
     try {
         const response = await fetch('../votes/transfer-votes.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': CSRF_TOKEN
+            },
+            credentials: 'same-origin',
             body: JSON.stringify({})
         });
         const result = await response.json();
