@@ -27,19 +27,17 @@
 - [Quick Start](#-quick-start)
 - [Screenshots](#-screenshots)
 - [Konfiguration](#konfiguration)
-  - [Anpassung für Ihre Veranstaltung](#anpassung-für-ihre-veranstaltung)
+  - [Anpassung für Ihre Veranstaltung](#anpassung-für-ihre-veranstaltung-initial-setup-via-seed)
   - [Eventspezifische JSON-Dateien](#eventspezifische-json-dateien)
   - [JSON-Dateien für neue Events anpassen](#json-dateien-für-neue-events-anpassen)
 - [Content-Verwaltung (Admin)](#️-content-verwaltung-admin)
   - [Zugriff](#zugriff)
   - [Verwaltbare Bereiche](#verwaltbare-bereiche)
-  - [Build-Verhalten](#build-verhalten)
 - [Voting-System](#-voting-system)
   - [Aktivierung](#aktivierung)
   - [Voting-Konfiguration](#voting-konfiguration)
   - [Nutzung](#nutzung)
-  - [Admin-Bereichserver](#admin-bereich)
-  - [Deployment](#deployment)
+  - [Admin-Bereich](#admin-bereich)
 - [Entwicklung](#-entwicklung)
   - [Befehle](#befehle)
 - [Internationalisierung (i18n)](#-internationalisierung-i18n)
@@ -156,9 +154,19 @@ pccampapp5
 
 ## ⚙️ Konfiguration
 
-Die gesamte App ist **konfigurationsgesteuert** über eine einzige Datei: `event.json`
+Die App ist komplett **konfigurationsgesteuert** — keine Code-Änderungen für neue
+Events. Es gibt zwei Wege, Inhalte zu pflegen:
 
-### Anpassung für Ihre Veranstaltung
+| Weg                         | Wann nutzen?                                                             |
+| --------------------------- | ------------------------------------------------------------------------ |
+| **Admin-UI** (empfohlen)    | Laufendes Event, Inhalte ändern sich regelmäßig, keine Dev-Tools nötig   |
+| **seed/** (Initial-Vorlage) | Erstes Deployment eines neuen Events, Vorlage in Git versionieren        |
+
+> Nach dem ersten Container-Start wird `seed/` einmalig nach `content/`
+> kopiert. Ab dann leben alle Inhalte (inkl. Admin-Uploads von Logo/Floorplan/
+> Sponsor-Logos) im `content/`-Volume und überleben jedes Image-Update.
+
+### Anpassung für Ihre Veranstaltung (Initial-Setup via seed/)
 
 ```bash
 # 1. Event-Konfiguration bearbeiten (Seed-Vorlage fuer frische Deployments)
@@ -435,7 +443,9 @@ Hauptnavigation der App:
 
 ## ✏️ Content-Verwaltung (Admin)
 
-Das unified Admin-Panel ermöglicht es, alle Event-Daten (Sessions, Timetable, News, Food, Sponsoren, Navigation) **und** das Voting direkt im Browser zu verwalten — ohne Build, ohne Deployment, ohne Commit.
+Das Admin-Panel verwaltet **alle Event-Daten** (Sessions, Timetable, News, Food,
+Sponsoren, Navigation, Event-Config + Logos/Floorplan) **und** das Voting
+direkt im Browser — ohne Build, ohne Deployment, ohne Commit.
 
 ### Zugriff
 
@@ -443,9 +453,10 @@ Das unified Admin-Panel ermöglicht es, alle Event-Daten (Sessions, Timetable, N
 http://localhost:5173/admin/
 ```
 
-Beim Aufruf erscheint ein **Login-Formular**, das den Admin-Key via PHP-Session validiert. Der Key wird aus der `VOTING_ADMIN_KEY` Umgebungsvariable gelesen (siehe [.env.example](.env.example)).
-
-**Abmelden** über den Logout-Button oben rechts im Admin-Panel (POST-Form mit CSRF-Token; kein GET-Endpoint).
+Login über ein Formular mit dem Admin-Key. Der Key wird beim Deployment über
+die `VOTING_ADMIN_KEY` Umgebungsvariable gesetzt (siehe [.env.example](.env.example))
+und ist nur durch Container-Neustart änderbar. **Logout** über den Button oben
+rechts im Admin-Panel.
 
 ### Verwaltbare Bereiche
 
@@ -466,19 +477,15 @@ Beim Aufruf erscheint ein **Login-Formular**, das den Admin-Key via PHP-Session 
 **Features:**
 
 - **Strukturierter Editor** — Formulare für jede Resource (Felder, Checkboxen, Auswahlen)
-- **Raw JSON Editor** — Umschaltbar für direktes JSON-Editing
+- **Raw JSON Editor** — Umschaltbar für direktes JSON-Editing (Event-Tab ist Raw-only)
+- **Asset-Upload** — App-Logo, Floorplan und Sponsor-Logos per Drag & Drop (im Event-Tab, MIME-validiert, max. 5 MB)
+- **Schema-Validierung** — Payloads werden beim Speichern serverseitig geprüft (Typen, Feldlängen, nur sichere URL-Schemes)
 - **Backup/Restore** — Vor jedem Speichern wird automatisch ein Backup erstellt
 - **Sofort live** — Änderungen sind nach dem Speichern direkt für alle User sichtbar (Service Worker network-first für JSON)
-- **Runtime-Cache-Busting** — `rehash.php` aktualisiert `content/content-hashes.json` und bumped die SW-Cache-Version automatisch
 - **Tastaturkürzel** — `Ctrl+S` / `Cmd+S` zum Speichern
 
-### Build-Verhalten
-
-Admin-Änderungen überleben einen `make build`:
-
-- Beim Build werden Admin-verwaltete JSON-Dateien aus `build/` gesichert
-- Nach dem Build werden sie automatisch wiederhergestellt
-- Nur wenn keine `build/`-Version existiert (erster Build), wird `src/` verwendet
+> **Persistenz:** Admin-Edits leben in `content/` und überleben jedes Image-Update.
+> Der Build fasst das Content-Volume nicht an.
 
 ---
 
@@ -566,35 +573,9 @@ Das aktuelle Datum und die Uhrzeit müssen innerhalb eines konfigurierten Zeitfe
 
 **Prüfung:** System vergleicht aktuellen Wochentag (0=Sonntag, 6=Samstag) und Uhrzeit mit der Konfiguration.
 
-#### 4. GET-Parameter Override (nur für Testing)
-
-Für Entwicklung und Tests kann die Zeitfenster-Prüfung übersprungen werden:
-
-```text
-?vote=samstag  // Zeigt Voting für z. B. Samstag
-```
-
-**Wichtig:** Feature-Flag und Admin-Status müssen trotzdem aktiv sein!
-
-#### Zusammenfassung der Prüfreihenfolge
-
-```plaintext
-1. ✓ voting: true in event.json?
-   └─ Nein → Kein Voting
-   └─ Ja → Weiter zu Schritt 2
-
-2. ✓ status: "active" in voting-state.json?
-   └─ Nein (inactive/ended) → Kein Voting
-   └─ Ja → Weiter zu Schritt 3
-
-3. ✓ GET-Parameter ?vote=... vorhanden?
-   └─ Ja → Voting anzeigen (Zeitfenster übersprungen)
-   └─ Nein → Weiter zu Schritt 4
-
-4. ✓ Aktuelles Datum/Uhrzeit in votingSchedule?
-   └─ Nein → Kein Voting
-   └─ Ja → Voting anzeigen
-```
+> **Testing:** Für lokale Tests kann die Zeitfenster-Prüfung mit dem
+> Query-Parameter `?vote=<tag>` (z. B. `?vote=samstag`) übersprungen werden —
+> Feature-Flag und Admin-Status müssen trotzdem aktiv sein.
 
 ### Nutzung
 
@@ -607,22 +588,12 @@ Für Entwicklung und Tests kann die Zeitfenster-Prüfung übersprungen werden:
 
 ### Admin-Bereich
 
-Voting wird seit v2.0.0 im **unified Admin-Panel** verwaltet — siehe [Content-Verwaltung (Admin)](#️-content-verwaltung-admin).
+Voting wird im [Admin-Panel](#️-content-verwaltung-admin) im Tab **"Voting"** verwaltet:
 
-```text
-http://localhost:5173/admin/
-```
-
-Im Admin-Panel befindet sich der Tab **"Voting"**, der die folgenden Funktionen bereitstellt:
-
-- Live-Statistik des aktuellen Votings
-- De/aktivieren und Beenden von Votings
-- Übermitteln der Ergebnisse in die `sessions.json` für Winner-Badge-Anzeige (TOP 3)
-- Ergebnis-Ansicht mit Medaillen-Ranking (`/admin/results.php`)
-
-**Deployment:**
-
-Die `votes.json` und `voting-state.json` sollten bei einem Deployment nicht überschrieben werden.
+- Live-Statistik und Teilnehmerzahlen
+- Voting aktivieren / deaktivieren / beenden
+- Ergebnisse in `sessions.json` übertragen (Winner-Badge TOP 3)
+- Ergebnis-Ansicht mit Medaillen-Ranking
 
 ---
 
@@ -750,9 +721,9 @@ Sprache in `event.json` festlegen:
 - **Styling:** Reines CSS (keine Präprozessoren)
 - **Backend:** PHP (Voting-System + Content-Verwaltung)
 - **PWA:** Service Worker, Web App Manifest
-- **Build:** Node.js (Cache-Busting, Icon-Generierung)
+- **Build:** Node.js im Multi-Stage Docker-Build (Cache-Busting, Icon-Generierung)
 - **Testing:** Playwright (Cross-Browser)
-- **Server:** nginx (Docker für Entwicklung)
+- **Server:** nginx + PHP-FPM (Docker, Dev + Prod)
 
 ### Caching-Strategie
 
