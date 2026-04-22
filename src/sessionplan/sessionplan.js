@@ -71,11 +71,14 @@
 
 			// Erstelle Tages-Container basierend auf dynamischer Reihenfolge
 			const dayOrder = getDayOrder();
+			const hideDayHeading = dayOrder.length <= 1;
 			dayOrder.forEach((dayInfo, index) => {
-				const h2 = document.createElement('h2');
-				h2.style.cssText = 'font:600 16px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px 0;text-align:center';
-				h2.textContent = dayInfo.name;
-				container.appendChild(h2);
+				if (!hideDayHeading) {
+					const h2 = document.createElement('h2');
+					h2.style.cssText = 'font:600 16px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px 0;text-align:center';
+					h2.textContent = dayInfo.name;
+					container.appendChild(h2);
+				}
 
 				const mount = document.createElement('div');
 				mount.className = 'sessionplan-mount';
@@ -400,7 +403,7 @@
 			
 			Object.keys(roomGroups).sort().forEach(room => {
 				const d = el('details');
-				const s = el('summary',null,`Raum ${room}`);
+				const s = el('summary',null,room);
 				d.appendChild(s);
 				const list = el('ul');
 				const sessions = roomGroups[room];

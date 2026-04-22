@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.3] - 2026-04-22
+
+Sessionplan- und Timetable-UI entschlackt: Das Praefix „Raum" vor dem Raumnamen in der Sessionplan-Raum-Gruppierung entfaellt (`src/sessionplan/sessionplan.js`), der Summary-Text ist jetzt nur noch der Raumname. Zusaetzlich wird die Tages-Ueberschrift im Sessionplan und im Timetable automatisch ausgeblendet, wenn nur ein einziger Tag in den Daten vorhanden ist — damit verschwindet der redundante „Samstag"-/„Sonntag"-Header bei Single-Day-Events. Timetable wurde dazu in eine wiederverwendbare `renderDayContent()`-Funktion refaktoriert, die fuer Single-Day direkt in den Wrapper rendert und fuer Multi-Day weiterhin collapsible `<details>`-Gruppen erzeugt.
+
 ## [3.0.2] - 2026-04-22
 
 Fix Admin-Panel hinter Apache-Reverse-Proxy in Prod (`https://example.com/admin` lief auf `http://…:5173/admin/` ins Leere). Ursache: nginx hat den automatischen Trailing-Slash-Redirect auf `/admin/` absolut mit seinem Container-internen Listen-Port gebaut und die `X-Forwarded-Proto`/`-Port`-Header von Apache ignoriert. Fix: `absolute_redirect off;` im Prod-Server-Block — nginx liefert jetzt nur noch relative `Location`-Header, und der Browser ergaenzt den korrekten Origin selbst.

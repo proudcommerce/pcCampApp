@@ -54,31 +54,39 @@
     return n;
   };
   
+  const renderDayContent = (dayData) => {
+    const content = el('div','slot-content');
+    Object.keys(dayData).sort((a,b)=>timeKey(a)-timeKey(b)).forEach(slot => {
+      const slotDiv = el('div','slot');
+      slotDiv.appendChild(el('div','muted',slot));
+      const sessions = Array.isArray(dayData[slot]) ? dayData[slot] : [];
+      sessions.forEach(item => {
+        const itemDiv = el('div');
+        itemDiv.appendChild(el('div','room',item?.room ?? ''));
+        itemDiv.appendChild(el('div','title',item?.title ?? ''));
+        slotDiv.appendChild(itemDiv);
+      });
+      content.appendChild(slotDiv);
+    });
+    return content;
+  };
+
   const renderInto = (container, data) => {
     if (!data || typeof data !== 'object') return;
     const wrap = el('div','timetable');
-    Object.keys(data).forEach(day => {
-      const d = el('details');
-      const s = el('summary',null,day.charAt(0).toUpperCase() + day.slice(1));
-      d.appendChild(s);
-      
-      const content = el('div','slot-content');
-      const dayData = data[day] || {};
-      Object.keys(dayData).sort((a,b)=>timeKey(a)-timeKey(b)).forEach(slot => {
-        const slotDiv = el('div','slot');
-        slotDiv.appendChild(el('div','muted',slot));
-        const sessions = Array.isArray(dayData[slot]) ? dayData[slot] : [];
-        sessions.forEach(item => {
-          const itemDiv = el('div');
-          itemDiv.appendChild(el('div','room',item?.room ?? ''));
-          itemDiv.appendChild(el('div','title',item?.title ?? ''));
-          slotDiv.appendChild(itemDiv);
-        });
-        content.appendChild(slotDiv);
+    const days = Object.keys(data);
+
+    if (days.length === 1) {
+      wrap.appendChild(renderDayContent(data[days[0]] || {}));
+    } else {
+      days.forEach(day => {
+        const d = el('details');
+        const s = el('summary',null,day.charAt(0).toUpperCase() + day.slice(1));
+        d.appendChild(s);
+        d.appendChild(renderDayContent(data[day] || {}));
+        wrap.appendChild(d);
       });
-      d.appendChild(content);
-      wrap.appendChild(d);
-    });
+    }
     container.replaceChildren(wrap);
   };
   
