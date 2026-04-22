@@ -53,8 +53,15 @@ function isSafeUrl(string $url): bool {
     // Protokollrelative URLs ("//host/...") bewusst blocken: sie erben das
     // Seiten-Schema und entwerten die Scheme-Whitelist.
     if (str_starts_with($url, '//')) return false;
-    // Relative Pfade: absolute ("/foo/bar") oder reine Dateiname-Segmente.
-    if (preg_match('#^(/[\w.\-/]*|[a-z0-9._-]+/?)$#i', $url)) return true;
+    // Relative/absolute Pfade: absolute ("/foo/bar"), dot-relativ
+    // ("./assets/logo.png") oder reine Segmentpfade ("assets/logo.png").
+    // Path-Traversal-Segmente (..) werden unten hart abgelehnt.
+    if (preg_match('#^(/[\w.\-/]*|(\./)?[\w.\-]+(/[\w.\-]+)*/?)$#i', $url)) {
+        foreach (explode('/', $url) as $seg) {
+            if ($seg === '..') return false;
+        }
+        return true;
+    }
     // Schema-basierte URL
     if (!preg_match('#^([a-z][a-z0-9+.-]*):#i', $url, $m)) return false;
     $scheme = strtolower($m[1]);
