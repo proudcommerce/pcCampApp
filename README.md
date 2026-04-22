@@ -13,6 +13,7 @@
 - **📊 Event-Features** - Sessionpläne, Zeitpläne, Speisekarten, Sponsoren, Voting
 - **✏️ Online Content-Verwaltung** - Event-Daten im Browser bearbeiten, ohne Deployment
 - **🎨 Auto-Branding** - PWA-Icons werden automatisch aus einem einzigen Quellbild generiert
+- **🖌️ Custom Styles** - Farbpalette und CSS pro Event ueber `content/assets/custom.css` ueberschreibbar — ohne Rebuild
 - **🧪 100% Getestet** - Playwright-Tests für Übersetzungen, PWA, UI/UX
 - **🐳 Docker Ready** - Entwicklungsumgebung mit einem Befehl
 
@@ -30,6 +31,7 @@
   - [Anpassung für Ihre Veranstaltung](#anpassung-für-ihre-veranstaltung-initial-setup-via-seed)
   - [Eventspezifische JSON-Dateien](#eventspezifische-json-dateien)
   - [JSON-Dateien für neue Events anpassen](#json-dateien-für-neue-events-anpassen)
+  - [Custom Styles / Branding-Farben](#custom-styles--branding-farben)
 - [Content-Verwaltung (Admin)](#️-content-verwaltung-admin)
   - [Zugriff](#zugriff)
   - [Verwaltbare Bereiche](#verwaltbare-bereiche)
@@ -196,10 +198,11 @@ make build
 
 **Keine Code-Änderungen nötig!** Das Build-System automatisch:
 
-- Ersetzt alle `{{EVENT_NAME}}`-Platzhalter in HTML
 - Generiert PWA-Manifest aus der Konfiguration
 - Erstellt alle PWA-Icons (16x16, 144x144, 192x192, 512x512)
 - Wendet Theme-Farben an
+
+Alle `event.json`-Felder (Name, Titel, Beschreibung, Theme-Color, Copyright, Logo-Alt, Manifest) werden zusaetzlich **zur Laufzeit** aus `content/event.json` angewandt — Admin-Edits im Tab „Event" wirken ohne Rebuild. Build-Zeit-Platzhalter `{{EVENT_NAME}}` etc. sind nur noch Initial-Seed.
 
 ### Eventspezifische JSON-Dateien
 
@@ -438,6 +441,28 @@ Hauptnavigation der App:
   - WLAN-Informationen anpassen
 
 **Tipp:** Alternativ können alle JSON-Dateien über die [Content-Verwaltung](#%EF%B8%8F-content-verwaltung-admin) direkt im Browser bearbeitet werden — ohne Build oder Deployment.
+
+### Custom Styles / Branding-Farben
+
+Die Farbpalette und beliebige CSS-Regeln koennen pro Event ueber `content/assets/custom.css` ueberschrieben werden — ohne Rebuild. `src/assets/app.css` und die Modul-CSS nutzen CSS-Custom-Properties; `content/assets/custom.css` wird als letztes Stylesheet geladen und gewinnt.
+
+```css
+/* content/assets/custom.css */
+:root {
+  --color-primary: #d9174b;
+  --color-primary-dark: #b70529;
+  --color-primary-light: #ea285c;
+  --color-text: #41454b;
+  --color-text-strong: #111111;
+  --color-bg: #f5f5f5;
+  --color-border: #dadada;
+}
+
+/* Einzelne Komponenten gezielt ueberschreiben */
+.card { border-radius: 4px; }
+```
+
+Verfuegbare Tokens: `--color-primary` / `-dark` / `-light`, `--color-text` / `-strong` / `-soft` / `-muted`, `--color-bg`, `--color-surface` / `-alt`, `--color-border` / `-strong`, `--color-success`, `--color-danger`, `--color-favorite` / `-hover`. Default-Werte stehen im `:root`-Block von [src/assets/app.css](src/assets/app.css). Seed-Vorlage liegt in [seed/assets/custom.css](seed/assets/custom.css) mit Token-Dokumentation. Admin-UI bleibt bewusst von dem Override ausgenommen.
 
 ---
 
