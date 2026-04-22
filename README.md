@@ -88,9 +88,9 @@ kein PHP, keine Build-Toolchain:
 
 ```bash
 # 1. Repo oder einfach nur diese Dateien klonen:
-#    Dockerfile, docker-compose.prod.yml, nginx.prod.conf,
+#    Dockerfile, docker-compose.prod.yml, nginx.prod.conf, nginx.security-headers.conf,
 #    docker-entrypoint.sh, src/, seed/, build-cache-busting.cjs,
-#    generate-icons.js, package*.json, event.schema.json
+#    package*.json, event.schema.json
 git clone <repository-url>
 cd pccampapp
 
@@ -463,8 +463,6 @@ Beim Aufruf erscheint ein **Login-Formular**, das den Admin-Key via PHP-Session 
 | Voting    | —                | Voting-Status steuern (aktivieren/deaktivieren/beenden), Ergebnisse anzeigen, Votes in `sessions.json` übertragen |
 
 
-Der frühere separate Voting-Admin (`/votes/admin.php`) leitet jetzt auf `/admin/` weiter.
-
 **Features:**
 
 - **Strukturierter Editor** — Formulare für jede Resource (Felder, Checkboxen, Auswahlen)
@@ -622,8 +620,6 @@ Im Admin-Panel befindet sich der Tab **"Voting"**, der die folgenden Funktionen 
 - Übermitteln der Ergebnisse in die `sessions.json` für Winner-Badge-Anzeige (TOP 3)
 - Ergebnis-Ansicht mit Medaillen-Ranking (`/admin/results.php`)
 
-Der alte Einstiegspunkt `/votes/admin.php` leitet automatisch auf `/admin/` weiter.
-
 **Deployment:**
 
 Die `votes.json` und `voting-state.json` sollten bei einem Deployment nicht überschrieben werden.
@@ -640,9 +636,8 @@ Die `votes.json` und `voting-state.json` sollten bei einem Deployment nicht übe
 | Befehl                | Beschreibung                                           |
 | --------------------- | ------------------------------------------------------ |
 | `make install`        | Node.js Dependencies installieren                      |
-| `make build`          | Produktionsversion bauen (Cache-Busting)               |
+| `make build`          | Produktionsversion bauen (Cache-Busting + PWA-Icons)   |
 | `make clean`          | Vollständige Bereinigung (node_modules, build, Docker) |
-| `make generate-icons` | PWA-Icons aus icon.png generieren                      |
 
 
 #### Development (Port 5173 - src/)

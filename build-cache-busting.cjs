@@ -80,10 +80,7 @@ const htmlFiles = [
 // Files copied 1:1 (no hashing). Runtime-editable files (votes, content JSONs)
 // are NOT listed — they live in /content/ which is seeded on container start.
 const copyOnlyFiles = [
-  '.htaccess',
   'votes/vote.php',
-  'votes/results.php',
-  'votes/admin.php',
   'votes/change-status.php',
   'votes/transfer-votes.php',
   'votes/status.php',

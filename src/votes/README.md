@@ -79,12 +79,13 @@ POST /votes/vote.php
 // HTTP 409 Conflict
 ```
 
-### `results.php`
-**Admin results page** - Displays voting results (requires authentication).
+### Results page
+
+**Admin results page** — Displays voting results (requires admin session).
 
 **Access:**
 ```
-/votes/results.php   (nur via authentisierter Admin-Session erreichbar)
+/admin/results.php   (nur via authentisierter Admin-Session erreichbar)
 ```
 
 **Features:**

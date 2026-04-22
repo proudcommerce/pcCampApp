@@ -9,7 +9,7 @@ COPY package*.json ./
 # postinstall hook. sharp's lifecycle scripts must run to pull its native binary.
 RUN npm ci --omit=dev
 
-COPY build-cache-busting.cjs generate-icons.js ./
+COPY build-cache-busting.cjs ./
 COPY src ./src
 COPY seed ./seed
 
