@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.8] - 2026-04-22
+
+Sessionplan-Uhrzeit-Gruppierung zeigte weiterhin „Raum" vor dem Raumnamen im Session-Titel (z. B. „Raum Hangar"). Der Praefix-Entfall aus 3.0.3 hatte nur die Raum-Gruppierungs-Ansicht erwischt. Jetzt auch in der Zeit-Gruppierung nur noch der reine Raumname (`src/sessionplan/sessionplan.js`). Ungenutzten Key `sessionplan.roomPrefix` aus `src/translations/de.json` und `src/translations/en.json` entfernt.
+
 ## [3.0.7] - 2026-04-22
 
 Neues Nav-Icon `car` ergaenzt. Der `createIcon()`-Switch in `src/assets/header.js` kannte bisher nur `calendar`, `clock`, `map`, `food`, `image`, `wifi`, `star` — das Admin-Feld „Icon" akzeptiert freie Strings, sodass z. B. `car` fuer einen Parken-Eintrag stumm zu `null` rendete. Fix: Zusaetzlicher SVG-Pfad fuer ein Auto-Icon, damit Menue-Items mit `icon: "car"` sichtbar sind.

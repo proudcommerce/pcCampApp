@@ -484,7 +484,7 @@
 
 				filteredSessions.forEach(item => {
 					const li = el('li', 'session-card');
-					const roomText = item?.room ? `${t('sessionplan.roomPrefix')} ${item.room}` : '';
+					const roomText = item?.room ? `${item.room}` : '';
 					li.appendChild(el('div','room',roomText));
 					const titleHost = el('div');
 
