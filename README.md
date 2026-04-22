@@ -14,6 +14,7 @@
 - **✏️ Online Content-Verwaltung** - Event-Daten im Browser bearbeiten, ohne Deployment
 - **🎨 Auto-Branding** - PWA-Icons werden automatisch aus einem einzigen Quellbild generiert
 - **🖌️ Custom Styles** - Farbpalette und CSS pro Event ueber `content/assets/custom.css` ueberschreibbar — ohne Rebuild
+- **🔗 SEO & Social-Previews** - Server-seitig gerenderte Meta-, OpenGraph- und Twitter-Card-Tags aus `event.json`, Canonical-URL pro Seite — Crawler und Social-Previews zeigen echte Event-Daten ohne JS
 - **🧪 100% Getestet** - Playwright-Tests für Übersetzungen, PWA, UI/UX
 - **🐳 Docker Ready** - Entwicklungsumgebung mit einem Befehl
 
@@ -94,9 +95,10 @@ kein PHP, keine Build-Toolchain:
 git clone <repository-url>
 cd pccampapp
 
-# 2. Environment setzen (sicherer Admin-Key!)
+# 2. Environment setzen (sicherer Admin-Key + Event-Domain!)
 cp .env.example .env
 vim .env   # VOTING_ADMIN_KEY=<random>
+           # TRUSTED_HOSTS=camp.example.com,www.camp.example.com
 
 # 3. Bauen und starten — Multi-Stage-Build erstellt das Image aus der Node-Stage,
 #    content/ wird beim ersten Start aus seed/ geseedet.
@@ -202,7 +204,9 @@ make build
 - Erstellt alle PWA-Icons (16x16, 144x144, 192x192, 512x512)
 - Wendet Theme-Farben an
 
-Alle `event.json`-Felder (Name, Titel, Beschreibung, Theme-Color, Copyright, Logo-Alt, Manifest) werden zusaetzlich **zur Laufzeit** aus `content/event.json` angewandt — Admin-Edits im Tab „Event" wirken ohne Rebuild. Build-Zeit-Platzhalter `{{EVENT_NAME}}` etc. sind nur noch Initial-Seed.
+Alle `event.json`-Felder (Name, Titel, Beschreibung, Theme-Color, Copyright, Logo-Alt, Manifest, OpenGraph/Twitter-Cards, Canonical-URL) werden **server-seitig beim Request aus `content/event.json` in den HTML-Head gerendert** (die 6 oeffentlichen Einstiegsseiten sind PHP-Templates). Damit sehen Crawler und Social-Previews schon im initialen Response die echten Event-Daten — ganz ohne JavaScript. Admin-Edits im Tab „Event" schlagen ab dem naechsten Request durch; `event-config-loader.js` ergaenzt zusaetzlich ein DOM-Live-Update, damit offene Browser-Tabs die Aenderung auch ohne Reload sehen.
+
+> **Wichtig fuer Prod:** Die Canonical-/OG-URL nutzt den Request-Host, validiert gegen die `TRUSTED_HOSTS`-Env. Ohne eingetragene Domain faellt sie auf `localhost` zurueck — Social-Previews zeigen dann die falsche URL. Siehe [.env.example](.env.example) und den Deploy-Abschnitt unten.
 
 ### Eventspezifische JSON-Dateien
 
