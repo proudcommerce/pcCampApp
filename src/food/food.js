@@ -73,14 +73,18 @@
     return slot;
   };
 
-  const buildDay = (dayName, meals) => {
-    const details = document.createElement('details');
-    details.appendChild(makeEl('summary', null, dayName));
+  const buildDayContent = (meals) => {
     const content = makeEl('div', 'meal-content');
     Object.entries(meals || {}).forEach(([mealName, items]) => {
       content.appendChild(buildMeal(mealName, items));
     });
-    details.appendChild(content);
+    return content;
+  };
+
+  const buildDay = (dayName, meals) => {
+    const details = document.createElement('details');
+    details.appendChild(makeEl('summary', null, dayName));
+    details.appendChild(buildDayContent(meals));
     return details;
   };
   
@@ -99,15 +103,22 @@
         const menu = await response.json();
 
         menuContainer.replaceChildren();
-        Object.entries(menu).forEach(([dayKey, meals]) => {
-          const dayName = dayKey.charAt(0).toUpperCase() + dayKey.slice(1);
-          menuContainer.appendChild(buildDay(dayName, meals));
-        });
+        const dayKeys = Object.keys(menu);
+        if (dayKeys.length === 1) {
+          menuContainer.appendChild(buildDayContent(menu[dayKeys[0]] || {}));
+        } else {
+          dayKeys.forEach(dayKey => {
+            const dayName = dayKey.charAt(0).toUpperCase() + dayKey.slice(1);
+            menuContainer.appendChild(buildDay(dayName, menu[dayKey]));
+          });
+        }
         // Remove data-i18n attribute to prevent translation system from overwriting content
         menuContainer.removeAttribute('data-i18n');
 
-        // Auto-open nach dem Laden
-        autoOpenToday();
+        // Auto-open nach dem Laden (nur bei mehreren Tagen relevant)
+        if (dayKeys.length > 1) {
+          autoOpenToday();
+        }
       } else {
         menuContainer.removeAttribute('data-i18n');
         menuContainer.replaceChildren(makeEl('div', null, t('errors.loadingMenu')));

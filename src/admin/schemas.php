@@ -183,6 +183,23 @@ function validateFood($data): ?string {
                 if (isset($it['allergens']) && !is_array($it['allergens'])) {
                     return "food[$day][$meal][$i].allergens must be array";
                 }
+                if (isset($it['description']) && !isBoundedString($it['description'], 2000)) {
+                    return "food[$day][$meal][$i].description invalid";
+                }
+                if (isset($it['variants'])) {
+                    if (!is_array($it['variants'])) {
+                        return "food[$day][$meal][$i].variants must be array";
+                    }
+                    foreach ($it['variants'] as $vi => $v) {
+                        if (!is_array($v)) return "food[$day][$meal][$i].variants[$vi] not an object";
+                        if (isset($v['name']) && !isBoundedString($v['name'])) {
+                            return "food[$day][$meal][$i].variants[$vi].name invalid";
+                        }
+                        if (isset($v['allergens']) && !is_array($v['allergens'])) {
+                            return "food[$day][$meal][$i].variants[$vi].allergens must be array";
+                        }
+                    }
+                }
             }
         }
     }

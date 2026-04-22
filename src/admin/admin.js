@@ -740,7 +740,46 @@
           row.appendChild(inputField('Allergene', (item.allergens || []).join(', '), { name: 'allergens', placeholder: 'z.B. A, C, G' }));
           card.appendChild(row);
 
+          if (item.description != null) {
+            const descRow = h('div', { className: 'item-row' });
+            descRow.appendChild(textareaField('Beschreibung', item.description, { name: 'description', fullWidth: true }));
+            card.appendChild(descRow);
+          }
+
+          const variantsBox = h('div', { className: 'food-variants' });
+          variantsBox.appendChild(h('div', { className: 'food-variants-label' }, 'Varianten'));
+
+          const variants = Array.isArray(item.variants) ? item.variants : [];
+          variants.forEach((variant, vIdx) => {
+            const vRow = h('div', { className: 'food-variant-row' });
+            vRow.appendChild(inputField('Variante', variant.name, { name: 'variant-name' }));
+            vRow.appendChild(inputField('Allergene', (variant.allergens || []).join(', '), { name: 'variant-allergens', placeholder: 'z.B. A, C, G' }));
+            vRow.appendChild(deleteButton(() => {
+              item.variants.splice(vIdx, 1);
+              if (item.variants.length === 0) delete item.variants;
+              renderEditor();
+            }));
+            variantsBox.appendChild(vRow);
+          });
+
+          variantsBox.appendChild(h('button', {
+            className: 'btn btn-small btn-secondary',
+            onClick: () => {
+              if (!Array.isArray(item.variants)) item.variants = [];
+              item.variants.push({ name: '' });
+              renderEditor();
+            }
+          }, '+ Variante'));
+          card.appendChild(variantsBox);
+
           const actions = h('div', { className: 'item-actions' });
+          if (item.description == null) {
+            actions.appendChild(h('button', {
+              className: 'btn btn-small',
+              style: 'background:#e5e7eb;color:#374151;',
+              onClick: () => { item.description = ''; renderEditor(); }
+            }, '+ Beschreibung'));
+          }
           actions.appendChild(deleteButton(() => { meals[meal].splice(idx, 1); renderEditor(); }));
           card.appendChild(actions);
 
@@ -777,6 +816,29 @@
           if (allergensStr) {
             item.allergens = allergensStr.split(',').map(s => s.trim()).filter(Boolean);
           }
+
+          const descEl = card.querySelector('[data-name="description"]');
+          if (descEl) {
+            const descVal = descEl.value.trim();
+            if (descVal) item.description = descVal;
+          }
+
+          const variantRows = card.querySelectorAll('.food-variant-row');
+          if (variantRows.length > 0) {
+            const variants = [];
+            variantRows.forEach(vRow => {
+              const vName = vRow.querySelector('[data-name="variant-name"]').value.trim();
+              if (!vName) return;
+              const variant = { name: vName };
+              const vAllergens = vRow.querySelector('[data-name="variant-allergens"]').value.trim();
+              if (vAllergens) {
+                variant.allergens = vAllergens.split(',').map(s => s.trim()).filter(Boolean);
+              }
+              variants.push(variant);
+            });
+            if (variants.length > 0) item.variants = variants;
+          }
+
           items.push(item);
         });
 

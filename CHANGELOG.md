@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.15] - 2026-04-22
+
+Food-Menueverwaltung um zwei optionale Felder pro Item erweitert: `description` (Beschreibung, bis 2000 Zeichen) und `variants` (Liste aus `{name, allergens[]}`) — bisher liessen sich Menue-Eintraege nur als flache Name+Allergene-Kombination pflegen. `src/admin/admin.js` rendert im Menue-Editor eine Textarea fuer die Beschreibung (wird per „+ Beschreibung"-Button angelegt, damit alte Eintraege ohne Feld keine leere Textarea bekommen) und einen nested Varianten-Editor mit „+ Variante"/Delete pro Zeile. Beim Speichern werden leere Varianten-Namen verworfen, leere `variants`/`description`-Werte nicht in die JSON geschrieben. `src/admin/schemas.php` lehnt ungueltige Strukturen ab (Description per `isBoundedString`, `variants` muss Array sein, jede Variante ein Objekt mit optionalem `name` und `allergens`-Array). Neues CSS fuer `.food-variants`/`.food-variant-row` in `src/admin/admin.css` (Grid 1fr 1fr 32px fuer Name/Allergene/Delete, eigenes Hintergrund-Panel mit Label).
+
+Frontend-Renderer `src/food/food.js` passt auf Single-Day-Menues an: Liefert `content/menue.json` nur einen Wochentag-Key (Tages-Event oder nur ein aktiver Tag), faellt der `<details>/<summary>`-Akkordeon-Wrapper weg — die Mahlzeiten werden direkt in den Container gerendert. `autoOpenToday()` laeuft nur noch bei mehreren Tagen, damit keine Animation auf ein nicht-vorhandenes `<details>` losgeht. Mehrtagiges Verhalten (Akkordeon + Auto-Open des aktuellen Tages) unveraendert.
+
 ## [3.0.14] - 2026-04-22
 
 Security-Fixes rund um den in 3.0.13 eingefuehrten Server-rendered Event-Head. Der interne Security-Review hat drei Flanken aufgedeckt, die jetzt dicht sind:
