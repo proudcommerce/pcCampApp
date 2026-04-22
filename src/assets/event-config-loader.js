@@ -1,20 +1,18 @@
 /**
  * Event Configuration Loader
- * Loads event.json and replaces placeholders in development mode
- * In production, placeholders are replaced at build time
+ *
+ * Wendet Branding/Meta/Copyright/Manifest zur Laufzeit aus /content/event.json an.
+ * Das ist absichtlich in Dev UND Prod aktiv: Build-Zeit ersetzt zwar Platzhalter
+ * in HTML, aber Admin-Edits der event.json sollen ohne Rebuild wirken. Dieser
+ * Loader ueberschreibt deshalb die entsprechenden DOM-Felder nach dem Fetch —
+ * egal ob vorher Platzhalter oder bereits gebackene Werte drin stehen.
+ *
+ * Copyright/Hashtag werden via textContent gesetzt (XSS-Schutz fuer
+ * Admin-Content — siehe frueheren Kommentar zu innerHTML). Wer HTML im Footer
+ * braucht, hinterlegt es im Template, nicht in der JSON.
  */
 
 (function() {
-  // Check if we're in development mode (placeholders still present)
-  const isDevelopment = document.title.includes('{{');
-
-  if (!isDevelopment) {
-    // Production build - placeholders already replaced
-    return;
-  }
-
-  console.log('🔧 Development mode detected - loading event.json...');
-
   // Zentrale Definition liegt in header.js (window.getBasePath). Fallback auf
   // eine identische Lokalkopie, falls header.js (noch) nicht geladen ist.
   const getBasePath = window.getBasePath || (() => {
@@ -26,124 +24,100 @@
     return '/' + segments[0];
   });
 
-  const configPath = getBasePath() + '/content/event.json';
-  console.log('📍 Loading event.json from:', configPath);
+  const basePath = getBasePath();
+  const configPath = basePath + '/content/event.json';
 
-  // Fetch event.json from correct path
-  fetch(configPath)
-    .then(response => response.json())
-    .then(config => {
-      console.log('📋 Event config loaded:', config.event.name);
+  window.EVENT_CONFIG = null;
 
-      // Create replacement map
-      const allowIndexing = config.seo?.allowIndexing ?? false;
-      const robotsMeta = allowIndexing ? 'index, follow' : 'noindex, nofollow';
-
-      const replacements = {
-        '{{EVENT_NAME}}': config.event.name,
-        '{{EVENT_SHORT_NAME}}': config.event.shortName,
-        '{{EVENT_DESCRIPTION}}': config.event.description,
-        '{{EVENT_HASHTAG}}': config.event.hashtag || '',
-        '{{COPYRIGHT}}': config.event.copyright,
-        '{{EVENT_LOCALE}}': config.event.locale || 'de',
-        '{{THEME_COLOR}}': config.branding.themeColor,
-        '{{BACKGROUND_COLOR}}': config.branding.backgroundColor,
-        '{{ROBOTS_META}}': robotsMeta
-      };
-
-      // Replace in document title
-      if (document.title.includes('{{')) {
-        Object.entries(replacements).forEach(([placeholder, value]) => {
-          document.title = document.title.replace(new RegExp(placeholder, 'g'), value);
-        });
-      }
-
-      // Replace in meta tags
-      document.querySelectorAll('meta[content*="{{"]').forEach(meta => {
-        let content = meta.getAttribute('content');
-        Object.entries(replacements).forEach(([placeholder, value]) => {
-          content = content.replace(new RegExp(placeholder, 'g'), value);
-        });
-        meta.setAttribute('content', content);
-      });
-
-      // Replace lang attribute in html tag
-      const htmlElement = document.documentElement;
-      if (htmlElement.getAttribute('lang')?.includes('{{')) {
-        let langValue = htmlElement.getAttribute('lang');
-        Object.entries(replacements).forEach(([placeholder, value]) => {
-          langValue = langValue.replace(new RegExp(placeholder, 'g'), value);
-        });
-        htmlElement.setAttribute('lang', langValue);
-      }
-
-      // Replace in visible text content
-      const textNodes = getTextNodes(document.body);
-      textNodes.forEach(node => {
-        let text = node.textContent;
-        let hasPlaceholder = false;
-
-        Object.entries(replacements).forEach(([placeholder, value]) => {
-          if (text.includes(placeholder)) {
-            text = text.replace(new RegExp(placeholder, 'g'), value);
-            hasPlaceholder = true;
-          }
-        });
-
-        if (hasPlaceholder) {
-          // Fruehere Version hat hier node.parentElement.innerHTML = text gesetzt,
-          // wenn der Copyright-Text ein `<a>` enthalten hat. Das war eine
-          // XSS-Senke fuer Admin-Content. Wir rendern Text jetzt immer als
-          // textContent — wenn ein Link gebraucht wird, muss der im Template
-          // stehen, nicht im JSON-Text.
-          node.textContent = text;
-        }
-      });
-
-      console.log('✅ Placeholders replaced');
-    })
-    .catch(error => {
-      console.error('❌ Failed to load event.json:', error);
-      console.warn('⚠️  Placeholders will remain visible in development mode');
-    });
-
-  // Helper function to get all text nodes
-  function getTextNodes(node) {
-    const textNodes = [];
-    const walker = document.createTreeWalker(
-      node,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: function(node) {
-          // Skip script and style tags
-          if (node.parentElement.tagName === 'SCRIPT' ||
-              node.parentElement.tagName === 'STYLE') {
-            return NodeFilter.FILTER_REJECT;
-          }
-          // Only accept nodes with placeholders
-          if (node.textContent.includes('{{')) {
-            return NodeFilter.FILTER_ACCEPT;
-          }
-          return NodeFilter.FILTER_REJECT;
-        }
-      }
-    );
-
-    while (walker.nextNode()) {
-      textNodes.push(walker.currentNode);
-    }
-
-    return textNodes;
+  function setMeta(name, value) {
+    if (value === undefined || value === null) return;
+    const el = document.querySelector('meta[name="' + name + '"]');
+    if (el) el.setAttribute('content', value);
   }
 
-  // Make config globally available for other scripts
-  window.EVENT_CONFIG = null;
-  fetch(configPath)
-    .then(r => r.json())
-    .then(config => {
-      window.EVENT_CONFIG = config;
+  function applyHeadConfig(config) {
+    const event = config.event || {};
+    const branding = config.branding || {};
+    const allowIndexing = (config.seo && config.seo.allowIndexing) ?? false;
+    const robotsMeta = allowIndexing ? 'index, follow' : 'noindex, nofollow';
+
+    if (event.locale) document.documentElement.setAttribute('lang', event.locale);
+    if (event.shortName) document.title = event.shortName;
+
+    setMeta('description', event.description);
+    setMeta('robots', robotsMeta);
+    setMeta('theme-color', branding.themeColor);
+    setMeta('apple-mobile-web-app-title', event.shortName);
+    setMeta('msapplication-TileColor', branding.themeColor);
+
+    applyManifest(config);
+  }
+
+  function applyBodyConfig(config) {
+    const event = config.event || {};
+
+    const brandImg = document.querySelector('img[data-brand-logo]');
+    if (brandImg && event.shortName) brandImg.setAttribute('alt', event.shortName);
+
+    // H1 nur auf der Startseite — Unterseiten haben keinen main>h1.
+    const h1 = document.querySelector('main h1');
+    if (h1 && event.name) h1.textContent = event.name;
+
+    const copyrightLeft = document.querySelector('.copyright-left');
+    if (copyrightLeft && event.copyright !== undefined) copyrightLeft.textContent = event.copyright;
+
+    const copyrightRight = document.querySelector('.copyright-right');
+    if (copyrightRight && event.hashtag !== undefined) copyrightRight.textContent = event.hashtag || '';
+  }
+
+  function applyManifest(config) {
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    if (!manifestLink) return;
+
+    const event = config.event || {};
+    const branding = config.branding || {};
+    const pwa = config.pwa || {};
+
+    const manifest = {
+      name: pwa.manifestName,
+      short_name: pwa.manifestShortName,
+      description: pwa.manifestDescription,
+      start_url: pwa.startUrl,
+      display: pwa.display,
+      background_color: branding.backgroundColor,
+      theme_color: branding.themeColor,
+      orientation: pwa.orientation,
+      scope: pwa.scope,
+      lang: event.locale,
+      icons: [
+        { src: basePath + '/assets/icon-144.png', sizes: '144x144', type: 'image/png', purpose: 'any' },
+        { src: basePath + '/assets/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+        { src: basePath + '/assets/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+      ]
+    };
+    if (pwa.categories) manifest.categories = pwa.categories;
+
+    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+    manifestLink.setAttribute('href', URL.createObjectURL(blob));
+  }
+
+  function apply(config) {
+    window.EVENT_CONFIG = config;
+    applyHeadConfig(config);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => applyBodyConfig(config));
+    } else {
+      applyBodyConfig(config);
+    }
+  }
+
+  fetch(configPath, { cache: 'no-cache' })
+    .then(response => {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.json();
     })
+    .then(apply)
     .catch(error => {
-      console.error('❌ Failed to load event.json for window.EVENT_CONFIG:', error);
+      console.error('Failed to load event.json:', error);
     });
 })();

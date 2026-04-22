@@ -8,6 +8,13 @@
   border-radius: 8px;
 }
 
+@media (min-width: 768px) {
+  .floorplan-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+}
+
 .zoom-hint {
   display: flex;
   align-items: center;

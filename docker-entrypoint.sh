@@ -26,7 +26,7 @@ fi
 # Binary defaults (logo/floorplan/sponsor-logos) werden bei bestehenden Volumes
 # nachgezogen, ohne JSONs zu ueberschreiben. Bereits vorhandene Dateien
 # (vom Admin-Upload) bleiben unberuehrt.
-for rel in assets/logo.png floorplan/floorplan.jpg sponsors/logos/sponsor-placeholder.png; do
+for rel in assets/logo.png assets/custom.css floorplan/floorplan.jpg sponsors/logos/sponsor-placeholder.png; do
     src="$SEED_DIR/$rel"
     dst="$CONTENT_DIR/$rel"
     if [ -f "$src" ] && [ ! -e "$dst" ]; then
