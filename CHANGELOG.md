@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.7] - 2026-04-22
+
+Neues Nav-Icon `car` ergaenzt. Der `createIcon()`-Switch in `src/assets/header.js` kannte bisher nur `calendar`, `clock`, `map`, `food`, `image`, `wifi`, `star` — das Admin-Feld „Icon" akzeptiert freie Strings, sodass z. B. `car` fuer einen Parken-Eintrag stumm zu `null` rendete. Fix: Zusaetzlicher SVG-Pfad fuer ein Auto-Icon, damit Menue-Items mit `icon: "car"` sichtbar sind.
+
 ## [3.0.6] - 2026-04-22
 
 Fix Sessionplan zeigte Medaillen-Icons (🥇🥈🥉) auf Sessions an, obwohl noch kein Voting stattgefunden hatte. Ursache: `getTopSessions()` in `src/sessionplan/sessionplan.js` prüfte nur, ob alle Sessions ein `votes`-Property besitzen — nicht, ob tatsächlich Stimmen abgegeben wurden. Da die Seed-Daten bereits `"votes": 0` enthalten, bekam die erste Session der stabilen Sortierung automatisch Gold (Silber/Bronze analog in zugeklappten Zeitslots). Fix: Zusätzlicher Check, dass mindestens eine Session `votes > 0` hat, sonst leeres Top-Array.

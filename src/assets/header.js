@@ -520,6 +520,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             case 'star':
                 d = 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z';
                 break;
+            case 'car':
+                d = 'M3 13l2-6a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 6 M3 13v5h3v-2h12v2h3v-5 M3 13h18 M7 16a1 1 0 1 0 0-.01 M17 16a1 1 0 1 0 0-.01';
+                break;
             default:
                 d = '';
         }
