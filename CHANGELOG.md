@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.10] - 2026-04-22
+
+Logo-Flackern beim Seitenwechsel in Prod behoben. Ursache in `nginx.prod.conf`: die generische `location ^~ /content/` lieferte ALLE Dateien unter `/content/` — also auch das Logo in `/content/assets/logo.png` — mit `Cache-Control: no-store, no-cache, must-revalidate` aus. Da die App eine MPA ist (jeder Link = Full Page Reload) und der Service Worker das Logo nicht vor-cached, musste der Browser es bei jedem Seitenwechsel neu ueber's Netz holen — sichtbar als kurzer Leer-Flash im Header. Fix: zusaetzliche nested `location ^~ /content/assets/` mit `public, max-age=3600, must-revalidate`. Selbes Muster wie bei den bereits vorhandenen PWA-Icons/Favicon-Locations (Zeilen 64-83), die ebenfalls ueber `/content/assets/` admin-editierbar sind. Branding-Assets (Logo, Floorplan, Sponsor-Logos, `custom.css`) kommen jetzt aus dem Browser-Disk-Cache oder per 304-Revalidate; Admin-Aenderungen schlagen spaetestens nach 1h durch bzw. sofort, sobald der Server einen neuen `Last-Modified` liefert. Event-Config-JSONs und sonstige `/content/`-Dateien bleiben unveraendert mit `no-store` ausgeliefert.
+
 ## [3.0.9] - 2026-04-22
 
 Sessionplan-Desktop-Layout gefixt: In der Raum-Gruppierung klebte der Session-Titel ab 768px am rechten Rand direkt unter dem Favoriten-Herz, mit grosser Luecke zwischen Zeitspalte und Titel. Ursache in `src/sessionplan/sessionplan.css`: `flex:1` lag auf `.title`, aber `.title` ist kein direktes Flex-Kind von `li` — es steckt in einem unbenannten Wrapper-`div`. Fix: Wrapper bekommt Klasse `session-body` (`src/sessionplan/sessionplan.js`) und ist jetzt das streckende Flex-Kind, Zeit-/Raumspalte hat `min-width:110px`, `justify-content:space-between` durch `gap:16px` ersetzt und `padding-right:40px` am `li` reserviert Platz fuer das absolut positionierte Favoriten-Herz. Mobile (unter 768px) unveraendert.
