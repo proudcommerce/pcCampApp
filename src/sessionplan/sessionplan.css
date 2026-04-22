@@ -3,13 +3,13 @@
 .sessionplan summary{padding:12px 14px;font-weight:600;list-style:none;cursor:pointer}
 .sessionplan summary::-webkit-details-marker{display:none}
 .sessionplan ul{margin:0;padding:0 14px 12px 14px}
-.sessionplan li{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-top:1px solid var(--color-border)}
+.sessionplan li{display:flex;flex-direction:column;gap:2px;padding:10px 40px 10px 0;border-top:1px solid var(--color-border)}
 .sessionplan li:first-child{border-top:0}
 .sessionplan .room{font-weight:700}
 .sessionplan .title{color:var(--color-text-strong)}
 .sessionplan .host{color:var(--color-text-muted);font-size:0.95em}
 .sessionplan .cancelled-badge{background:var(--color-danger);color:white;padding:2px 6px;border-radius:4px;font-size:0.75em;font-weight:600;margin-left:8px;text-decoration:none}
-@media (min-width:768px){.sessionplan li{flex-direction:row;justify-content:space-between;align-items:baseline}.sessionplan .title{margin-left:8px;flex:1}}
+@media (min-width:768px){.sessionplan li{flex-direction:row;align-items:baseline;gap:16px}.sessionplan .room{flex:0 0 auto;min-width:110px}.sessionplan .session-body{flex:1;min-width:0}}
 
 /* Favorites filter */
 .favorites-filter{margin:20px 0;display:block}

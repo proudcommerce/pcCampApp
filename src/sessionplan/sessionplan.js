@@ -431,7 +431,7 @@
 					const li = el('li', 'session-card');
 					const timeText = item.timeSlot ? `${item.timeSlot}` : '';
 					li.appendChild(el('div','room',timeText));
-					const titleHost = el('div');
+					const titleHost = el('div','session-body');
 
 					// Titel mit Badge für entfallene Sessions und Medaillen für Top-Sessions
 					const titleDiv = el('div','title',item?.title ?? '');
@@ -486,7 +486,7 @@
 					const li = el('li', 'session-card');
 					const roomText = item?.room ? `${item.room}` : '';
 					li.appendChild(el('div','room',roomText));
-					const titleHost = el('div');
+					const titleHost = el('div','session-body');
 
 					// Titel mit Badge für entfallene Sessions und Medaillen für Top-Sessions
 					const titleDiv = el('div','title',item?.title ?? '');

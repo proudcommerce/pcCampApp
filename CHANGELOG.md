@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.9] - 2026-04-22
+
+Sessionplan-Desktop-Layout gefixt: In der Raum-Gruppierung klebte der Session-Titel ab 768px am rechten Rand direkt unter dem Favoriten-Herz, mit grosser Luecke zwischen Zeitspalte und Titel. Ursache in `src/sessionplan/sessionplan.css`: `flex:1` lag auf `.title`, aber `.title` ist kein direktes Flex-Kind von `li` — es steckt in einem unbenannten Wrapper-`div`. Fix: Wrapper bekommt Klasse `session-body` (`src/sessionplan/sessionplan.js`) und ist jetzt das streckende Flex-Kind, Zeit-/Raumspalte hat `min-width:110px`, `justify-content:space-between` durch `gap:16px` ersetzt und `padding-right:40px` am `li` reserviert Platz fuer das absolut positionierte Favoriten-Herz. Mobile (unter 768px) unveraendert.
+
 ## [3.0.8] - 2026-04-22
 
 Sessionplan-Uhrzeit-Gruppierung zeigte weiterhin „Raum" vor dem Raumnamen im Session-Titel (z. B. „Raum Hangar"). Der Praefix-Entfall aus 3.0.3 hatte nur die Raum-Gruppierungs-Ansicht erwischt. Jetzt auch in der Zeit-Gruppierung nur noch der reine Raumname (`src/sessionplan/sessionplan.js`). Ungenutzten Key `sessionplan.roomPrefix` aus `src/translations/de.json` und `src/translations/en.json` entfernt.
