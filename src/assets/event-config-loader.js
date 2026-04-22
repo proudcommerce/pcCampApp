@@ -2,10 +2,11 @@
  * Event Configuration Loader
  *
  * Wendet Branding/Meta/Copyright/Manifest zur Laufzeit aus /content/event.json an.
- * Das ist absichtlich in Dev UND Prod aktiv: Build-Zeit ersetzt zwar Platzhalter
- * in HTML, aber Admin-Edits der event.json sollen ohne Rebuild wirken. Dieser
- * Loader ueberschreibt deshalb die entsprechenden DOM-Felder nach dem Fetch —
- * egal ob vorher Platzhalter oder bereits gebackene Werte drin stehen.
+ * Seit der PHP-Umstellung rendert index.php den Head-Bereich bereits server-seitig
+ * aus derselben JSON — das reicht fuer Crawler/Social-Previews. Dieser Loader
+ * bleibt aktiv, damit Admin-Edits ohne Full-Reload sichtbar werden (DOM-Override)
+ * und damit dynamisch generierte Felder wie Manifest/Logo-URL zur Laufzeit
+ * gesetzt werden.
  *
  * Copyright/Hashtag werden via textContent gesetzt (XSS-Schutz fuer
  * Admin-Content — siehe frueheren Kommentar zu innerHTML). Wer HTML im Footer
@@ -42,12 +43,15 @@
     const robotsMeta = allowIndexing ? 'index, follow' : 'noindex, nofollow';
 
     if (event.locale) document.documentElement.setAttribute('lang', event.locale);
-    if (event.shortName) document.title = event.shortName;
+    // Titel spiegelt den vollen event.name (nicht shortName) — konsistent zu dem
+    // was index.php server-seitig rendert.
+    const titleText = event.name || event.shortName;
+    if (titleText) document.title = titleText;
 
     setMeta('description', event.description);
     setMeta('robots', robotsMeta);
     setMeta('theme-color', branding.themeColor);
-    setMeta('apple-mobile-web-app-title', event.shortName);
+    setMeta('apple-mobile-web-app-title', titleText);
     setMeta('msapplication-TileColor', branding.themeColor);
 
     applyManifest(config);
@@ -59,7 +63,8 @@
 
     const brandImg = document.querySelector('img[data-brand-logo]');
     if (brandImg) {
-      if (event.shortName) brandImg.setAttribute('alt', event.shortName);
+      const altText = event.name || event.shortName;
+      if (altText) brandImg.setAttribute('alt', altText);
 
       const configured = branding.logo || 'assets/logo.png';
       const rel = String(configured).replace(/^\.\//, '');
@@ -74,10 +79,10 @@
     if (h1 && event.name) h1.textContent = event.name;
 
     const copyrightLeft = document.querySelector('.copyright-left');
-    if (copyrightLeft && event.copyright !== undefined) copyrightLeft.textContent = event.copyright;
+    if (copyrightLeft && event.copyright !== undefined) copyrightLeft.innerHTML = event.copyright;
 
     const copyrightRight = document.querySelector('.copyright-right');
-    if (copyrightRight && event.hashtag !== undefined) copyrightRight.textContent = event.hashtag || '';
+    if (copyrightRight && event.hashtag !== undefined) copyrightRight.innerHTML = event.hashtag || '';
   }
 
   function applyManifest(config) {

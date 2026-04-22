@@ -65,14 +65,15 @@ const GENERATED_ICONS = [
 const imageFiles = [];
 
 const htmlFiles = [
-  'index.html',
-  'sessionplan/index.html',
-  'timetable/index.html',
-  'food/index.html',
-  'floorplan/index.html',
-  'sponsors/index.html',
-  // PHP-Templates mit Asset-Referenzen (link/script/img) — gleiche Hash-Rewrite-Logik,
-  // `replaceEventPlaceholders` ist no-op solange keine {{...}}-Platzhalter enthalten sind.
+  // PHP-Templates mit Asset-Referenzen (link/script/img) — gleiche Hash-Rewrite-Logik.
+  // Die ehemaligen *.html wurden auf PHP umgestellt, damit event.json server-seitig
+  // in den Head gerendert wird (SEO/Social-Preview).
+  'index.php',
+  'sessionplan/index.php',
+  'timetable/index.php',
+  'food/index.php',
+  'floorplan/index.php',
+  'sponsors/index.php',
   'admin/index.php',
   'admin/results.php'
 ];
@@ -80,6 +81,7 @@ const htmlFiles = [
 // Files copied 1:1 (no hashing). Runtime-editable files (votes, content JSONs)
 // are NOT listed — they live in /content/ which is seeded on container start.
 const copyOnlyFiles = [
+  'assets/event-head.php',
   'votes/vote.php',
   'votes/change-status.php',
   'votes/transfer-votes.php',
@@ -408,13 +410,15 @@ function updateServiceWorker(hashMap, iconPaths = []) {
     `const BUILD_VERSION = 'v${buildVersion}';`
   );
 
+  // Directory-URLs — nginx liefert dort index.php. Explizit precachen, damit der
+  // Offline-Fallback die Route kennt (cache-key = request URL).
   const urlsToCache = [
     "'./'",
-    "'./index.html'",
-    "'./sessionplan/index.html'",
-    "'./timetable/index.html'",
-    "'./food/index.html'",
-    "'./floorplan/index.html'",
+    "'./sessionplan/'",
+    "'./timetable/'",
+    "'./food/'",
+    "'./floorplan/'",
+    "'./sponsors/'",
     "'./translations.json'",
     "'./assets-hashes.json'"
   ];

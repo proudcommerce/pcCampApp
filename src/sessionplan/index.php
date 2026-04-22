@@ -1,20 +1,22 @@
+<?php require_once __DIR__ . '/../assets/event-head.php'; ?>
 <!doctype html>
-<html lang="{{EVENT_LOCALE}}">
+<html lang="<?= htmlspecialchars(eh_get('event.locale', 'de'), ENT_QUOTES) ?>">
 <head>
 <!-- Source: https://github.com/proudcommerce/pcCampApp -->
-<meta name="robots" content="{{ROBOTS_META}}">
+<meta name="robots" content="<?= htmlspecialchars(eh_robots(), ENT_QUOTES) ?>">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{EVENT_SHORT_NAME}}</title>
+<title><?php eh_echo('event.name'); ?></title>
 <script src="../assets/event-config-loader.js"></script>
 <link rel="icon" type="image/png" href="../assets/favicon.png">
 <link rel="stylesheet" href="../assets/app.css">
 <link rel="stylesheet" href="./sessionplan.css">
 <link rel="stylesheet" href="../content/assets/custom.css">
+<?php eh_render_social_tags(); ?>
 </head>
 <body>
 
-<header class="header"><div class="bar container"><a class="brand" href="../"><img data-brand-logo src="" alt="{{EVENT_SHORT_NAME}}"></a><div class="header-buttons"><button id="newsButton" class="news-button" data-i18n-aria="aria.newsButton"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg><span id="newsBadge" class="news-badge"></span></button><button id="burger" class="burger" data-i18n-aria="aria.menuButton"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button></div></div></header>
+<header class="header"><div class="bar container"><a class="brand" href="../"><img data-brand-logo src="" alt="<?php eh_echo('event.name'); ?>"></a><div class="header-buttons"><button id="newsButton" class="news-button" data-i18n-aria="aria.newsButton"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg><span id="newsBadge" class="news-badge"></span></button><button id="burger" class="burger" data-i18n-aria="aria.menuButton"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button></div></div></header>
 <nav id="nav-drawer" class="drawer container">
   <div id="navItems"></div>
 </nav>
@@ -79,8 +81,8 @@
   </div>
   <div class="footer-copyright">
     <div class="copyright-content">
-      <span class="copyright-left">{{COPYRIGHT}}</span>
-      <span class="copyright-right">{{EVENT_HASHTAG}}</span>
+      <span class="copyright-left"><?= eh_get('event.copyright') ?></span>
+      <span class="copyright-right"><?php eh_echo('event.hashtag'); ?></span>
     </div>
   </div>
 </footer>
@@ -91,5 +93,3 @@
 
 </body>
 </html>
-
-

@@ -6,11 +6,11 @@ let CACHE_NAME = 'event-app-' + BUILD_VERSION;
 
 const urlsToCache = [
   './',
-  './index.html',
-  './sessionplan/index.html',
-  './timetable/index.html',
-  './food/index.html',
-  './floorplan/index.html',
+  './sessionplan/',
+  './timetable/',
+  './food/',
+  './floorplan/',
+  './sponsors/',
   './assets/app.css',
   './assets/header.js',
   './assets/favicon.png',

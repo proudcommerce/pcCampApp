@@ -5,6 +5,7 @@
  */
 require_once __DIR__ . '/../votes/config.php';
 require_once __DIR__ . '/content-paths.php';
+require_once __DIR__ . '/../assets/event-head.php';
 startHardenedSession();
 
 // Handle login POST
@@ -49,7 +50,7 @@ if (empty($_SESSION['admin_authenticated'])) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Admin Login - PC CampApp</title>
+<title>Admin Login – <?php eh_echo('event.name', eh_get('event.shortName', 'CampApp')); ?></title>
 <style>
 body { font:16px/1.4 system-ui,-apple-system,sans-serif; background:#f9fafb; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }
 .login-box { background:white; padding:32px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); width:100%; max-width:360px; }
@@ -96,7 +97,7 @@ if (!file_exists($stateFile)) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="csrf-token" content="<?= htmlspecialchars($CSRF_TOKEN, ENT_QUOTES) ?>">
-<title>Admin - PC CampApp</title>
+<title>Admin – <?php eh_echo('event.name', eh_get('event.shortName', 'CampApp')); ?></title>
 <link rel="stylesheet" href="../assets/app.css">
 <link rel="stylesheet" href="admin.css">
 </head>
