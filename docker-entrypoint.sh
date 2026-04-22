@@ -40,11 +40,14 @@ done
 # Prozessen (nginx-User) schreiben darf.
 chown -R "$RUNTIME_USER:$RUNTIME_GROUP" "$CONTENT_DIR"
 
-echo "🚀 Starting PHP-FPM (as $RUNTIME_USER)..."
-su-exec "$RUNTIME_USER:$RUNTIME_GROUP" php-fpm -D
+# PHP-FPM-Master laeuft als root, damit er /dev/stderr (→ /proc/self/fd/2 des
+# Container-Init) fuer error_log oeffnen darf. Die Worker wechseln laut www.conf
+# (`user = nginx`) automatisch in den unprivilegierten Runtime-User — das ist
+# das offizielle php:fpm-Pattern.
+echo "🚀 Starting PHP-FPM (master root, workers $RUNTIME_USER)..."
+php-fpm -D
 
-# nginx-Master lauft ebenfalls als nginx-User. `daemon off;` + `master_process on;`
-# laesst nginx als einen Prozess mit einem Worker laufen — ausreichend fuer
-# den Container und vermeidet einen root-Master.
-echo "🚀 Starting nginx (as $RUNTIME_USER)..."
-exec su-exec "$RUNTIME_USER:$RUNTIME_GROUP" nginx -g 'daemon off;'
+# nginx-Master laeuft als root, damit er :80/:5173 und /var/log/nginx oeffnen
+# kann. Die Worker wechseln per `user`-Direktive in den nginx-User.
+echo "🚀 Starting nginx..."
+exec nginx -g 'daemon off;'
