@@ -79,10 +79,10 @@
     if (h1 && event.name) h1.textContent = event.name;
 
     const copyrightLeft = document.querySelector('.copyright-left');
-    if (copyrightLeft && event.copyright !== undefined) copyrightLeft.innerHTML = event.copyright;
+    if (copyrightLeft && event.copyright !== undefined) copyrightLeft.textContent = event.copyright;
 
     const copyrightRight = document.querySelector('.copyright-right');
-    if (copyrightRight && event.hashtag !== undefined) copyrightRight.innerHTML = event.hashtag || '';
+    if (copyrightRight && event.hashtag !== undefined) copyrightRight.textContent = event.hashtag || '';
   }
 
   function applyManifest(config) {

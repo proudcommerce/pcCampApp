@@ -8,13 +8,18 @@ services:
       - "${PROD_PORT:-5174}:5173"
     environment:
       - VOTING_ADMIN_KEY=${VOTING_ADMIN_KEY}
+      # Whitelist fuer canonical/OG-URLs — verhindert Host-Header-Injection in
+      # `eh_canonical_url()`. Komma-getrennt, ohne Scheme/Port. Default nur
+      # `localhost` fuer Healthcheck — in Produktion die echte Event-Domain(s)
+      # setzen, z.B. `TRUSTED_HOSTS=camp.example.com,www.camp.example.com`.
+      - TRUSTED_HOSTS=${TRUSTED_HOSTS:-localhost}
     volumes:
       # Code kommt komplett aus dem Image.
       # Nur der laufzeit-aenderbare Content wird vom Host gemountet.
       - ./content:/usr/share/nginx/html/content:rw
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173/index.html"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173/"]
       interval: 30s
       timeout: 3s
       retries: 3

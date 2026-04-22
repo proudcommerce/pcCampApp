@@ -51,9 +51,26 @@ if (!function_exists('eh_get')) {
         return $allow ? 'index, follow' : 'noindex, nofollow';
     }
 
-    // Best-effort Canonical-URL: HTTPS, Host aus X-Forwarded-Host (Reverse-Proxy)
-    // oder Host-Header, Pfad ohne Query. Endet auf `/` fuer Directory-Routen
-    // (nginx-Rewrite index.php zu `/`-Pfad).
+    // Liefert die erlaubten Hostnamen aus TRUSTED_HOSTS-Env (Komma-getrennt).
+    // Ohne Whitelist koennte ein Angreifer per Host-/X-Forwarded-Host-Header
+    // die Canonical-URL und OG-Tags auf seine Domain umleiten (Web-Cache-
+    // Poisoning, SEO-/Social-Preview-Hijacking). Daher strikte Whitelist;
+    // Default ist `localhost` fuer Dev.
+    function eh_trusted_hosts() {
+        static $hosts = null;
+        if ($hosts !== null) return $hosts;
+        $raw = (string) (getenv('TRUSTED_HOSTS') ?: '');
+        $hosts = array_values(array_filter(array_map(
+            fn($h) => strtolower(trim($h)),
+            explode(',', $raw)
+        )));
+        if (empty($hosts)) $hosts = ['localhost'];
+        return $hosts;
+    }
+
+    // Best-effort Canonical-URL: HTTPS, Host gegen TRUSTED_HOSTS-Whitelist
+    // validiert (Reverse-Proxy-safe), Pfad ohne Query. Endet auf `/` fuer
+    // Directory-Routen (nginx-Rewrite index.php zu `/`-Pfad).
     function eh_canonical_url() {
         $scheme = 'https';
         if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
@@ -65,9 +82,16 @@ if (!function_exists('eh_get')) {
         } else {
             $scheme = 'http';
         }
+        if (!in_array($scheme, ['http', 'https'], true)) $scheme = 'https';
 
-        $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
-        $host = explode(',', $host)[0];
+        $rawHost = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
+        $host = strtolower(explode(',', $rawHost)[0]);
+        $host = preg_replace('/:\d+$/', '', $host);
+
+        $allowed = eh_trusted_hosts();
+        if (!in_array($host, $allowed, true)) {
+            $host = $allowed[0];
+        }
 
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';

@@ -41,7 +41,7 @@
   </div>
   <div class="footer-copyright">
     <div class="copyright-content">
-      <span class="copyright-left"><?= eh_get('event.copyright') ?></span>
+      <span class="copyright-left"><?php eh_echo('event.copyright'); ?></span>
       <span class="copyright-right"><?php eh_echo('event.hashtag'); ?></span>
     </div>
   </div>

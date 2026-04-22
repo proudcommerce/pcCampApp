@@ -260,9 +260,21 @@ function validateEvent($data): ?string {
     // Dokumenten-Titeln, Meta-Tags). Striktes is_string + Laengenlimit —
     // vorher stand hier (string)$...; Arrays/Objekte hätten die Pruefung
     // damit als "Array" passiert.
+    //
+    // Zusaetzlich: Defense-in-Depth gegen XSS ueber diese Felder. Auch wenn
+    // die PHP-Templates `eh_echo()` (htmlspecialchars) und der JS-Loader
+    // `textContent` nutzen — ein versehentlicher Raw-Output in kuenftigen
+    // Templates/Scripts wuerde sonst jederzeit zu Stored XSS. Darum hier
+    // schon am Input HTML-Tags ablehnen. Falls formatierter Copyright
+    // gewuenscht ist: strukturell im Template verankern (Link-Wrapper mit
+    // textContent-Slot), nicht per HTML im JSON.
     foreach (['name', 'shortName', 'description', 'hashtag', 'copyright', 'locale'] as $f) {
-        if (isset($data['event'][$f]) && !isBoundedString($data['event'][$f], 500)) {
+        if (!isset($data['event'][$f])) continue;
+        if (!isBoundedString($data['event'][$f], 500)) {
             return "event.$f must be a bounded string";
+        }
+        if ($data['event'][$f] !== strip_tags($data['event'][$f])) {
+            return "event.$f must not contain HTML tags";
         }
     }
 

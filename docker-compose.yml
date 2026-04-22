@@ -8,6 +8,7 @@ services:
       - "${DEV_PORT:-5173}:5173"
     environment:
       - VOTING_ADMIN_KEY=${VOTING_ADMIN_KEY:-change-me-in-production}
+      - TRUSTED_HOSTS=${TRUSTED_HOSTS:-localhost}
     volumes:
       # Code live-reloadable aus src/
       - ./src:/usr/share/nginx/html:rw
