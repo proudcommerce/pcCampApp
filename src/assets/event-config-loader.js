@@ -55,9 +55,19 @@
 
   function applyBodyConfig(config) {
     const event = config.event || {};
+    const branding = config.branding || {};
 
     const brandImg = document.querySelector('img[data-brand-logo]');
-    if (brandImg && event.shortName) brandImg.setAttribute('alt', event.shortName);
+    if (brandImg) {
+      if (event.shortName) brandImg.setAttribute('alt', event.shortName);
+
+      const configured = branding.logo || 'assets/logo.png';
+      const rel = String(configured).replace(/^\.\//, '');
+      const logoSrc = /^(https?:\/\/|\/)/i.test(rel) ? rel : basePath + '/content/' + rel;
+      if (brandImg.getAttribute('src') !== logoSrc) {
+        brandImg.src = logoSrc;
+      }
+    }
 
     // H1 nur auf der Startseite — Unterseiten haben keinen main>h1.
     const h1 = document.querySelector('main h1');

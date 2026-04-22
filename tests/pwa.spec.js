@@ -73,6 +73,18 @@ test.describe('Service Worker', () => {
     expect(response.status()).toBe(200);
   });
 
+  test('Runtime-Content sollte vor generischem Asset-Cache behandelt werden', async ({ page }) => {
+    const response = await page.goto('/sw.js');
+    const sw = await response.text();
+
+    const contentBranch = sw.indexOf("url.pathname.includes('/content/')");
+    const assetBranch = sw.indexOf("url.pathname.includes('/assets/')");
+
+    expect(contentBranch).toBeGreaterThan(-1);
+    expect(assetBranch).toBeGreaterThan(-1);
+    expect(contentBranch).toBeLessThan(assetBranch);
+  });
+
   test('Service Worker sollte aktiviert werden', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');

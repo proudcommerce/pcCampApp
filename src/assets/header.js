@@ -1095,6 +1095,13 @@ class PWAManager {
     
     registerServiceWorker() {
         if ('serviceWorker' in navigator) {
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                refreshing = true;
+                window.location.reload();
+            });
+
             // Dynamischer Pfad basierend auf aktueller URL
             const basePath = getBasePath();
             const isInSubfolder = getPathDepth();
@@ -1115,6 +1122,9 @@ class PWAManager {
             navigator.serviceWorker.register(swPath)
                 .then(registration => {
                     console.log('Service Worker registriert:', registration);
+                    registration.update().catch(error => {
+                        console.log('Service Worker Update-Pruefung fehlgeschlagen:', error);
+                    });
                     
                     // Fehlerbehandlung für Message Port
                     registration.addEventListener('updatefound', () => {
@@ -1122,8 +1132,8 @@ class PWAManager {
                         if (newWorker) {
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // Neuer Service Worker verfügbar
-                                    console.log('Neuer Service Worker verfügbar');
+                                    console.log('Neuer Service Worker verfügbar, aktiviere Update');
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
                                 }
                             });
                         }

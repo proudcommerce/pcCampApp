@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.12] - 2026-04-22
+
+Logo-Flackern final nachgezogen. Die nginx-Header aus 3.0.10/3.0.11 waren korrekt, wurden aber vom Service Worker unterlaufen: Dessen generische Asset-Branch behandelte auch `/content/assets/logo.jpg` als Cache-First, weil der Pfad `/assets/` enthaelt. Runtime-Content unter `/content/` wird jetzt im Service Worker vor dieser generischen Asset-Regel Network-First mit Offline-Fallback behandelt. Zusaetzlich setzt `event-config-loader.js` das Header-Logo direkt aus `/content/event.json`, bevor `header.js` nach Hash-Manifests und Translations fertig ist. Dadurch verschwindet das leere Logo-Fenster beim Seitenwechsel, und Admin-Uploads mit gleicher Logo-URL bleiben nicht mehr im CacheStorage haengen. Neue Service-Worker-Versionen werden aktiv per `registration.update()` gesucht, direkt per `SKIP_WAITING` aktiviert und laden die Seite einmal neu, damit bestehende Clients nicht weiter vom alten Cache-First-Worker kontrolliert werden.
+
 ## [3.0.11] - 2026-04-22
 
 Nachbesserung zum Logo-Caching aus 3.0.10: In Prod blieb das Flackern bestehen, weil der Browser zwei widersprechende `Cache-Control`-Header sah — `max-age=0` und `public, max-age=3600, must-revalidate`. Ursache: die nested `location ^~ /content/assets/` erbte das `expires 0;` der aeusseren `location ^~ /content/`, und nginx generiert aus `expires` **zusaetzlich** einen eigenen `Cache-Control: max-age=0`-Header, der den manuellen `add_header` nicht ersetzt sondern ergaenzt. Bei mehreren `Cache-Control`-Werten gewinnt der restriktivere — Ergebnis: kein Caching. Fix: `expires off;` in der nested Location, damit die automatische Header-Generierung deaktiviert ist und nur unser gewuenschter `add_header` uebrig bleibt. Sichtbar im DevTools-Network-Panel: Response hat jetzt nur noch eine `Cache-Control`-Zeile, zweiter Request liefert 304 Not Modified.

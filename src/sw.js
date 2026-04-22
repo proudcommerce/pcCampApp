@@ -64,7 +64,30 @@ self.addEventListener('fetch', function(event) {
   if (event.request.method !== 'GET') return;
   if (url.pathname.includes('/votes/') || url.pathname.includes('/admin/')) return;
 
-  // Network-first with cache update for JSON data files (content volume + code JSONs).
+  // Runtime content is admin-editable and may keep stable URLs (notably
+  // /content/assets/logo.jpg). Use network-first so updates are not hidden by
+  // the generic cache-first asset branch below, but keep an offline fallback.
+  if (url.pathname.includes('/content/')) {
+    const cacheKey = url.origin + url.pathname;
+    event.respondWith(
+      fetch(event.request)
+        .then(function(response) {
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(function(cache) {
+              cache.put(cacheKey, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(function() {
+          return caches.match(cacheKey);
+        })
+    );
+    return;
+  }
+
+  // Network-first with cache update for code JSON data files.
   // Translations and manifest are cached alongside code assets (cache-first).
   if (url.pathname.endsWith('.json') &&
       !url.pathname.endsWith('manifest.json') &&
