@@ -39,7 +39,7 @@
   - [Nutzung](#nutzung)
   - [Admin-Bereich](#admin-bereich)
 - [Entwicklung](#-entwicklung)
-  - [Befehle](#befehle)
+  - [Wichtigste Befehle](#wichtigste-befehle)
 - [Internationalisierung (i18n)](#-internationalisierung-i18n)
   - [Unterstützte Sprachen](#unterstützte-sprachen)
   - [i18n-Konfiguration](#i18n-konfiguration)
@@ -599,68 +599,19 @@ Voting wird im [Admin-Panel](#️-content-verwaltung-admin) im Tab **"Voting"** 
 
 ## 💻 Entwicklung
 
-### Befehle
+### Wichtigste Befehle
 
-#### Setup & Build
+| Befehl                | Was es tut                                                  |
+| --------------------- | ----------------------------------------------------------- |
+| `make dev-start`      | Dev-Container starten (Port 5173, Live-Reload aus `src/`)   |
+| `make dev-prod-start` | Prod-Image lokal testen (Port 5174, Multi-Stage-Build)      |
+| `make prod-start`     | Prod-Container für Server-Deployment (detached, baut Image) |
+| `make test-all`       | Alle Playwright-Tests                                       |
+| `make clean`          | node_modules, build-Output und Docker-Artefakte entfernen   |
 
-
-| Befehl                | Beschreibung                                           |
-| --------------------- | ------------------------------------------------------ |
-| `make install`        | Node.js Dependencies installieren                      |
-| `make build`          | Produktionsversion bauen (Cache-Busting + PWA-Icons)   |
-| `make clean`          | Vollständige Bereinigung (node_modules, build, Docker) |
-
-
-#### Development (Port 5173 - src/)
-
-
-| Befehl            | Beschreibung                        |
-| ----------------- | ----------------------------------- |
-| `make dev-start`  | Entwicklungsserver starten          |
-| `make dev-stop`   | Entwicklungsserver stoppen          |
-| `make dev-build`  | Docker Image neu bauen (ohne Cache) |
-| `make dev-logs`   | Live-Logs anzeigen                  |
-| `make dev-remove` | Container + Volumes entfernen       |
-
-
-#### Dev-Prod (Port 5174 - lokaler Prod-Test, Foreground)
-
-
-| Befehl                 | Beschreibung                                 |
-| ---------------------- | -------------------------------------------- |
-| `make dev-prod-start`  | Lokaler Prod-Test starten (inkl. Build)      |
-| `make dev-prod-stop`   | Lokaler Prod-Test stoppen                    |
-| `make dev-prod-build`  | Docker Image neu bauen (ohne Cache)          |
-| `make dev-prod-logs`   | Live-Logs anzeigen                           |
-| `make dev-prod-remove` | Container + Volumes entfernen                |
-
-
-#### Production (Port 5174 - Server-Deployment, Detached)
-
-
-| Befehl             | Beschreibung                                 |
-| ------------------ | -------------------------------------------- |
-| `make prod-start`  | Prod-Container im Hintergrund (inkl. Build)  |
-| `make prod-stop`   | Prod-Container stoppen                       |
-| `make prod-build`  | Docker Image neu bauen (ohne Cache)          |
-| `make prod-logs`   | Live-Logs anzeigen                           |
-| `make prod-remove` | Container + Volumes entfernen                |
-
-
-#### Testing
-
-
-| Befehl                      | Beschreibung                                            |
-| --------------------------- | ------------------------------------------------------- |
-| `make test`                 | Standard Tests (119 Tests, Port 5174, nginx + PHP-FPM)  |
-| `make test-php`             | Voting/PHP Tests (23 Tests, Port 5174, nginx + PHP-FPM) |
-| `make test-translations`    | Übersetzungs-Tests (42 Tests, DE + EN)                  |
-| `make test-translations-de` | Übersetzungs-Tests nur Deutsch (21 Tests)               |
-| `make test-translations-en` | Übersetzungs-Tests nur Englisch (21 Tests)              |
-| `make test-all`             | Alle Tests (142 Tests, Standard + PHP + Translations)   |
-| `make test-headed`          | Standard Tests mit sichtbarem Browser                   |
-| `make test-php-headed`      | Voting/PHP Tests mit sichtbarem Browser                 |
-| `make test-report`          | HTML Test-Report öffnen                                 |
+Jedes der drei `start`-Targets hat passende `-stop`, `-build`, `-logs` und
+`-remove`-Varianten (z. B. `make dev-stop`, `make prod-build`). Eine vollständige
+Übersicht liefert `make help` oder `cat Makefile`.
 
 
 ---
