@@ -17,6 +17,8 @@ services:
       - ./seed:/app/seed:ro
       # Dev-nginx-Config
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # Security-Header-Include (nginx.conf inkludiert es auf Server-Ebene)
+      - ./nginx.security-headers.conf:/etc/nginx/nginx.security-headers.conf:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173/"]

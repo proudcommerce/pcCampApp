@@ -51,6 +51,13 @@ RUN sed -i \
         -e 's/^listen.group = www-data/listen.group = nginx/' \
         /usr/local/etc/php-fpm.d/www.conf
 
+# PHP-FPM-Master loggt auf stderr des Containers. Default `/proc/self/fd/2`
+# scheitert beim non-root-Start, weil der nginx-User den FD nicht oeffnen darf.
+RUN { \
+    echo '[global]'; \
+    echo 'error_log = /dev/stderr'; \
+  } > /usr/local/etc/php-fpm.d/zz-logging.conf
+
 EXPOSE 5173
 
 COPY --from=builder /app/build /usr/share/nginx/html
