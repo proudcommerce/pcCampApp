@@ -58,6 +58,12 @@ if (!$action || !$resource) {
     exit;
 }
 
+// Custom CSS wird als Plain-Text gespeichert (kein JSON) — eigener Pfad.
+if ($resource === 'customcss') {
+    handleCustomCss($action, $input['data'] ?? null);
+    exit;
+}
+
 // Resource to file path mapping — all content lives in the content/ volume.
 $resourceMap = [
     'sessions'  => contentPath('sessionplan/sessions.json'),
@@ -217,6 +223,84 @@ function handleUpdate($file, $resource, $data) {
         'resource' => $resource,
         'backup'   => true,
     ]);
+}
+
+/**
+ * Custom-CSS Handler — Plain-Text statt JSON, eigener Pfad in content/assets/.
+ * Schreibt content/assets/custom.css mit Backup, Groessen-Limit und einem
+ * Defense-in-Depth-Block gegen </style>-Breakouts.
+ */
+function handleCustomCss($action, $data) {
+    $file = contentPath('assets/custom.css');
+    $backupDir = contentRoot() . '/.backups';
+    if (!is_dir($backupDir)) {
+        mkdir($backupDir, 0750, true);
+    }
+    $backupFile = $backupDir . '/custom.css.backup';
+
+    switch ($action) {
+        case 'get':
+            $content = is_file($file) ? file_get_contents($file) : '';
+            echo json_encode([
+                'success'      => true,
+                'resource'     => 'customcss',
+                'data'         => $content,
+                'backupExists' => is_file($backupFile),
+            ]);
+            return;
+
+        case 'update':
+            if (!is_string($data)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Data must be a string']);
+                return;
+            }
+            // 100 KB sollte fuer Theming dicke reichen.
+            if (strlen($data) > 102400) {
+                http_response_code(422);
+                echo json_encode(['error' => 'CSS zu gross (max 100 KB)']);
+                return;
+            }
+            // Defense-in-Depth: kein </style oder <script erlauben — wuerde im
+            // <link>-Kontext zwar nicht ausgefuehrt, aber falls jemand die Datei
+            // mal inline einbettet, schliesst das die Tuer von vornherein.
+            if (preg_match('#</\s*style|<\s*script#i', $data)) {
+                http_response_code(422);
+                echo json_encode(['error' => 'CSS enthaelt verbotene Tags (<style>/<script>)']);
+                return;
+            }
+
+            if (is_file($file)) {
+                file_put_contents($backupFile, file_get_contents($file));
+            }
+            file_put_contents($file, $data);
+
+            echo json_encode([
+                'success'  => true,
+                'message'  => 'custom.css gespeichert',
+                'resource' => 'customcss',
+                'backup'   => is_file($backupFile),
+            ]);
+            return;
+
+        case 'reset':
+            if (!is_file($backupFile)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Kein Backup vorhanden']);
+                return;
+            }
+            file_put_contents($file, file_get_contents($backupFile));
+            echo json_encode([
+                'success'  => true,
+                'message'  => 'custom.css aus Backup wiederhergestellt',
+                'resource' => 'customcss',
+            ]);
+            return;
+
+        default:
+            http_response_code(400);
+            echo json_encode(['error' => 'Unknown action: ' . $action]);
+    }
 }
 
 /**

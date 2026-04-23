@@ -129,6 +129,7 @@ if (!file_exists($stateFile)) {
         <button class="admin-tab" data-resource="sponsors">Sponsors</button>
         <button class="admin-tab" data-resource="menu">Menu</button>
         <button class="admin-tab" data-resource="event">Event</button>
+        <button class="admin-tab" data-resource="customcss">Design</button>
         <button class="admin-tab" data-resource="voting">Voting</button>
     </div>
 
@@ -176,6 +177,22 @@ if (!file_exists($stateFile)) {
         <div id="raw-editor" class="raw-editor" style="display:none;">
             <textarea id="json-textarea" spellcheck="false"></textarea>
             <div id="json-error" class="json-error" style="display:none;"></div>
+        </div>
+
+        <!-- Custom CSS Editor (Plain-Text, eigener Endpoint) -->
+        <div id="css-editor" class="raw-editor" style="display:none;">
+            <p class="css-editor-hint">
+                Diese Datei wird als <strong>letzte CSS-Datei</strong> auf allen Seiten geladen
+                und kann jede Regel/Variable uebersteuern. Verfuegbare Color-Tokens:
+                <code>--color-primary</code>, <code>--color-primary-dark</code>,
+                <code>--color-primary-light</code>, <code>--color-text</code>,
+                <code>--color-text-strong</code>, <code>--color-bg</code>,
+                <code>--color-surface</code>, <code>--color-border</code>,
+                <code>--color-success</code>, <code>--color-danger</code>,
+                <code>--color-favorite</code> u.a.
+            </p>
+            <textarea id="css-textarea" spellcheck="false" placeholder=":root { --color-primary: #d9174b; }"></textarea>
+            <div id="css-error" class="json-error" style="display:none;"></div>
         </div>
 
         <!-- Voting Panel (inline, no separate page) -->

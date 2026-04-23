@@ -18,6 +18,9 @@
   const rawEditor = document.getElementById('raw-editor');
   const jsonTextarea = document.getElementById('json-textarea');
   const jsonError = document.getElementById('json-error');
+  const cssEditor = document.getElementById('css-editor');
+  const cssTextarea = document.getElementById('css-textarea');
+  const cssError = document.getElementById('css-error');
   const loading = document.getElementById('loading');
   const resourceLabel = document.getElementById('resource-label');
   const modeToggle = document.getElementById('mode-toggle');
@@ -36,7 +39,8 @@
     allergene: 'Allergene',
     sponsors: 'Sponsors',
     menu: 'Menu',
-    event: 'Event-Config'
+    event: 'Event-Config',
+    customcss: 'Design (custom.css)'
   };
 
   // Resources that only support the raw JSON editor (no structured view).
@@ -91,8 +95,33 @@
       editorToolbar.style.display = 'none';
       structuredEditor.style.display = 'none';
       rawEditor.style.display = 'none';
+      if (cssEditor) cssEditor.style.display = 'none';
       loading.classList.remove('visible');
       votingPanel.style.display = '';
+      return;
+    }
+
+    // Custom-CSS tab: eigener Plain-Text Editor.
+    if (resource === 'customcss') {
+      votingPanel.style.display = 'none';
+      editorToolbar.style.display = '';
+      structuredEditor.style.display = 'none';
+      rawEditor.style.display = 'none';
+      if (cssEditor) cssEditor.style.display = '';
+      if (modeToggle) modeToggle.disabled = true;
+      resourceLabel.textContent = resourceNames[resource];
+      structuredEditor.innerHTML = '';
+      loading.classList.add('visible');
+      try {
+        const result = await apiCall('get', resource);
+        currentData = typeof result.data === 'string' ? result.data : '';
+        cssTextarea.value = currentData;
+        if (cssError) cssError.style.display = 'none';
+      } catch (err) {
+        showMessage('Fehler beim Laden: ' + err.message, 'error');
+      } finally {
+        loading.classList.remove('visible');
+      }
       return;
     }
 
@@ -103,6 +132,7 @@
     editorToolbar.style.display = '';
     structuredEditor.style.display = effectiveRaw ? 'none' : '';
     rawEditor.style.display = effectiveRaw ? '' : 'none';
+    if (cssEditor) cssEditor.style.display = 'none';
     if (modeToggle) modeToggle.disabled = forceRaw;
 
     resourceLabel.textContent = resourceNames[resource] || resource;
@@ -186,8 +216,14 @@
   // ─── Save & Restore ───────────────────────────────────────────
 
   async function save() {
-    const data = collectData();
-    if (data === null) return;
+    let data;
+    if (currentResource === 'customcss') {
+      data = cssTextarea.value;
+      if (cssError) cssError.style.display = 'none';
+    } else {
+      data = collectData();
+      if (data === null) return;
+    }
 
     btnSave.disabled = true;
     btnSave.textContent = 'Speichern...';
@@ -197,6 +233,10 @@
       currentData = data;
       showMessage(resourceNames[currentResource] + ' gespeichert', 'success');
     } catch (err) {
+      if (currentResource === 'customcss' && cssError) {
+        cssError.textContent = err.message;
+        cssError.style.display = '';
+      }
       showMessage('Fehler beim Speichern: ' + err.message, 'error');
     } finally {
       btnSave.disabled = false;

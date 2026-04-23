@@ -200,6 +200,47 @@
     font-size: 13px;
 }
 
+/* Custom CSS Editor */
+#css-textarea {
+    width: 100%;
+    min-height: 500px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    resize: vertical;
+    tab-size: 2;
+    background: #fafafa;
+    box-sizing: border-box;
+}
+
+#css-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.css-editor-hint {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    color: #0c4a6e;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.css-editor-hint code {
+    background: rgba(255, 255, 255, 0.7);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
 /* Loading */
 .loading {
     padding: 40px;
@@ -665,7 +706,8 @@
         padding: 10px;
     }
 
-    #json-textarea {
+    #json-textarea,
+    #css-textarea {
         min-height: 300px;
         font-size: 12px;
         padding: 8px;
