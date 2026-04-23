@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.18] - 2026-04-23
+
+Sessionplan-Auto-Open bei nicht-heutigen Tag-Tabs umgebaut. Bisher brach `autoOpen()` in `src/sessionplan/sessionplan.js` frueh ab, wenn der Tab-Tag nicht dem heutigen Wochentag entsprach — zukuenftige Event-Tage blieben komplett zu, obwohl der User dort sinnvollerweise den ersten Slot sehen will. Jetzt wird bei `isToday=false` der erste Slot geoeffnet, und zwar **ohne** `scrollIntoView`, damit das Oeffnen von Zukunfts-Tabs den Viewport nicht ungewollt verschiebt. Die heutige Logik wurde zusaetzlich um den Fallback "letzter vergangener Slot" gekuerzt: nach Tagesende bleibt der Akkordeon jetzt zu, statt zwangsweise den letzten Slot aufzublaettern — Reihenfolge heute ist damit nur noch aktueller Slot → naechster anstehender → nichts. Der Lazy-Observer (der Tabs nachlaedt, sobald sie in den Viewport scrollen) ruft `autoOpen()` jetzt ebenfalls auf — vorher blieben lazy-geladene Tabs komplett zu, weil `autoOpen()` nur fuer den initial eager geladenen Tag lief.
+
 ## [3.0.17] - 2026-04-23
 
 README um einen Abschnitt „Bestehende Texte anpassen" ergaenzt. Bisher beschrieb der i18n-Teil nur, wie man neue Uebersetzungs-Schluessel hinzufuegt — die haeufigere Frage „Wie benenne ich bestehende UI-Labels um (z.B. Sessions → Vortraege)" blieb unbeantwortet. Neuer Abschnitt zeigt, dass UI-Labels in `src/translations/de.json` / `en.json` direkt editierbar sind (Keys muessen stehen bleiben, sonst brechen die `data-i18n`-Bindings) und weist explizit auf den Build-Time-Charakter hin: Translations sind Teil des Docker-Image-Builds, anders als `event.json`, `custom.css` oder Sponsoren-Logos im `content/`-Volume — Aenderungen brauchen `make build` bzw. Image-Rebuild + Redeploy. Inhaltsverzeichnis entsprechend erweitert.

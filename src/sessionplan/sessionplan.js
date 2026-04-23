@@ -115,7 +115,14 @@
 				const container = entry.target;
 				const isLazy = container.getAttribute('data-lazy') === 'true';
 				if (isLazy && !container.hasAttribute('data-loaded')) {
-					loadSessionData(container);
+					const day = container.getAttribute('data-day');
+					const now = new Date();
+					const todayName = now.toLocaleDateString('de-DE', { weekday: 'long' }).toLowerCase();
+					const isToday = day === todayName;
+					const nowMinutes = now.getHours()*60 + now.getMinutes();
+					loadSessionData(container).then(() => {
+						autoOpen(container, isToday, nowMinutes);
+					});
 					container.setAttribute('data-loaded', 'true');
 					lazyObserver.unobserve(container);
 				}
@@ -178,7 +185,6 @@
 		return [start,end];
 	};
 	const autoOpen = (container,isToday,nowMinutes) => {
-		if (!isToday) return;
 		const wrap = container.querySelector('.sessionplan');
 		if (!wrap) return;
 		const details = Array.from(wrap.querySelectorAll('details'));
@@ -188,42 +194,40 @@
 			return { d, range: slotRange(label) };
 		});
 		let candidate = null;
-		
-		// Erst versuchen, den aktuellen Zeitslot zu finden
-		for (let i=0;i<buckets.length;i++) {
-			const r = buckets[i].range;
-			if (r && nowMinutes >= r[0] && nowMinutes < r[1]) { 
-				candidate = buckets[i]; 
-				break; 
-			}
-		}
-		
-		// Falls kein aktueller Slot gefunden, den nächsten anstehenden Slot finden
-		if (!candidate) {
+		let shouldScroll = true;
+
+		if (isToday) {
+			// Erst versuchen, den aktuellen Zeitslot zu finden
 			for (let i=0;i<buckets.length;i++) {
 				const r = buckets[i].range;
-				if (r && nowMinutes < r[0]) { 
-					candidate = buckets[i]; 
-					break; 
+				if (r && nowMinutes >= r[0] && nowMinutes < r[1]) {
+					candidate = buckets[i];
+					break;
 				}
 			}
-		}
-		
-		// Falls immer noch nichts gefunden, den letzten vergangenen Slot nehmen
-		if (!candidate) {
-			for (let i=buckets.length-1;i>=0;i--) {
-				const r = buckets[i].range;
-				if (r && nowMinutes >= r[0]) { 
-					candidate = buckets[i]; 
-					break; 
+
+			// Falls kein aktueller Slot gefunden, den nächsten anstehenden Slot finden
+			if (!candidate) {
+				for (let i=0;i<buckets.length;i++) {
+					const r = buckets[i].range;
+					if (r && nowMinutes < r[0]) {
+						candidate = buckets[i];
+						break;
+					}
 				}
 			}
+		} else {
+			// Anderer Tag (Zukunft oder Vergangenheit): ersten Slot öffnen, aber nicht hinscrollen
+			candidate = buckets[0];
+			shouldScroll = false;
 		}
-		
+
 		if (candidate) {
 			details.forEach(x => x.removeAttribute('open'));
 			candidate.d.setAttribute('open','');
-			candidate.d.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			if (shouldScroll) {
+				candidate.d.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			}
 		}
 	};
 	const el = (t,cls,txt) => {
