@@ -1,0 +1,35 @@
+/*
+ * Event-spezifische Style-Overrides.
+ * Diese Datei wird als LETZTE CSS geladen und kann jede Regel/Variable uebersteuern.
+ *
+ * Verfuegbare Farb-Tokens (Default-Werte stehen in src/assets/app.css):
+ *   --color-primary           Primaerfarbe (Links, Akzente)
+ *   --color-primary-dark      Primaer Hover/dunkler
+ *   --color-primary-light     Primaer hell (Verlaeufe)
+ *   --color-text              Standard-Textfarbe
+ *   --color-text-strong       Starker Text (Headlines)
+ *   --color-text-soft         Weicher Text (Sekundaer)
+ *   --color-text-muted        Gedaempfter Text
+ *   --color-bg                Body-Hintergrund
+ *   --color-surface           Kartenhintergrund (weiss)
+ *   --color-surface-alt       Alternativer Hintergrund (Hover)
+ *   --color-border            Rahmenfarbe
+ *   --color-border-strong     Starker Rahmen (Hover)
+ *   --color-success           Erfolg / positiv (gruen)
+ *   --color-danger            Fehler / Warnung (rot)
+ *   --color-favorite          Favoriten-Icon
+ *   --color-favorite-hover    Favoriten-Icon Hover
+ *
+ * Beispiel — Primaerfarbe aendern:
+ *
+ *   :root {
+ *     --color-primary: #8b5cf6;
+ *     --color-primary-dark: #6d28d9;
+ *     --color-primary-light: #c4b5fd;
+ *   }
+ *
+ * Einzelne Komponenten gezielt ueberschreiben ist ebenfalls moeglich:
+ *
+ *   .card { border-radius: 4px; }
+ *   .header { background: #000; }
+ */

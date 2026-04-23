@@ -1,5 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../admin/rehash.php';
+require_once __DIR__ . '/../admin/content-paths.php';
+startHardenedSession();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -8,23 +11,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require_once __DIR__ . '/config.php';
+// Auth: Session + CSRF, kein Key-Fallback mehr.
+if (empty($_SESSION['admin_authenticated'])) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Not authenticated']);
+    exit;
+}
+requireCsrfToken();
 
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Auth: session or key in body
-$authenticated = !empty($_SESSION['voting_admin']);
-if (!$authenticated && isset($input['key'])) {
-    $authenticated = validateAdminKey($input['key']);
-}
-if (!$authenticated) {
-    http_response_code(403);
-    echo json_encode(['error' => 'Forbidden']);
-    exit;
-}
-
 // Check if voting is ended
-$stateFile = __DIR__ . '/voting-state.json';
+$stateFile = contentPath('voting/voting-state.json');
 if (!file_exists($stateFile)) {
     http_response_code(400);
     echo json_encode(['error' => 'Voting state file not found. Please use admin panel to initialize voting system.']);
@@ -40,7 +38,7 @@ if ($votingState['status'] !== 'ended') {
 }
 
 // Load votes.json
-$votesFile = __DIR__ . '/votes.json';
+$votesFile = contentPath('voting/votes.json');
 if (!file_exists($votesFile)) {
     http_response_code(404);
     echo json_encode(['error' => 'Votes file not found']);
@@ -50,7 +48,7 @@ if (!file_exists($votesFile)) {
 $votesData = json_decode(file_get_contents($votesFile), true);
 
 // Load sessions.json
-$sessionsFile = __DIR__ . '/../sessionplan/sessions.json';
+$sessionsFile = contentPath('sessionplan/sessions.json');
 if (!file_exists($sessionsFile)) {
     http_response_code(404);
     echo json_encode(['error' => 'Sessions file not found']);
@@ -89,6 +87,9 @@ if (file_put_contents($sessionsFile, json_encode($sessionsData, JSON_PRETTY_PRIN
     echo json_encode(['error' => 'Failed to save sessions.json']);
     exit;
 }
+
+// Rehash sessions.json for cache busting
+rehashJsonFile($sessionsFile, 'sessionplan/sessions.json');
 
 echo json_encode([
     'success' => true,

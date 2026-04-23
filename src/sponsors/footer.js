@@ -1,84 +1,40 @@
 // Shared Sponsor Loading Module
-// Used across all pages to DRY up sponsor rendering logic
-// Logo URLs can be absolute paths (e.g., CDN or external hosting)
+// Used across all pages to DRY up sponsor rendering logic.
+// Logo URLs can be absolute (CDN/external) or relative paths inside the
+// content volume (content/sponsors/...), resolved via window.contentUrl.
 
 (async () => {
-  // HTML-Encoding helper to prevent XSS
   const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
   try {
-    // Helper function to determine base path
-    function getBasePath() {
-      const pathname = window.location.pathname;
-      const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
+    await window.assetHashesReady;
 
-      if (segments.length === 0) {
-        return '';
-      }
-
-      const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes'];
-      if (knownPages.includes(segments[0])) {
-        return '';
-      }
-
-      return '/' + segments[0];
-    }
-
-    // Lade Event-Konfiguration falls noch nicht geladen
     if (typeof eventConfig === 'undefined' || !eventConfig) {
-      const pathname = window.location.pathname;
-      const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
-      const basePath = getBasePath();
-
-      let configPath;
-      if (basePath) {
-        configPath = basePath + '/event.json';
-      } else {
-        const isInSubfolder = segments.length >= 1;
-        configPath = isInSubfolder ? '../event.json' : './event.json';
-      }
-      const configResponse = await fetch(configPath);
+      const configResponse = await fetch(window.contentUrl('event.json'));
       window.eventConfig = await configResponse.json();
     }
 
-    // Prüfe ob Sponsoren-Feature aktiviert ist
     const sponsorFooter = document.getElementById('sponsorFooter');
     if (window.eventConfig?.features?.sponsors === false) {
-      console.log('Sponsoren-Feature ist deaktiviert');
-      if (sponsorFooter) {
-        sponsorFooter.style.display = 'none';
-      }
+      if (sponsorFooter) sponsorFooter.style.display = 'none';
       return;
     }
 
-    // Determine correct path to sponsors.json
-    const pathname = window.location.pathname;
-    const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
-    const basePath = getBasePath();
-
-    let pathPrefix;
-    if (basePath) {
-      // Base path exists (e.g., /build)
-      pathPrefix = basePath + '/sponsors';
-    } else {
-      // No base path
-      const isInSubfolder = segments.length >= 1;
-      pathPrefix = isInSubfolder ? '../sponsors' : './sponsors';
-    }
-
-    // Verwende Original-Datei (wird vom Build-Script durch gehashte Version ersetzt)
-    const sponsorsFileName = `${pathPrefix}/sponsors.json`;
-    const response = await fetch(sponsorsFileName);
+    const response = await fetch(window.contentUrl('sponsors/sponsors.json'));
     const data = await response.json();
     const container = document.getElementById('sponsorsContainer');
 
     if (container && data.sponsors) {
       container.innerHTML = data.sponsors.map(sponsor => {
-        // Resolve logo path: absolute URLs stay as-is, relative paths get prefix
-        const logoSrc = sponsor.logo.startsWith('http://') || sponsor.logo.startsWith('https://') || sponsor.logo.startsWith('/')
-          ? sponsor.logo
-          : `${pathPrefix}/${sponsor.logo.replace(/^\.\//, '')}`;
-        
+        let logoSrc;
+        if (sponsor.logo.startsWith('http://') || sponsor.logo.startsWith('https://') || sponsor.logo.startsWith('/')) {
+          logoSrc = sponsor.logo;
+        } else {
+          // Relative path inside content/sponsors/ (e.g. "logos/foo.png").
+          const rel = sponsor.logo.replace(/^\.\//, '');
+          logoSrc = window.contentUrl('sponsors/' + rel);
+        }
+
         return `<a href="${esc(sponsor.url)}" target="_blank" rel="noopener noreferrer" title="${esc(sponsor.name)}">
           <img src="${esc(logoSrc)}" alt="${esc(sponsor.name)}" class="sponsor-logo"
                onerror="this.style.display='none'; this.parentElement.textContent=this.alt">

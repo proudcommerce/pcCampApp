@@ -1,7 +1,14 @@
 .PHONY: help install clean test test-headed test-report test-php test-php-headed test-all \
-        test-translations test-translations-de test-translations-en build \
-        dev-up dev-down dev-rebuild dev-logs dev-remove generate-icons \
-        prod-up prod-down prod-rebuild prod-logs prod-remove
+        test-translations test-translations-de test-translations-en \
+        dev-start dev-stop dev-build dev-logs dev-remove \
+        dev-prod-start dev-prod-stop dev-prod-build dev-prod-logs dev-prod-remove \
+        prod-start prod-stop prod-build prod-logs prod-remove
+
+# Host-Ports aus .env lesen (Fallback auf Defaults aus docker-compose)
+-include .env
+export
+DEV_PORT  ?= 5173
+PROD_PORT ?= 5174
 
 # =============================================================================
 # HELP
@@ -12,82 +19,68 @@ help:
 	@echo "║           PC CampCamp - Make Commands           ║"
 	@echo "╚═════════════════════════════════════════════════╝"
 	@echo ""
-	@echo "Setup & Build:"
-	@echo "  make install         - Installiert Dependencies (node_modules)"
-	@echo "  make build           - Erstellt Production Build (build/)"
-	@echo "  make clean           - Vollständige Bereinigung (node_modules, build, Docker)"
+	@echo "Setup:"
+	@echo "  make install             - Installiert Playwright (nur fuer lokale Tests)"
+	@echo "  make clean               - Vollstaendige Bereinigung (Docker + content/)"
 	@echo ""
-	@echo "Development (Port 5173 - src/):"
-	@echo "  make dev-up          - Startet Dev-Server"
-	@echo "  make dev-down        - Stoppt Dev-Server"
-	@echo "  make dev-rebuild     - Rebuild Docker Image (ohne Cache)"
-	@echo "  make dev-logs        - Zeigt Live-Logs"
-	@echo "  make dev-remove      - Stoppt und entfernt Container + Volumes"
+	@echo "Development (Port $(DEV_PORT), src/ live-mount):"
+	@echo "  make dev-start           - Startet Dev-Container"
+	@echo "  make dev-stop            - Stoppt Dev-Container"
+	@echo "  make dev-build           - Rebuild Dev Image (ohne Cache)"
+	@echo "  make dev-logs            - Live-Logs"
+	@echo "  make dev-remove          - Container + Netzwerke entfernen"
 	@echo ""
-	@echo "Production (Port 5174 - build/):"
-	@echo "  make prod-up         - Startet Prod-Test-Server (inkl. Build)"
-	@echo "  make prod-down       - Stoppt Prod-Test-Server"
-	@echo "  make prod-rebuild    - Rebuild Docker Image (ohne Cache)"
-	@echo "  make prod-logs       - Zeigt Live-Logs"
-	@echo "  make prod-remove     - Stoppt und entfernt Container + Volumes"
+	@echo "Dev-Prod (Port $(PROD_PORT), Multi-Stage Image, Foreground):"
+	@echo "  make dev-prod-start      - Startet lokalen Prod-Test (baut Image)"
+	@echo "  make dev-prod-stop       - Stoppt lokalen Prod-Test"
+	@echo "  make dev-prod-build      - Rebuild Prod Image (ohne Cache)"
+	@echo "  make dev-prod-logs       - Live-Logs"
+	@echo "  make dev-prod-remove     - Container + Netzwerke entfernen"
+	@echo ""
+	@echo "Production (Port $(PROD_PORT), Multi-Stage Image, Detached -d):"
+	@echo "  make prod-start          - Startet Prod-Container im Hintergrund (baut Image)"
+	@echo "  make prod-stop           - Stoppt Prod-Container"
+	@echo "  make prod-build          - Rebuild Prod Image (ohne Cache)"
+	@echo "  make prod-logs           - Live-Logs"
+	@echo "  make prod-remove         - Container + Netzwerke entfernen"
 	@echo ""
 	@echo "Testing (Production):"
-	@echo "  make test                 - Standard Tests (Port 5174, mit PHP-FPM)"
-	@echo "  make test-php             - Voting/PHP Tests (Port 5174, mit PHP-FPM)"
-	@echo "  make test-translations    - Übersetzungs-Tests (DE + EN)"
-	@echo "  make test-translations-de - Übersetzungs-Tests (nur DE)"
-	@echo "  make test-translations-en - Übersetzungs-Tests (nur EN)"
-	@echo "  make test-all             - Alle Tests (Standard + PHP + Translations)"
+	@echo "  make test                 - Standard Tests (Port 5174)"
+	@echo "  make test-php             - Voting/PHP Tests"
+	@echo "  make test-translations    - Uebersetzungs-Tests (DE + EN)"
+	@echo "  make test-all             - Alle Tests"
 	@echo "  make test-headed          - Tests mit sichtbarem Browser"
-	@echo "  make test-report          - Öffne HTML Test-Report"
+	@echo "  make test-report          - HTML Test-Report oeffnen"
 
 # =============================================================================
-# SETUP & BUILD
+# SETUP
 # =============================================================================
 
 install:
-	@echo "📦 Installiere Dependencies..."
+	@echo "Installiere Playwright-Browser fuer lokale Tests..."
 	@npm install
-	@echo "✅ Dependencies installiert"
+	@npx playwright install
+	@echo "OK"
 
 clean:
 	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║           Vollständige Bereinigung                           ║"
+	@echo "║           Vollstaendige Bereinigung                          ║"
 	@echo "╚══════════════════════════════════════════════════════════════╝"
 	@echo ""
-	@echo "⚠️  WARNUNG: Folgende Aktionen werden ausgeführt:"
-	@echo "   • Löschen von node_modules/"
-	@echo "   • Löschen von build/"
-	@echo "   • Stoppen und Entfernen aller Docker Container"
-	@echo "   • Entfernen aller Docker Images (pccampapp)"
-	@echo "   • Entfernen aller Docker Volumes (pccampapp)"
+	@echo "Folgende Aktionen werden ausgefuehrt:"
+	@echo "   - Loeschen von node_modules/, build/, content/"
+	@echo "   - Stoppen/Entfernen aller pccampapp Docker Container/Images/Volumes"
 	@echo ""
-	@printf "❓ Möchten Sie fortfahren? [y/N] " && read ans && [ $${ans:-N} = y ]
-	@echo ""
-	@echo "🧹 Bereinige node_modules und build/..."
-	@rm -rf node_modules
-	@rm -rf build
-	@echo "✅ Lokale Dateien bereinigt"
-	@echo ""
-	@echo "🐳 Stoppe und entferne Docker Container..."
+	@printf "Fortfahren? [y/N] " && read ans && [ $${ans:-N} = y ]
+	@rm -rf node_modules build content
 	@docker compose down -v --remove-orphans 2>/dev/null || true
 	@docker compose -f docker-compose.prod.yml down -v --remove-orphans 2>/dev/null || true
-	@echo "✅ Container gestoppt und entfernt"
-	@echo ""
-	@echo "🗑️  Entferne Docker Images..."
 	@docker images | grep pccampapp | awk '{print $$3}' | xargs -r docker rmi -f 2>/dev/null || true
-	@echo "✅ Images entfernt"
-	@echo ""
-	@echo "📦 Entferne Docker Volumes..."
 	@docker volume ls | grep pccampapp | awk '{print $$2}' | xargs -r docker volume rm 2>/dev/null || true
-	@echo "✅ Volumes entfernt"
-	@echo ""
-	@echo "✨ Vollständige Bereinigung abgeschlossen!"
-	@echo ""
-	@echo "💡 Nächster Schritt: make install && make dev-up"
+	@echo "Bereinigung abgeschlossen. Naechster Schritt: make dev-start oder make prod-start"
 
 # =============================================================================
-# TESTING (Production Build - Port 5174)
+# TESTING (Production Build)
 # =============================================================================
 
 test:
@@ -97,170 +90,88 @@ test-headed:
 	@bash scripts/test-with-server.sh --headed
 
 test-php:
-	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║           PHP/Voting Tests (Port 5174)                       ║"
-	@echo "╚══════════════════════════════════════════════════════════════╝"
-	@echo ""
-	@echo "🐘 PHP-FPM läuft im Production-Container auf Port 5174"
-	@echo "🧪 Führe Voting-Tests mit PHP-Backend aus..."
-	@echo ""
 	@bash scripts/test-with-server.sh tests/voting.spec.js
 
 test-php-headed:
-	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║           PHP/Voting Tests (Port 5174, headed)               ║"
-	@echo "╚══════════════════════════════════════════════════════════════╝"
-	@echo ""
 	@bash scripts/test-with-server.sh tests/voting.spec.js --headed
 
 test-translations:
-	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║           Translation Tests (DE + EN)                        ║"
-	@echo "╚══════════════════════════════════════════════════════════════╝"
-	@echo ""
-	@echo "🌐 Teste Übersetzungen für beide Sprachen..."
-	@echo ""
-	@echo "🇩🇪 Part 1/2: Deutsche Übersetzungen"
 	@$(MAKE) test-translations-de
-	@echo ""
-	@echo "🇬🇧 Part 2/2: Englische Übersetzungen"
 	@$(MAKE) test-translations-en
-	@echo ""
-	@echo "🔄 Stelle Standard-Locale wieder her..."
 	@node scripts/restore-locale.js
-	@echo ""
-	@echo "✅ Alle Translation-Tests abgeschlossen!"
 
 test-translations-de:
-	@echo "🇩🇪 Teste Deutsche Übersetzungen..."
 	@bash scripts/test-with-server.sh --project=chromium-de
 
 test-translations-en:
-	@echo "🇬🇧 Teste Englische Übersetzungen..."
 	@bash scripts/test-with-server.sh --project=chromium-en
 
 test-all:
-	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║           Running All Tests (Standard + PHP + Translations)  ║"
-	@echo "╚══════════════════════════════════════════════════════════════╝"
-	@echo ""
-	@echo "🔹 Part 1/3: Standard Tests (Port 5174, nginx)"
-	@echo ""
 	@$(MAKE) test
-	@echo ""
-	@echo "🔹 Part 2/3: PHP Tests (Port 5175, PHP Built-in Server)"
-	@echo ""
 	@$(MAKE) test-php
-	@echo ""
-	@echo "🔹 Part 3/3: Translation Tests (DE + EN)"
-	@echo ""
 	@$(MAKE) test-translations
 
 test-report:
-	@echo "📊 Öffne Playwright Test-Report..."
 	@npx playwright show-report
 
-generate-icons:
-	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║           PWA Icon Generator                                 ║"
-	@echo "╚══════════════════════════════════════════════════════════════╝"
-	@echo ""
-	@node generate-icons.js
-	@echo ""
-	@echo "✅ PWA Icons generiert!"
-	@echo "💡 Verwendet automatisch bei: make dev-up"
-
-build:
-	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║           Production Build mit Cache-Busting                 ║"
-	@echo "╚══════════════════════════════════════════════════════════════╝"
-	@echo ""
-	@echo "📦 Verarbeite Assets: JSON, CSS, JS, Bilder..."
-	@node build-cache-busting.cjs
-	@echo ""
-	@echo "✅ Build abgeschlossen!"
-	@echo ""
-	@echo "📊 Build Output:"
-	@echo "   📁 build/ - Deployment-ready Dateien"
-	@echo "   🔒 Alle Assets gehasht (immutable URLs)"
-	@echo "   ⚙️  Service Worker aktualisiert"
-	@echo "   📱 PWA Manifest aktualisiert"
-	@echo ""
-	@echo "💡 Nächster Schritt: make prod-up (Build lokal testen)"
-
 # =============================================================================
-# DEVELOPMENT (src/ auf Port 5173)
+# DEVELOPMENT (src/ live-mount, Port 5173)
 # =============================================================================
 
-dev-up:
-	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║           Development Server (src/)                          ║"
-	@echo "╚══════════════════════════════════════════════════════════════╝"
-	@echo ""
-	@echo "🎨 Generiere PWA Icons..."
-	@node generate-icons.js
-	@echo ""
-	@echo "🐳 Starte Docker Development Server..."
-	@echo "🌐 URL: http://localhost:5173"
-	@echo "📁 Serviert: src/ (live-reload aktiv)"
-	@echo "🔄 Caching: deaktiviert (Cache-Control: no-store)"
-	@echo ""
+dev-start:
+	@echo "Development Container (http://localhost:$(DEV_PORT)) — src/ live-mount"
 	@docker compose up
 
-dev-down:
-	@echo "🛑 Stoppe Development Server..."
+dev-stop:
 	@docker compose down
-	@echo "✅ Development Server gestoppt"
 
-dev-rebuild:
-	@echo "🔨 Rebuild Development Docker Image (ohne Cache)..."
+dev-build:
 	@docker compose build --no-cache
-	@echo "✅ Image neu gebaut"
 
 dev-logs:
-	@echo "📋 Development Server Logs (Ctrl+C zum Beenden)..."
 	@docker compose logs -f
 
 dev-remove:
-	@echo "🗑️  Entferne Development Container, Netzwerke und Volumes..."
 	@docker compose down -v --remove-orphans
-	@echo "✅ Vollständig entfernt"
 
 # =============================================================================
-# PRODUCTION TEST (build/ auf Port 5174)
+# DEV-PROD / FAK (Multi-Stage Image, Port 5174, Foreground)
+# Lokaler Prod-Test — baut exakt das Image, das auch auf den Server geht.
 # =============================================================================
 
-prod-up:
-	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║           Production Server                                  ║"
-	@echo "╚══════════════════════════════════════════════════════════════╝"
-	@echo ""
-	@echo "🔨 Erstelle frischen Production Build..."
-	@echo ""
-	@$(MAKE) build
-	@echo ""
-	@echo "🐳 Starte Production Server..."
-	@echo "🌐 URL: http://localhost:5174"
-	@echo "📁 Serviert: build/ (Production-ready)"
-	@echo "🔍 Teste: Cache-Busting, gehashte Assets, PWA"
-	@echo ""
-	@docker compose -f docker-compose.prod.yml up 
+dev-prod-start:
+	@echo "Dev-Prod Container (http://localhost:$(PROD_PORT)) — Foreground, Multi-Stage Build"
+	@docker compose -f docker-compose.prod.yml up --build
 
-prod-down:
-	@echo "🛑 Stoppe Production Server..."
+dev-prod-stop:
 	@docker compose -f docker-compose.prod.yml down
-	@echo "✅ Production Server gestoppt"
 
-prod-rebuild:
-	@echo "🔨 Rebuild Production Docker Image (ohne Cache)..."
+dev-prod-build:
 	@docker compose -f docker-compose.prod.yml build --no-cache
-	@echo "✅ Image neu gebaut"
+
+dev-prod-logs:
+	@docker compose -f docker-compose.prod.yml logs -f
+
+dev-prod-remove:
+	@docker compose -f docker-compose.prod.yml down -v --remove-orphans
+
+# =============================================================================
+# PRODUCTION (Multi-Stage Image, Port 5174, Detached)
+# Fuer echtes Server-Deployment — laeuft im Hintergrund.
+# =============================================================================
+
+prod-start:
+	@echo "Production Container (http://localhost:$(PROD_PORT)) — Detached, Multi-Stage Build"
+	@docker compose -f docker-compose.prod.yml up -d --build
+
+prod-stop:
+	@docker compose -f docker-compose.prod.yml down
+
+prod-build:
+	@docker compose -f docker-compose.prod.yml build --no-cache
 
 prod-logs:
-	@echo "📋 Production Server Logs (Ctrl+C zum Beenden)..."
 	@docker compose -f docker-compose.prod.yml logs -f
 
 prod-remove:
-	@echo "🗑️  Entferne Production Container, Netzwerke und Volumes..."
 	@docker compose -f docker-compose.prod.yml down -v --remove-orphans
-	@echo "✅ Vollständig entfernt"

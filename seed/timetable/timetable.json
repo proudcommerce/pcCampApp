@@ -1,0 +1,34 @@
+{
+  "samstag": {
+    "12:00 Uhr": [
+      {
+        "room": "Lounge & OpenSpace",
+        "title": "Ankommen & Mittagssnack"
+      }
+    ],
+    "12:45 Uhr": [
+      {
+        "room": "Hangar",
+        "title": "Begrüßung (Stefan Peter Roos, Andreas Förthner)"
+      }
+    ],
+    "13:00 Uhr": [
+      {
+        "room": "Hangar",
+        "title": "KEYNOTE: Context, Agents, Autonomie – Die drei Wellen der KI-Revolution (Prof. Dr. Sigurd Schacht, COAI Research)"
+      }
+    ],
+    "14:00 - 18:00 Uhr": [
+      {
+        "room": "Lounge & OpenSpace",
+        "title": "Networking & Breakout-Sessions (parallel zu den Vorträgen in Hangar & Team Space)"
+      }
+    ],
+    "18:00 Uhr": [
+      {
+        "room": "Drei im Weggla",
+        "title": "BBQ, fränkisches Bier & Chillout-Beats – Afterwork"
+      }
+    ]
+  }
+}

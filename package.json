@@ -1,11 +1,11 @@
 {
   "name": "pccampapp",
-  "version": "1.0.3",
+  "version": "3.0.18",
   "description": "Config-driven Progressive Web App for BarCamps and Unconferences",
   "type": "module",
   "scripts": {
     "build": "node build-cache-busting.cjs",
-    "install": "npx playwright install",
+    "postinstall:playwright": "npx playwright install",
     "test": "playwright test",
     "test:prod": "BASE_URL=http://localhost:5174 playwright test",
     "test:ui": "playwright test --ui",
@@ -24,8 +24,10 @@
   ],
   "author": "Proud Commerce GmbH",
   "license": "MIT",
-  "devDependencies": {
-    "@playwright/test": "^1.40.0",
+  "dependencies": {
     "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
   }
 }

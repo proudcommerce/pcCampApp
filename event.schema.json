@@ -51,7 +51,7 @@
       "properties": {
         "logo": {
           "type": "string",
-          "description": "Path to event logo (relative to src/)"
+          "description": "Logo-Quelle: Pfad relativ zum content/-Volume (z.B. \"assets/logo.png\") oder absolute URL (https://...). Beim Admin-Upload wird dieses Feld automatisch aktualisiert."
         },
         "sourceIcon": {
           "type": "string",
@@ -166,9 +166,9 @@
         },
         "votingAdminKey": {
           "type": "string",
-          "description": "Secret key for admin access (admin.php, results.php). Change this for production!",
-          "minLength": 8,
-          "default": "littGEEGsfdaxsd6Oe6DiJF"
+          "description": "DEPRECATED. Admin-Key wird ausschliesslich ueber die Env-Variable VOTING_ADMIN_KEY geladen. Dieses Feld wird ignoriert und ist nur zur Kompatibilitaet mit alten event.json-Dateien dokumentiert.",
+          "deprecated": true,
+          "minLength": 8
         },
         "favorites": {
           "type": "boolean",

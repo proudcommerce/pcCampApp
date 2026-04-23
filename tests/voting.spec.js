@@ -33,19 +33,19 @@ test.describe('Voting UI Components', () => {
 
 test.describe('Voting State Management', () => {
   test('voting-state.json sollte erreichbar sein (wenn vorhanden)', async ({ page }) => {
-    const response = await page.goto('/votes/voting-state.json');
+    const response = await page.goto('/content/voting/voting-state.json');
     // voting-state.json is a runtime file, may not exist yet (404 is acceptable)
     expect([200, 404]).toContain(response.status());
   });
 
   test('voting-state.json sollte gültiges JSON sein (wenn vorhanden)', async ({ page }) => {
-    const response = await page.goto('/votes/voting-state.json');
+    const response = await page.goto('/content/voting/voting-state.json');
 
     if (response.status() === 200) {
       const state = await response.json();
 
       expect(state).toHaveProperty('status');
-      expect(['active', 'inactive', 'closed']).toContain(state.status);
+      expect(['active', 'inactive', 'ended']).toContain(state.status);
     } else {
       // File doesn't exist yet - this is acceptable
       expect(response.status()).toBe(404);
@@ -56,7 +56,7 @@ test.describe('Voting State Management', () => {
 
 test.describe('Voting Configuration', () => {
   test('event.json sollte voting Feature konfiguriert haben', async ({ page }) => {
-    const response = await page.goto('/event.json');
+    const response = await page.goto('/content/event.json');
     const config = await response.json();
 
     expect(config).toHaveProperty('features');
@@ -65,7 +65,7 @@ test.describe('Voting Configuration', () => {
   });
 
   test('event.json sollte votingSchedule haben wenn voting aktiv', async ({ page }) => {
-    const response = await page.goto('/event.json');
+    const response = await page.goto('/content/event.json');
     const config = await response.json();
 
     if (config.features.voting === true) {
@@ -126,7 +126,8 @@ test.describe('Voting Backend API', () => {
       data: {
         sessionId: 'test-session',
         day: 'invalid-day',
-        userKey: 'test-user-key'
+        // Muss dem Server-Regex entsprechen, damit die Day-Validierung greift.
+        userKey: 'vote_abcd1234'
       }
     });
 
@@ -135,6 +136,20 @@ test.describe('Voting Backend API', () => {
     const body = await response.json();
     expect(body).toHaveProperty('error');
     expect(body.error).toContain('Invalid day');
+  });
+
+  (phpEnabled ? test : test.skip)('vote.php sollte ungueltige userKey-Formate ablehnen', async ({ page }) => {
+    const response = await page.request.post('/votes/vote.php', {
+      data: {
+        sessionId: 'test-session',
+        day: 'samstag',
+        userKey: '../../etc/passwd'
+      }
+    });
+
+    expect(response.status()).toBe(400);
+    const body = await response.json();
+    expect(body.error).toContain('Invalid userKey format');
   });
 });
 
@@ -175,7 +190,7 @@ test.describe('Voting Functionality', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
-    const userKey = await page.evaluate(() => localStorage.getItem('userKey'));
+    const userKey = await page.evaluate(() => localStorage.getItem('pccampapp_vote_key'));
 
     // UserKey should be generated and stored
     if (userKey) {
@@ -207,7 +222,7 @@ test.describe('Voting Functionality', () => {
     await page.waitForTimeout(2000);
 
     // Load event config to check voting feature
-    const configResponse = await page.request.get('/event.json');
+    const configResponse = await page.request.get('/content/event.json');
     const config = await configResponse.json();
 
     const votingSection = page.locator('#voting-section');
@@ -278,27 +293,39 @@ test.describe('Voting URL Override (Testing Feature)', () => {
 });
 
 test.describe('Voting Data Persistence', () => {
-  test('votes.json sollte erreichbar sein', async ({ page }) => {
-    const response = await page.goto('/votes/votes.json');
-    // Should return 200 (may be empty but file exists)
-    expect([200, 404]).toContain(response.status());
+  test('votes.json darf NICHT oeffentlich abrufbar sein', async ({ page }) => {
+    // Die Rohdatei enthaelt userKeys aller Voter; nginx blockt sie auf 404.
+    // Aggregate liegen auf /votes/status.php.
+    const response = await page.goto('/content/voting/votes.json');
+    expect(response.status()).toBe(404);
+  });
+});
+
+test.describe('Voting Public Aggregates', () => {
+  const phpEnabled = process.env.PHP_TESTS_ENABLED === 'true';
+
+  // GET ist nicht erlaubt — muss 405 oder 404 sein (je nach Build-Stand).
+  test('status.php darf auf GET nicht 200 liefern', async ({ page }) => {
+    const response = await page.request.get('/votes/status.php');
+    expect([404, 405]).toContain(response.status());
   });
 
-  test('votes.json sollte gültiges JSON sein (wenn vorhanden)', async ({ page }) => {
-    const response = await page.goto('/votes/votes.json');
+  (phpEnabled ? test : test.skip)('status.php liefert bei POST aggregates + ownVote', async ({ page }) => {
+    const response = await page.request.post('/votes/status.php', {
+      data: {}
+    });
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toHaveProperty('aggregates');
+    expect(body).toHaveProperty('ownVote');
+    expect(body.ownVote).toHaveProperty('hasVoted');
+  });
 
-    if (response.status() === 200) {
-      const votes = await response.json();
-      expect(typeof votes).toBe('object');
-
-      // Check structure for each day
-      for (const day in votes) {
-        expect(votes[day]).toHaveProperty('sessions');
-        expect(votes[day]).toHaveProperty('users');
-        expect(typeof votes[day].sessions).toBe('object');
-        expect(typeof votes[day].users).toBe('object');
-      }
-    }
+  (phpEnabled ? test : test.skip)('status.php lehnt ungueltigen userKey ab', async ({ page }) => {
+    const response = await page.request.post('/votes/status.php', {
+      data: { day: 'samstag', userKey: '../../etc/passwd' }
+    });
+    expect(response.status()).toBe(400);
   });
 });
 
@@ -306,15 +333,15 @@ test.describe('Voting Security', () => {
   const phpEnabled = process.env.PHP_TESTS_ENABLED === 'true';
 
   (phpEnabled ? test : test.skip)('Admin-Bereiche sollten ohne Key geschützt sein', async ({ page }) => {
-    const adminPages = [
-      '/votes/results.php',
-      '/votes/admin.php'
-    ];
+    // /votes/results.php leitet weiter zu /admin/results.php — dort 403 ohne Session.
+    const resultsResponse = await page.goto('/votes/results.php');
+    expect(resultsResponse.status()).toBe(403);
 
-    for (const url of adminPages) {
-      const response = await page.goto(url);
-      expect(response.status()).toBe(403);
-    }
+    // /votes/admin.php leitet zu /admin/ → Login-Formular (200),
+    // Admin-UI darf ohne Auth nicht erreichbar sein.
+    await page.goto('/votes/admin.php');
+    await expect(page.locator('form input[name="admin_key"]')).toBeVisible();
+    await expect(page.locator('.admin-tabs')).toHaveCount(0);
   });
 
   test('UserKey sollte persistent über Seitenaufrufe bleiben', async ({ page }) => {
@@ -322,14 +349,14 @@ test.describe('Voting Security', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    const userKey1 = await page.evaluate(() => localStorage.getItem('userKey'));
+    const userKey1 = await page.evaluate(() => localStorage.getItem('pccampapp_vote_key'));
 
     // Reload page
     await page.reload();
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    const userKey2 = await page.evaluate(() => localStorage.getItem('userKey'));
+    const userKey2 = await page.evaluate(() => localStorage.getItem('pccampapp_vote_key'));
 
     // Should be the same key
     expect(userKey1).toBe(userKey2);

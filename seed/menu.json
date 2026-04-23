@@ -1,43 +1,43 @@
 {
-  "items": [
+    "items": [
         {
             "title": "Sessionplan",
-            "url": "/sessionplan/",
+            "url": "\/sessionplan\/",
             "description": "",
             "icon": "calendar",
             "active": true
         },
         {
             "title": "Timetable",
-            "url": "/timetable/",
+            "url": "\/timetable\/",
             "description": "",
             "icon": "clock",
             "active": true
         },
         {
             "title": "Floorplan",
-            "url": "/floorplan/",
+            "url": "\/floorplan\/",
             "description": "",
             "icon": "map",
             "active": true
         },
         {
             "title": "Food",
-            "url": "/food/",
+            "url": "\/food\/",
             "description": "",
             "icon": "food",
             "active": true
         },
         {
             "title": "Sponsoren",
-            "url": "/sponsors/",
+            "url": "\/sponsors\/",
             "description": "Unsere Unterstützer",
             "icon": "star",
             "active": true
         },
         {
             "title": "GitHub",
-            "url": "https://github.com/proudcommerce/pcCampApp",
+            "url": "https:\/\/github.com\/proudcommerce\/pcCampApp",
             "description": "Open Source Event-App",
             "icon": "image",
             "active": true
@@ -45,7 +45,7 @@
         {
             "title": "WLAN",
             "url": "",
-            "description": "EventWiFi / test123",
+            "description": "EventWiFi \/ test123",
             "icon": "wifi",
             "active": true
         }

@@ -31,7 +31,7 @@ function getCurrentLocale(testInfo) {
     return testInfo.project.metadata.locale;
   }
   // Fallback: Read from event.json
-  const eventConfigPath = path.join(process.cwd(), 'event.json');
+  const eventConfigPath = path.join(process.cwd(), 'content', 'event.json');
   const eventConfig = JSON.parse(fs.readFileSync(eventConfigPath, 'utf-8'));
   return eventConfig.event.locale || 'de';
 }

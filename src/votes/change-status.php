@@ -1,5 +1,7 @@
 <?php
-session_start();
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../admin/content-paths.php';
+startHardenedSession();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -8,20 +10,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require_once __DIR__ . '/config.php';
-
-$input = json_decode(file_get_contents('php://input'), true);
-
-// Auth: session or key in body
-$authenticated = !empty($_SESSION['voting_admin']);
-if (!$authenticated && isset($input['key'])) {
-    $authenticated = validateAdminKey($input['key']);
-}
-if (!$authenticated) {
+// Auth: Session (admin_authenticated) + CSRF-Token. Kein Key im Body mehr.
+if (empty($_SESSION['admin_authenticated'])) {
     http_response_code(403);
-    echo json_encode(['error' => 'Forbidden']);
+    echo json_encode(['error' => 'Not authenticated']);
     exit;
 }
+requireCsrfToken();
+
+$input = json_decode(file_get_contents('php://input'), true);
 
 if (!isset($input['status'])) {
     http_response_code(400);
@@ -38,7 +35,10 @@ if (!in_array($newStatus, $allowedStatuses)) {
     exit;
 }
 
-$stateFile = __DIR__ . '/voting-state.json';
+$stateFile = contentPath('voting/voting-state.json');
+if (!is_dir(dirname($stateFile))) {
+    mkdir(dirname($stateFile), 0755, true);
+}
 
 $votingState = [
     'status' => $newStatus,

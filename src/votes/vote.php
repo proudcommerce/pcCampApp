@@ -1,16 +1,23 @@
 <?php
 header('Content-Type: application/json');
 
+require_once __DIR__ . '/../admin/content-paths.php';
+require_once __DIR__ . '/vote-helpers.php';
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
-// Validate input parameters first (before checking voting state)
 $input = json_decode(file_get_contents('php://input'), true);
 
-if (!isset($input['sessionId']) || !isset($input['day']) || !isset($input['userKey'])) {
+if (!is_array($input)
+    || !isset($input['sessionId'], $input['day'], $input['userKey'])
+    || !is_string($input['sessionId'])
+    || !is_string($input['day'])
+    || !is_string($input['userKey'])
+) {
     http_response_code(400);
     echo json_encode(['error' => 'Missing required parameters']);
     exit;
@@ -20,9 +27,17 @@ $sessionId = $input['sessionId'];
 $day = $input['day'];
 $userKey = $input['userKey'];
 
-// Validate day parameter (load allowed days from event config)
-$eventConfigPath = __DIR__ . '/../../event.json';
-$allowedDays = ['samstag', 'sonntag']; // Default fallback
+// userKey muss dem Client-Format entsprechen (`vote_<alnum>`, 8-64 Zeichen).
+// Ohne Pattern koennten Angreifer kollidierende oder absurd grosse Keys senden
+// und so Vote-Budgets/Storage anderer Nutzer verfaelschen.
+if (!preg_match('/^vote_[a-z0-9]{4,58}$/', $userKey)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid userKey format']);
+    exit;
+}
+
+$eventConfigPath = contentPath('event.json');
+$allowedDays = ['samstag', 'sonntag'];
 
 if (file_exists($eventConfigPath)) {
     $eventConfig = json_decode(file_get_contents($eventConfigPath), true);
@@ -33,35 +48,61 @@ if (file_exists($eventConfigPath)) {
     }
 }
 
-if (!in_array($day, $allowedDays)) {
+if (!in_array($day, $allowedDays, true)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid day', 'allowed_days' => $allowedDays]);
     exit;
 }
 
-// Check voting state after input validation
-$stateFile = __DIR__ . '/voting-state.json';
+$stateFile = contentPath('voting/voting-state.json');
 if (file_exists($stateFile)) {
     $votingState = json_decode(file_get_contents($stateFile), true);
-    if ($votingState['status'] !== 'active') {
+    if (($votingState['status'] ?? null) !== 'active') {
         http_response_code(403);
-        echo json_encode(['error' => 'Voting is not active', 'status' => $votingState['status']]);
+        echo json_encode(['error' => 'Voting is not active', 'status' => $votingState['status'] ?? null]);
         exit;
     }
 }
 
-$votesFile = __DIR__ . '/votes.json';
-$votes = [];
-
-if (file_exists($votesFile)) {
-    $votes = json_decode(file_get_contents($votesFile), true) ?: [];
+// sessionId gegen sessions.json[day] pruefen — nur existierende, nicht gecancelte
+// Sessions duerfen gevotet werden.
+if (!isValidSessionId($sessionId, $day)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Unknown or cancelled session']);
+    exit;
 }
+
+$votesFile = contentPath('voting/votes.json');
+
+// Atomares read-modify-write mit flock. Ohne Lock koennen gleichzeitige Votes
+// sich gegenseitig ueberschreiben.
+$dir = dirname($votesFile);
+if (!is_dir($dir)) {
+    mkdir($dir, 0755, true);
+}
+$fp = fopen($votesFile, 'c+');
+if (!$fp) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Failed to open votes file']);
+    exit;
+}
+if (!flock($fp, LOCK_EX)) {
+    fclose($fp);
+    http_response_code(500);
+    echo json_encode(['error' => 'Failed to acquire lock']);
+    exit;
+}
+
+$raw = stream_get_contents($fp);
+$votes = $raw !== '' ? (json_decode($raw, true) ?: []) : [];
 
 if (!isset($votes[$day])) {
     $votes[$day] = ['sessions' => [], 'users' => []];
 }
 
 if (isset($votes[$day]['users'][$userKey])) {
+    flock($fp, LOCK_UN);
+    fclose($fp);
     http_response_code(409);
     echo json_encode(['error' => 'User already voted for this day']);
     exit;
@@ -77,16 +118,23 @@ $votes[$day]['users'][$userKey] = [
     'timestamp' => time()
 ];
 
-if (file_put_contents($votesFile, json_encode($votes, JSON_PRETTY_PRINT)) === false) {
+ftruncate($fp, 0);
+rewind($fp);
+if (fwrite($fp, json_encode($votes, JSON_PRETTY_PRINT)) === false) {
+    flock($fp, LOCK_UN);
+    fclose($fp);
     http_response_code(500);
     echo json_encode(['error' => 'Failed to save vote']);
     exit;
 }
+fflush($fp);
+flock($fp, LOCK_UN);
+fclose($fp);
 
+// Public-Response enthaelt nur aggregate Zaehler, keine userKeys anderer Nutzer.
 echo json_encode([
-    'success' => true,
-    'message' => 'Vote recorded successfully',
-    'votes' => $votes[$day]
+    'success'  => true,
+    'message'  => 'Vote recorded successfully',
+    'sessions' => $votes[$day]['sessions'],
+    'hasVoted' => true,
 ]);
-?>
-

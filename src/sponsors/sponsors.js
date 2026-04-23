@@ -1,6 +1,7 @@
 // Sponsors Page - Dynamic Content Loading
 // Loads sponsor data from URL and renders detailed sponsor cards
-// Logo URLs can be absolute paths (e.g., CDN or external hosting)
+// Logos live in the content/ volume (content/sponsors/logos/) so admins can
+// upload/replace them without a rebuild. Absolute URLs are passed through as-is.
 
 (async () => {
   // HTML-Encoding helper to prevent XSS
@@ -22,10 +23,8 @@
   });
 
   try {
-    // Load sponsor data from current directory
-    // Build script will replace with hashed filename
-    const sponsorsFileName = './sponsors.json';
-    const response = await fetch(sponsorsFileName);
+    await window.assetHashesReady;
+    const response = await fetch(window.contentUrl('sponsors/sponsors.json'));
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -50,10 +49,12 @@
       const displayUrl = sponsorUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
       const description = sponsor.beschreibung || '';
       
-      // Resolve logo path: absolute URLs stay as-is, relative paths are resolved to current directory
+      // Resolve logo path: absolute URLs stay as-is; relative filenames resolve
+      // against the content volume (content/sponsors/...).
+      const rel = sponsor.logo.replace(/^\.\//, '');
       const logoSrc = sponsor.logo.startsWith('http://') || sponsor.logo.startsWith('https://') || sponsor.logo.startsWith('/')
         ? sponsor.logo
-        : `./${sponsor.logo}`;
+        : window.contentUrl('sponsors/' + rel);
 
       return `
         <a href="${esc(sponsorUrl)}" target="_blank" rel="noopener noreferrer" class="sponsor-card">

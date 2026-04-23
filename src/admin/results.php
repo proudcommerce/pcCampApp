@@ -1,14 +1,15 @@
 <?php
-session_start();
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../votes/config.php';
+require_once __DIR__ . '/content-paths.php';
+startHardenedSession();
 
-if (empty($_SESSION['voting_admin'])) {
+if (empty($_SESSION['admin_authenticated'])) {
     http_response_code(403);
-    echo 'Forbidden &mdash; <a href="admin.php">Login</a>';
+    echo 'Forbidden &mdash; <a href="./">Login</a>';
     exit;
 }
 
-$votesFile = __DIR__ . '/votes.json';
+$votesFile = contentPath('voting/votes.json');
 $votes = [];
 
 if (file_exists($votesFile)) {
@@ -16,7 +17,7 @@ if (file_exists($votesFile)) {
 }
 
 // Load event configuration to get configured voting days
-$eventConfigPath = __DIR__ . '/../../event.json';
+$eventConfigPath = contentPath('event.json');
 $votingDays = [];
 if (file_exists($eventConfigPath)) {
     $eventConfig = json_decode(file_get_contents($eventConfigPath), true);
@@ -39,7 +40,7 @@ if (empty($votingDays)) {
 }
 
 // Get session data
-$sessionsData = json_decode(file_get_contents(__DIR__ . '/../sessionplan/sessions.json'), true);
+$sessionsData = json_decode(file_get_contents(contentPath('sessionplan/sessions.json')), true) ?: [];
 
 // Helper function to get session info with time slot
 function getSessionInfo($sessionId, $sessionsData) {
@@ -151,7 +152,7 @@ body { background:#f9fafb; }
 </head>
 <body>
 
-<div class="header"><div class="bar container"><a class="brand" href="../"><img src="../assets/logo.png" alt=""></a><button id="burger" class="burger" aria-label="Menü"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button></div></div>
+<div class="header"><div class="bar container"><a class="brand" href="../"><img src="<?= htmlspecialchars(brandLogoUrl(), ENT_QUOTES) ?>" alt=""></a><button id="burger" class="burger" aria-label="Menü"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button></div></div>
 <nav id="nav-drawer" class="drawer container">
   <div id="navItems"></div>
 </nav>

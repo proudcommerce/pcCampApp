@@ -5,7 +5,7 @@
     "shortName": "CampApp Event",
     "hashtag": "#DCAE25",
     "description": "Event-App für BarCamps und Unkonferenzen",
-    "copyright": "<a href='https://github.com/proudcommerce/pcCampApp' target='_blank' style='text-decoration: none; color: inherit;'>pcCampApp</a>",
+    "copyright": "pcCampApp",
     "locale": "de",
     "timezone": "Europe/Berlin"
   },

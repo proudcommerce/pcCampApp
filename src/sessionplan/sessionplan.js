@@ -49,7 +49,8 @@
 
 		try {
 			// Lade sessions.json um verfügbare Tage zu ermitteln
-			const sessionsFileName = './sessions.json';
+			await window.assetHashesReady;
+			const sessionsFileName = window.contentUrl('sessionplan/sessions.json');
 			const response = await fetch(sessionsFileName, {
 				credentials: 'same-origin',
 				headers: { 'Accept': 'application/json' },
@@ -70,11 +71,14 @@
 
 			// Erstelle Tages-Container basierend auf dynamischer Reihenfolge
 			const dayOrder = getDayOrder();
+			const hideDayHeading = dayOrder.length <= 1;
 			dayOrder.forEach((dayInfo, index) => {
-				const h2 = document.createElement('h2');
-				h2.style.cssText = 'font:600 16px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px 0;text-align:center';
-				h2.textContent = dayInfo.name;
-				container.appendChild(h2);
+				if (!hideDayHeading) {
+					const h2 = document.createElement('h2');
+					h2.style.cssText = 'font:600 16px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px 0;text-align:center';
+					h2.textContent = dayInfo.name;
+					container.appendChild(h2);
+				}
 
 				const mount = document.createElement('div');
 				mount.className = 'sessionplan-mount';
@@ -111,7 +115,14 @@
 				const container = entry.target;
 				const isLazy = container.getAttribute('data-lazy') === 'true';
 				if (isLazy && !container.hasAttribute('data-loaded')) {
-					loadSessionData(container);
+					const day = container.getAttribute('data-day');
+					const now = new Date();
+					const todayName = now.toLocaleDateString('de-DE', { weekday: 'long' }).toLowerCase();
+					const isToday = day === todayName;
+					const nowMinutes = now.getHours()*60 + now.getMinutes();
+					loadSessionData(container).then(() => {
+						autoOpen(container, isToday, nowMinutes);
+					});
 					container.setAttribute('data-loaded', 'true');
 					lazyObserver.unobserve(container);
 				}
@@ -174,7 +185,6 @@
 		return [start,end];
 	};
 	const autoOpen = (container,isToday,nowMinutes) => {
-		if (!isToday) return;
 		const wrap = container.querySelector('.sessionplan');
 		if (!wrap) return;
 		const details = Array.from(wrap.querySelectorAll('details'));
@@ -184,42 +194,40 @@
 			return { d, range: slotRange(label) };
 		});
 		let candidate = null;
-		
-		// Erst versuchen, den aktuellen Zeitslot zu finden
-		for (let i=0;i<buckets.length;i++) {
-			const r = buckets[i].range;
-			if (r && nowMinutes >= r[0] && nowMinutes < r[1]) { 
-				candidate = buckets[i]; 
-				break; 
-			}
-		}
-		
-		// Falls kein aktueller Slot gefunden, den nächsten anstehenden Slot finden
-		if (!candidate) {
+		let shouldScroll = true;
+
+		if (isToday) {
+			// Erst versuchen, den aktuellen Zeitslot zu finden
 			for (let i=0;i<buckets.length;i++) {
 				const r = buckets[i].range;
-				if (r && nowMinutes < r[0]) { 
-					candidate = buckets[i]; 
-					break; 
+				if (r && nowMinutes >= r[0] && nowMinutes < r[1]) {
+					candidate = buckets[i];
+					break;
 				}
 			}
-		}
-		
-		// Falls immer noch nichts gefunden, den letzten vergangenen Slot nehmen
-		if (!candidate) {
-			for (let i=buckets.length-1;i>=0;i--) {
-				const r = buckets[i].range;
-				if (r && nowMinutes >= r[0]) { 
-					candidate = buckets[i]; 
-					break; 
+
+			// Falls kein aktueller Slot gefunden, den nächsten anstehenden Slot finden
+			if (!candidate) {
+				for (let i=0;i<buckets.length;i++) {
+					const r = buckets[i].range;
+					if (r && nowMinutes < r[0]) {
+						candidate = buckets[i];
+						break;
+					}
 				}
 			}
+		} else {
+			// Anderer Tag (Zukunft oder Vergangenheit): ersten Slot öffnen, aber nicht hinscrollen
+			candidate = buckets[0];
+			shouldScroll = false;
 		}
-		
+
 		if (candidate) {
 			details.forEach(x => x.removeAttribute('open'));
 			candidate.d.setAttribute('open','');
-			candidate.d.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			if (shouldScroll) {
+				candidate.d.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			}
 		}
 	};
 	const el = (t,cls,txt) => {
@@ -372,11 +380,17 @@
 		
 		// Prüfe, ob alle Sessions Votes haben (auch 0 Votes zählen)
 		const allHaveVotes = allSessions.every(session => session.hasOwnProperty('votes'));
-		
+
 		if (!allHaveVotes || allSessions.length === 0) {
 			return [];
 		}
-		
+
+		// Keine Medaillen zeigen, solange niemand tatsächlich gevotet hat
+		const hasAnyVotes = allSessions.some(session => (session.votes || 0) > 0);
+		if (!hasAnyVotes) {
+			return [];
+		}
+
 		// Sortiere nach Vote-Anzahl (absteigend) und nimm die Top 3
 		return allSessions
 			.sort((a, b) => (b.votes || 0) - (a.votes || 0))
@@ -399,7 +413,7 @@
 			
 			Object.keys(roomGroups).sort().forEach(room => {
 				const d = el('details');
-				const s = el('summary',null,`Raum ${room}`);
+				const s = el('summary',null,room);
 				d.appendChild(s);
 				const list = el('ul');
 				const sessions = roomGroups[room];
@@ -421,17 +435,19 @@
 					const li = el('li', 'session-card');
 					const timeText = item.timeSlot ? `${item.timeSlot}` : '';
 					li.appendChild(el('div','room',timeText));
-					const titleHost = el('div');
-					
+					const titleHost = el('div','session-body');
+
 					// Titel mit Badge für entfallene Sessions und Medaillen für Top-Sessions
 					const titleDiv = el('div','title',item?.title ?? '');
 					if (item?.cancelled) {
-						titleDiv.innerHTML = `${item?.title ?? ''} <span class="cancelled-badge">${t('sessionplan.cancelledBadge')}</span>`;
+						titleDiv.appendChild(document.createTextNode(' '));
+						const badge = el('span', 'cancelled-badge', t('sessionplan.cancelledBadge'));
+						titleDiv.appendChild(badge);
 						li.classList.add('cancelled');
 					} else if (topSessionIds.includes(item?.id)) {
 						const rank = topSessionIds.indexOf(item.id) + 1;
 						const medalIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
-						titleDiv.innerHTML = `${item?.title ?? ''} ${medalIcon}`;
+						titleDiv.appendChild(document.createTextNode(' ' + medalIcon));
 					}
 					titleHost.appendChild(titleDiv);
 
@@ -472,19 +488,21 @@
 
 				filteredSessions.forEach(item => {
 					const li = el('li', 'session-card');
-					const roomText = item?.room ? `${t('sessionplan.roomPrefix')} ${item.room}` : '';
+					const roomText = item?.room ? `${item.room}` : '';
 					li.appendChild(el('div','room',roomText));
-					const titleHost = el('div');
+					const titleHost = el('div','session-body');
 
 					// Titel mit Badge für entfallene Sessions und Medaillen für Top-Sessions
 					const titleDiv = el('div','title',item?.title ?? '');
 					if (item?.cancelled) {
-						titleDiv.innerHTML = `${item?.title ?? ''} <span class="cancelled-badge">${t('sessionplan.cancelledBadge')}</span>`;
+						titleDiv.appendChild(document.createTextNode(' '));
+						const badge = el('span', 'cancelled-badge', t('sessionplan.cancelledBadge'));
+						titleDiv.appendChild(badge);
 						li.classList.add('cancelled');
 					} else if (topSessionIds.includes(item?.id)) {
 						const rank = topSessionIds.indexOf(item.id) + 1;
 						const medalIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
-						titleDiv.innerHTML = `${item?.title ?? ''} ${medalIcon}`;
+						titleDiv.appendChild(document.createTextNode(' ' + medalIcon));
 					}
 					titleHost.appendChild(titleDiv);
 					
@@ -672,15 +690,23 @@
 	};
 
 	const userKey = generateUserKey();
-	let votesData = {}; // Wird dynamisch initialisiert
+	let votesData = {}; // aggregates-only, vom Server geliefert
+	let ownVote = { hasVoted: false, sessionId: null };
 
-	// Load votes data
-	const loadVotes = async () => {
+	// Holt aggregate Vote-Zaehler und den eigenen Vote-Status ueber status.php.
+	// Server liefert bewusst KEINE fremden userKeys mehr an den Client.
+	const loadVotes = async (day) => {
 		try {
-			const timestamp = new Date().getTime();
-			const response = await fetch(`../votes/votes.json?t=${timestamp}`);
+			const response = await fetch('../votes/status.php', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'same-origin',
+				body: JSON.stringify({ day, userKey })
+			});
 			if (response.ok) {
-				votesData = await response.json();
+				const payload = await response.json();
+				votesData = payload.aggregates || {};
+				ownVote = payload.ownVote || { hasVoted: false, sessionId: null };
 			}
 		} catch (error) {
 			console.error('Failed to load votes:', error);
@@ -692,13 +718,10 @@
 		const select = document.getElementById(`${day}-vote`);
 		if (!select) return;
 		
-		// Cache-Hashes werden nicht mehr verwendet
-		
 		// Load session data for specific day with cache busting
 		const timestamp = new Date().getTime();
-		// Verwende Original-Dateiname
-		const sessionsFileName = './sessions.json';
-		const sessionData = await fetch(`${sessionsFileName}?t=${timestamp}`).then(r => r.json());
+		await window.assetHashesReady;
+		const sessionData = await fetch(window.contentUrl('sessionplan/sessions.json') + `?t=${timestamp}`).then(r => r.json());
 
 		// Populate dropdown
 		const daySessions = sessionData[day] || {};
@@ -753,8 +776,11 @@
 				button.style.background = '#6b7280';
 				select.disabled = true;
 
-				// Update votes data
-				votesData[day] = result.votes;
+				// Update aggregates + eigener Vote-Status aus Response
+				if (result.sessions) {
+					votesData[day] = { sessions: result.sessions };
+				}
+				ownVote = { hasVoted: true, sessionId: select.value };
 			} else {
 				if (response.status === 409) {
 					console.warn('User already voted - this might be a false positive. UserKey:', userKey);
@@ -784,8 +810,7 @@
 		// Load event configuration if not already loaded
 		if (!window.eventConfig) {
 			try {
-				const configPath = '../event.json';
-				const response = await fetch(configPath);
+				const response = await fetch(window.contentUrl('event.json'));
 				window.eventConfig = await response.json();
 			} catch (error) {
 				console.error('Failed to load event config:', error);
@@ -801,7 +826,7 @@
 
 		// Check voting-state.json for admin-controlled status
 		try {
-			const stateResponse = await fetch('../votes/voting-state.json');
+			const stateResponse = await fetch(window.contentUrl('voting/voting-state.json'));
 			if (stateResponse.ok) {
 				const votingState = await stateResponse.json();
 				if (votingState.status !== 'active') {
@@ -862,22 +887,41 @@
 		return { show: false, day: null, dayLabel: null };
 	};
 
-	// Create voting UI for specific day
+	// Create voting UI for specific day.
+	// DOM-Konstruktion statt innerHTML — `day` kommt via votingSchedule aus
+	// event.json und ist zwar schema-validiert, aber defense in depth: wir
+	// interpretieren den Wert nie als HTML.
 	const createVotingUI = (day, dayLabel) => {
 		const container = document.getElementById('voting-container');
-		// set header to include day
 		const header = document.querySelector('#voting-section h3');
 		if (header) header.textContent = `${t('voting.title')} ${dayLabel}`;
 
-		container.innerHTML = `
-			<div class="voting-day">
-				<select id="${day}-vote" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:4px;">
-					<option value="">${t('voting.selectPlaceholder')}</option>
-				</select>
-				<button id="${day}-submit" style="width:100%;margin-top:8px;padding:12px 16px;background:#6b7280;color:white;border:none;border-radius:4px;cursor:not-allowed;font-size:16px;" disabled>${t('voting.submitButton')}</button>
-				<div id="${day}-status" style="margin-top:8px;font-size:0.9em;"></div>
-			</div>
-		`;
+		container.replaceChildren();
+		const wrapper = document.createElement('div');
+		wrapper.className = 'voting-day';
+
+		const select = document.createElement('select');
+		select.id = `${day}-vote`;
+		select.style.cssText = 'width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:4px;';
+		const placeholder = document.createElement('option');
+		placeholder.value = '';
+		placeholder.textContent = t('voting.selectPlaceholder');
+		select.appendChild(placeholder);
+		wrapper.appendChild(select);
+
+		const button = document.createElement('button');
+		button.id = `${day}-submit`;
+		button.disabled = true;
+		button.style.cssText = 'width:100%;margin-top:8px;padding:12px 16px;background:#6b7280;color:white;border:none;border-radius:4px;cursor:not-allowed;font-size:16px;';
+		button.textContent = t('voting.submitButton');
+		wrapper.appendChild(button);
+
+		const status = document.createElement('div');
+		status.id = `${day}-status`;
+		status.style.cssText = 'margin-top:8px;font-size:0.9em;';
+		wrapper.appendChild(status);
+
+		container.appendChild(wrapper);
 	};
 
 	// Debug function to reset user identity (for troubleshooting)
@@ -904,25 +948,22 @@
 		// Show voting section and create UI for current day
 		document.getElementById('voting-section').style.display = 'block';
 		createVotingUI(votingInfo.day, votingInfo.dayLabel);
-		
-		await loadVotes();
+
+		await loadVotes(votingInfo.day);
 		await populateDropdowns(votingInfo.day);
-		
-	// Check if user already voted
-	console.log('Checking vote status for userKey:', userKey);
-	console.log('Votes data for', votingInfo.day, ':', votesData[votingInfo.day]);
-	
-	if (votesData[votingInfo.day].users && votesData[votingInfo.day].users[userKey]) {
-		console.log('User has already voted for', votingInfo.day);
+
+	// Server entscheidet, ob der Nutzer schon gevotet hat. Kein Scannen mehr
+	// durch fremde userKeys — das war der Voting-Data-Leak.
+	console.log('Own vote status for', votingInfo.day, ':', ownVote);
+
+	if (ownVote.hasVoted) {
 		const select = document.getElementById(`${votingInfo.day}-vote`);
 		const button = document.getElementById(`${votingInfo.day}-submit`);
-		select.value = votesData[votingInfo.day].users[userKey].sessionId;
+		if (ownVote.sessionId) select.value = ownVote.sessionId;
 		select.disabled = true;
 		button.textContent = t('voting.alreadyVoted');
 		button.style.background = '#6b7280';
 		button.disabled = true;
-	} else {
-		console.log('User has not voted yet for', votingInfo.day);
 	}
 
 		// Add event listeners

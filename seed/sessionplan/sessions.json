@@ -1,0 +1,76 @@
+{
+    "samstag": {
+        "14:00 - 15:00": [
+            {
+                "id": "10",
+                "room": "Hangar",
+                "title": "Vom Start-Up zur europäischen Home & Living Brand",
+                "host": "Martin Gittel (Loberon)",
+                "votes": 0,
+                "cancelled": false
+            },
+            {
+                "id": "20",
+                "room": "Team Space",
+                "title": "Dead or alive? Wenn im E-Commerce nichts schief gehen darf",
+                "host": "Andreas Krause (Mr. Pixel)",
+                "votes": 0,
+                "cancelled": false
+            }
+        ],
+        "15:00 - 16:00": [
+            {
+                "id": "30",
+                "room": "Hangar",
+                "title": "Vom ersten Klick bis zur KI – Wie eine moderne Daten-Wertschöpfungskette entsteht",
+                "host": "Martin Kloos (tractionwise)",
+                "votes": 0,
+                "cancelled": false
+            },
+            {
+                "id": "40",
+                "room": "Team Space",
+                "title": "Automatische Auftragsfreigabe im ERP & InvoiceSensei",
+                "host": "Tobias Merkl (Proud Commerce)",
+                "votes": 0,
+                "cancelled": false
+            }
+        ],
+        "16:00 - 17:00": [
+            {
+                "id": "50",
+                "room": "Hangar",
+                "title": "Wie KI unseren Agenturalltag auf den Kopf stellt",
+                "host": "Stefan Peter Roos (Proud Commerce)",
+                "votes": 0,
+                "cancelled": false
+            },
+            {
+                "id": "60",
+                "room": "Team Space",
+                "title": "Mehr Umsatz, weniger Aufwand – wie du Shopware automatisiert für dich arbeiten lässt",
+                "host": "Tina Otto (netlogix)",
+                "votes": 0,
+                "cancelled": false
+            }
+        ],
+        "17:00 - 18:00": [
+            {
+                "id": "70",
+                "room": "Hangar",
+                "title": "Digital Experience Plattform (DXP) trifft E-Commerce",
+                "host": "Andreas Förthner (netlogix)",
+                "votes": 0,
+                "cancelled": false
+            },
+            {
+                "id": "80",
+                "room": "Team Space",
+                "title": "AI-Automatisierung im eCommerce-Marketing",
+                "host": "Kevin Flurschütz (KFL Consulting)",
+                "votes": 0,
+                "cancelled": false
+            }
+        ]
+    }
+}

@@ -103,7 +103,7 @@ export default defineConfig({
   // Production Server (optional - nur wenn nicht bereits läuft)
   // In lokaler Umgebung wird Server via make test-prod gestartet
   webServer: process.env.CI ? {
-    command: 'make prod-up',
+    command: 'make dev-prod-start',
     port: 5174,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,

@@ -16,8 +16,7 @@
   "sessionplan": {
     "groupByTime": "By Time",
     "groupByRoom": "By Room",
-    "cancelledBadge": "CANCELLED",
-    "roomPrefix": "Room"
+    "cancelledBadge": "CANCELLED"
   },
   "voting": {
     "title": "Session Voting",

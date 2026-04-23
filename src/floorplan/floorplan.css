@@ -1,5 +1,5 @@
 .brand img{border:none;box-shadow:none}
-.page-wrap img{max-width:100%;height:auto;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,0.08);transition:all 0.2s ease}
+.page-wrap img{max-width:100%;height:auto;border-radius:8px;border:1px solid var(--color-border);box-shadow:0 2px 6px rgba(0,0,0,0.08);transition:all 0.2s ease}
 .page-wrap img:hover{transform:scale(1.01);box-shadow:0 4px 12px rgba(0,0,0,0.12)}
 
 .floorplan-container {
@@ -8,22 +8,29 @@
   border-radius: 8px;
 }
 
+@media (min-width: 768px) {
+  .floorplan-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+}
+
 .zoom-hint {
   display: flex;
   align-items: center;
   text-align: center;
   gap: 8px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 8px 12px;
   margin-bottom: 16px;
   font-size: 14px;
-  color: #64748b;
+  color: var(--color-text-soft);
 }
 
 .zoom-hint svg {
-  color: #3b82f6;
+  color: var(--color-primary);
 }
 
 #floorplanImage {

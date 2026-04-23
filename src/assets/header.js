@@ -2,6 +2,68 @@
 let eventConfig = null;
 let translations = null;
 
+// Two separate hash manifests:
+//   /assets-hashes.json      → immutable code assets (CSS/JS/images), shipped in the image.
+//   /content/content-hashes.json → admin-edited content, lives in the content volume.
+// Both are loaded once at startup. Missing manifests are tolerated (dev mode).
+let _assetHashes = {};
+let _contentHashes = {};
+
+function _computeBasePath() {
+    const pathname = window.location.pathname;
+    const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
+    const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes', 'admin'];
+    const hasBasePath = segments.length >= 1 && !knownPages.includes(segments[0]);
+    return hasBasePath ? '/' + segments[0] : '';
+}
+
+// Export fuer andere Module (event-config-loader.js), damit Subfolder-Deploys
+// nur an EINER Stelle definiert sind und nicht auseinanderlaufen.
+window.getBasePath = _computeBasePath;
+
+const assetHashesReady = (async () => {
+    const basePath = _computeBasePath();
+
+    // Code-asset manifest (absolute path works in dev and prod).
+    try {
+        const resp = await fetch(basePath + '/assets-hashes.json', { cache: 'no-store' });
+        if (resp.ok) _assetHashes = await resp.json();
+    } catch (e) { /* dev mode — manifest absent */ }
+
+    // Content manifest (only present in prod after first admin rehash).
+    try {
+        const resp = await fetch(basePath + '/content/content-hashes.json', { cache: 'no-store' });
+        if (resp.ok) _contentHashes = await resp.json();
+    } catch (e) { /* no admin edits yet — unhashed paths work fine */ }
+})();
+
+/**
+ * Resolve a code-asset filename (e.g. 'app.css') to its cache-busted version.
+ */
+function resolveAsset(filename) {
+    if (!_assetHashes || Object.keys(_assetHashes).length === 0) return filename;
+    if (_assetHashes[filename]) return _assetHashes[filename].split('/').pop();
+    for (const [key, value] of Object.entries(_assetHashes)) {
+        if (key.endsWith('/' + filename)) return value.split('/').pop();
+    }
+    return filename;
+}
+
+/**
+ * Build a URL for a file in the content volume, honouring both the base path
+ * (sub-directory deployments) and the content hash manifest (cache-busting).
+ * Pass the relative path inside content/ (e.g. 'menu.json', 'sessionplan/sessions.json').
+ */
+function contentUrl(relativePath) {
+    const hashed = _contentHashes[relativePath];
+    const finalPath = hashed || relativePath;
+    return _computeBasePath() + '/content/' + finalPath;
+}
+
+window.resolveAsset = resolveAsset;
+window.contentUrl = contentUrl;
+window.assetHashesReady = assetHashesReady;
+
 function getPathDepth() {
     const pathname = window.location.pathname;
     const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
@@ -31,7 +93,7 @@ function getBasePath() {
     // und es mehr als ein Segment gibt, ist das erste Segment der Base-Path
     if (segments.length >= 1) {
         // Prüfe ob das erste Segment ein bekannter Seitenname ist
-        const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes'];
+        const knownPages = ['sessionplan', 'timetable', 'food', 'floorplan', 'sponsors', 'votes', 'admin'];
         if (knownPages.includes(segments[0])) {
             // Es ist eine Seite, kein Base-Path
             return '';
@@ -45,27 +107,8 @@ function getBasePath() {
 
 async function loadEventConfig() {
     try {
-        const pathname = window.location.pathname;
-        const segments = pathname.split('/').filter(s => s && !s.endsWith('.html'));
-        const basePath = getBasePath();
-
-        let configPath;
-        if (basePath) {
-            // We have a base path (e.g. /build)
-            // Always use absolute path from base
-            configPath = basePath + '/event.json';
-        } else {
-            // No base path
-            if (segments.length === 0) {
-                // We're at real root (/)
-                configPath = './event.json';
-            } else {
-                // We're in subdirectory (/sessionplan/)
-                configPath = '../event.json';
-            }
-        }
-
-        const response = await fetch(configPath);
+        await window.assetHashesReady;
+        const response = await fetch(contentUrl('event.json'));
         eventConfig = await response.json();
         return eventConfig;
     } catch (error) {
@@ -296,6 +339,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    // Brand-Logo aus branding.logo aufloesen (content/ oder absolute URL).
+    // Fallback auf content/assets/logo.png wenn kein Wert gesetzt ist.
+    const brandImg = document.querySelector('img[data-brand-logo]');
+    if (brandImg) {
+        const configured = (eventConfig && eventConfig.branding && eventConfig.branding.logo) || 'assets/logo.png';
+        const rel = String(configured).replace(/^\.\//, '');
+        const logoSrc = /^(https?:\/\/|\/)/i.test(rel) ? rel : contentUrl(rel);
+        brandImg.src = logoSrc;
+    }
+
     // Burger-Menü-Implementierung
     const navItems = document.getElementById('navItems');
     const oldBurger = document.getElementById('burger');
@@ -304,50 +357,31 @@ document.addEventListener('DOMContentLoaded', async function() {
     let menuData = null;
     
     async function loadMenuData() {
+        const cacheKey = 'sessionplan-menu';
+
         try {
             // Lade Event-Konfiguration falls noch nicht geladen
             if (!eventConfig) {
                 eventConfig = await loadEventConfig();
             }
 
-            // Prüfe Cache zuerst
-            const cacheKey = 'sessionplan-menu';
-            const cached = localStorage.getItem(cacheKey);
-            const cacheTime = localStorage.getItem(cacheKey + '-time');
-            const now = Date.now();
-
-            // Cache-TTL aus Konfiguration verwenden
-            const cacheTTL = eventConfig?.performance?.cacheTTL || 3600000;
-            if (cached && cacheTime && (now - parseInt(cacheTime)) < cacheTTL) {
-                menuData = JSON.parse(cached);
-                renderMenuItems();
-                return;
-            }
-
-            // Pfad-Setup
+            // Network-first: immer frisch laden, damit Admin-Änderungen sofort sichtbar werden.
+            // localStorage dient nur als Offline-Fallback im catch-Block.
             const basePath = getBasePath();
             const isInSubfolder = getPathDepth();
 
-            // Verwende Original-Dateinamen (funktioniert in Development & Production)
-            const menuFile = 'menu.json';
-            let menuPath;
-            if (basePath) {
-                menuPath = basePath + '/' + menuFile;
-            } else {
-                menuPath = isInSubfolder ? '../' + menuFile : './' + menuFile;
-            }
-            const response = await fetch(menuPath);
+            await window.assetHashesReady;
+            const response = await fetch(contentUrl('menu.json'));
             menuData = await response.json();
 
-            // Speichere im Cache
+            // Speichere im Cache nur als Offline-Fallback
             localStorage.setItem(cacheKey, JSON.stringify(menuData));
-            localStorage.setItem(cacheKey + '-time', now.toString());
 
             renderMenuItems();
         } catch (error) {
             console.error('Fehler beim Laden des Menüs:', error);
-            // Fallback zu Cache falls vorhanden
-            const cached = localStorage.getItem('sessionplan-menu');
+            // Fallback zu Cache falls vorhanden (Offline-Modus)
+            const cached = localStorage.getItem(cacheKey);
             if (cached) {
                 try {
                     menuData = JSON.parse(cached);
@@ -486,6 +520,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             case 'star':
                 d = 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z';
                 break;
+            case 'car':
+                d = 'M3 13l2-6a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 6 M3 13v5h3v-2h12v2h3v-5 M3 13h18 M7 16a1 1 0 1 0 0-.01 M17 16a1 1 0 1 0 0-.01';
+                break;
             default:
                 d = '';
         }
@@ -619,15 +656,8 @@ class NewsManager {
             const basePath = getBasePath();
             const isInSubfolder = getPathDepth();
 
-            // Verwende Original-Dateinamen (funktioniert in Development & Production)
-            const newsFile = 'news.json';
-            let newsPath;
-            if (basePath) {
-                newsPath = basePath + '/' + newsFile;
-            } else {
-                newsPath = isInSubfolder ? '../' + newsFile : './' + newsFile;
-            }
-            const response = await fetch(`${newsPath}?t=${Date.now()}`);
+            await window.assetHashesReady;
+            const response = await fetch(contentUrl('news.json') + `?t=${Date.now()}`);
             this.newsData = await response.json();
 
             this.renderNews();
@@ -1065,6 +1095,13 @@ class PWAManager {
     
     registerServiceWorker() {
         if ('serviceWorker' in navigator) {
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                refreshing = true;
+                window.location.reload();
+            });
+
             // Dynamischer Pfad basierend auf aktueller URL
             const basePath = getBasePath();
             const isInSubfolder = getPathDepth();
@@ -1085,6 +1122,9 @@ class PWAManager {
             navigator.serviceWorker.register(swPath)
                 .then(registration => {
                     console.log('Service Worker registriert:', registration);
+                    registration.update().catch(error => {
+                        console.log('Service Worker Update-Pruefung fehlgeschlagen:', error);
+                    });
                     
                     // Fehlerbehandlung für Message Port
                     registration.addEventListener('updatefound', () => {
@@ -1092,8 +1132,8 @@ class PWAManager {
                         if (newWorker) {
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // Neuer Service Worker verfügbar
-                                    console.log('Neuer Service Worker verfügbar');
+                                    console.log('Neuer Service Worker verfügbar, aktiviere Update');
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
                                 }
                             });
                         }
@@ -1216,20 +1256,38 @@ class PWAManager {
         const installPrefix = t('pwa.iosInstallPrefix');
         const installText = t('pwa.iosInstallPrompt');
 
-        iosBanner.innerHTML = `
-            <div class="ios-banner-content">
-                <span class="ios-banner-text"><b>${eventName} ${installPrefix}</b><br>${installText}</span>
-            </div>
-            <button class="ios-banner-close">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        `;
-        
-        // Event Listener für Close-Button
-        const closeButton = iosBanner.querySelector('.ios-banner-close');
+        // DOM-Konstruktion statt innerHTML — eventName kommt aus Admin-editierbarer
+        // event.json und darf nicht als HTML interpretiert werden.
+        const bannerContent = document.createElement('div');
+        bannerContent.className = 'ios-banner-content';
+        const bannerText = document.createElement('span');
+        bannerText.className = 'ios-banner-text';
+        const boldPart = document.createElement('b');
+        boldPart.textContent = `${eventName} ${installPrefix}`;
+        bannerText.appendChild(boldPart);
+        bannerText.appendChild(document.createElement('br'));
+        bannerText.appendChild(document.createTextNode(installText));
+        bannerContent.appendChild(bannerText);
+        iosBanner.appendChild(bannerContent);
+
+        const closeButton = document.createElement('button');
+        closeButton.className = 'ios-banner-close';
+        const closeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        closeSvg.setAttribute('width', '16');
+        closeSvg.setAttribute('height', '16');
+        closeSvg.setAttribute('viewBox', '0 0 24 24');
+        closeSvg.setAttribute('fill', 'none');
+        closeSvg.setAttribute('stroke', 'currentColor');
+        closeSvg.setAttribute('stroke-width', '2');
+        [[18,6,6,18],[6,6,18,18]].forEach(([x1,y1,x2,y2]) => {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+            closeSvg.appendChild(line);
+        });
+        closeButton.appendChild(closeSvg);
+        iosBanner.appendChild(closeButton);
+
         closeButton.addEventListener('click', closeBanner);
         
         document.body.appendChild(iosBanner);
