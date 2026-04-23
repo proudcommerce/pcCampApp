@@ -46,6 +46,7 @@
 - [Internationalisierung (i18n)](#-internationalisierung-i18n)
   - [Unterstützte Sprachen](#unterstützte-sprachen)
   - [i18n-Konfiguration](#i18n-konfiguration)
+  - [Bestehende Texte anpassen](#bestehende-texte-anpassen)
   - [Übersetzungen hinzufügen](#übersetzungen-hinzufügen)
 - [Architektur](#️-architektur)
   - [Tech-Stack](#tech-stack)
@@ -663,6 +664,21 @@ Sprache in `event.json` festlegen:
   }
 }
 ```
+
+### Bestehende Texte anpassen
+
+Alle UI-Labels (z.B. „Sessions", „Favoriten", „Voting aktiv") liegen in
+`src/translations/de.json` und `src/translations/en.json`. Wer die App
+auf eigene Vokabeln umstellen will (z.B. „Sessions" → „Vorträge",
+„Voting" → „Abstimmung"), aendert die entsprechenden Werte direkt in
+beiden Dateien. Schluessel-Namen bleiben unveraendert — sonst greifen die
+`data-i18n`-Bindings im HTML nicht mehr.
+
+> ⚠️ **Build-Time, nicht Runtime:** Translations sind Teil des Builds
+> (anders als `event.json`, `custom.css` oder Sponsoren-Logos im
+> `content/`-Volume). Aenderungen werden erst nach einem Rebuild
+> aktiv — `make build` lokal bzw. Image neu bauen + redeployen in Prod.
+> Es gibt aktuell keinen Admin-Editor fuer Translations.
 
 ### Übersetzungen hinzufügen
 
