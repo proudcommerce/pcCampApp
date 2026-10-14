@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.19] - 2026-10-14
+
+Mehrere Instanzen der App auf einem Server lauffaehig. Bisher war der Container-Name in `docker-compose.prod.yml` fest auf `pccampapp-prod` gesetzt, ein zweites Event auf demselben Host brach bei `make prod-start` mit „container name already in use" ab. Der Name wird jetzt aus `COMPOSE_PROJECT_NAME` abgeleitet (`${COMPOSE_PROJECT_NAME:-pccampapp}-prod`, analog `-dev` in `docker-compose.yml`). Ueber dieselbe Variable trennt Docker Compose auch Projekt und Netzwerk; das verhindert, dass zwei Checkouts in gleichnamigen Verzeichnissen sich gegenseitig den Container ersetzen. Jede weitere Instanz braucht in ihrer `.env` einen eigenen `COMPOSE_PROJECT_NAME` und `PROD_PORT`. Ohne gesetzte Variable bleibt der Name `pccampapp-prod`, bestehende Deployments laufen unveraendert weiter. `.env.example` und der Deployment-Abschnitt im README beschreiben das Setup.
+
 ## [3.0.18] - 2026-04-23
 
 Sessionplan-Auto-Open bei nicht-heutigen Tag-Tabs umgebaut. Bisher brach `autoOpen()` in `src/sessionplan/sessionplan.js` frueh ab, wenn der Tab-Tag nicht dem heutigen Wochentag entsprach — zukuenftige Event-Tage blieben komplett zu, obwohl der User dort sinnvollerweise den ersten Slot sehen will. Jetzt wird bei `isToday=false` der erste Slot geoeffnet, und zwar **ohne** `scrollIntoView`, damit das Oeffnen von Zukunfts-Tabs den Viewport nicht ungewollt verschiebt. Die heutige Logik wurde zusaetzlich um den Fallback "letzter vergangener Slot" gekuerzt: nach Tagesende bleibt der Akkordeon jetzt zu, statt zwangsweise den letzten Slot aufzublaettern — Reihenfolge heute ist damit nur noch aktueller Slot → naechster anstehender → nichts. Der Lazy-Observer (der Tabs nachlaedt, sobald sie in den Viewport scrollen) ruft `autoOpen()` jetzt ebenfalls auf — vorher blieben lazy-geladene Tabs komplett zu, weil `autoOpen()` nur fuer den initial eager geladenen Tag lief.

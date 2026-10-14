@@ -109,6 +109,20 @@ make prod-start
 #    auf deine Domain mit TLS routen.
 ```
 
+**Mehrere Events auf einem Server:** Jede Instanz bekommt ein eigenes
+Verzeichnis und in ihrer `.env` einen eigenen `COMPOSE_PROJECT_NAME` und
+`PROD_PORT`. Daraus ergeben sich Container-Name (`<name>-prod`), Netzwerk und
+Compose-Projekt, die Instanzen kommen sich so nicht in die Quere.
+
+```bash
+# .env der zweiten Instanz
+COMPOSE_PROJECT_NAME=pccampapp-herbst
+PROD_PORT=5175
+TRUSTED_HOSTS=herbst.example.com
+```
+
+Ohne `COMPOSE_PROJECT_NAME` heißt der Container wie bisher `pccampapp-prod`.
+
 **Persistente Daten:** Alle admin-pflegbaren Inhalte (`event.json`, `menu.json`,
 `sessions.json`, `votes.json`, Hash-Manifest, SW-Version, …) liegen im
 Host-Verzeichnis `./content/`. Das ist der einzige Pfad, den du beim Deploy

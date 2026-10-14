@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pccampapp-prod
+    container_name: ${COMPOSE_PROJECT_NAME:-pccampapp}-prod
     ports:
       - "${PROD_PORT:-5174}:5173"
     environment:
