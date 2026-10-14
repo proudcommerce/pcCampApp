@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+Speichern der Allergen-Legende im Admin-Bereich schlug fehl, sobald die Zusatzstoff-Codes `1` bis `14` enthalten waren (Fehler "allergen code must be 1-8 alphanumerics"). `json_decode()` wandelt numerische Objekt-Keys in Integer um, `validateAllergene()` in `src/admin/schemas.php` verlangte aber einen String. Der Code wird jetzt vor der Pruefung in einen String umgewandelt; ungueltige Codes wie `A-1` oder leere Keys werden weiterhin abgelehnt.
+
 ## [3.0.19] - 2026-10-14
 
 Mehrere Instanzen der App auf einem Server lauffaehig. Bisher war der Container-Name in `docker-compose.prod.yml` fest auf `pccampapp-prod` gesetzt, ein zweites Event auf demselben Host brach bei `make prod-start` mit „container name already in use" ab. Der Name wird jetzt aus `COMPOSE_PROJECT_NAME` abgeleitet (`${COMPOSE_PROJECT_NAME:-pccampapp}-prod`, analog `-dev` in `docker-compose.yml`). Ueber dieselbe Variable trennt Docker Compose auch Projekt und Netzwerk; das verhindert, dass zwei Checkouts in gleichnamigen Verzeichnissen sich gegenseitig den Container ersetzen. Jede weitere Instanz braucht in ihrer `.env` einen eigenen `COMPOSE_PROJECT_NAME` und `PROD_PORT`. Ohne gesetzte Variable bleibt der Name `pccampapp-prod`, bestehende Deployments laufen unveraendert weiter. `.env.example` und der Deployment-Abschnitt im README beschreiben das Setup.

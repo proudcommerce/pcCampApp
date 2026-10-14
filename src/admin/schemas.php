@@ -210,8 +210,9 @@ function validateFood($data): ?string {
 
 function validateAllergene($data): ?string {
     if (!is_array($data)) return 'allergene must be an object';
+    // json_decode() wandelt numerische Keys ("1".."14" = Zusatzstoffe) in int um.
     foreach ($data as $code => $desc) {
-        if (!is_string($code) || !preg_match('/^[A-Za-z0-9]{1,8}$/', $code)) {
+        if (!preg_match('/^[A-Za-z0-9]{1,8}$/', (string) $code)) {
             return 'allergen code must be 1-8 alphanumerics';
         }
         if (!isBoundedString($desc, 1000)) return "allergen[$code] description invalid";
