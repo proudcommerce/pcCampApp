@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [3.0.20] - 2026-10-14
+
 Speichern der Allergen-Legende im Admin-Bereich schlug fehl, sobald die Zusatzstoff-Codes `1` bis `14` enthalten waren (Fehler "allergen code must be 1-8 alphanumerics"). `json_decode()` wandelt numerische Objekt-Keys in Integer um, `validateAllergene()` in `src/admin/schemas.php` verlangte aber einen String. Der Code wird jetzt vor der Pruefung in einen String umgewandelt; ungueltige Codes wie `A-1` oder leere Keys werden weiterhin abgelehnt.
 
 ## [3.0.19] - 2026-10-14

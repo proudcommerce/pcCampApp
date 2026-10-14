@@ -105,9 +105,35 @@ vim .env   # VOTING_ADMIN_KEY=<random>
 #    content/ wird beim ersten Start aus seed/ geseedet.
 make prod-start
 
-# 4. Reverse-Proxy (nginx/Caddy/Traefik) vorschalten und Port 5174 bzw. PROD_PORT
-#    auf deine Domain mit TLS routen.
+# 4. Reverse-Proxy (Apache/nginx/Caddy/Traefik) vorschalten und Port 5174 bzw.
+#    PROD_PORT auf deine Domain mit TLS routen.
 ```
+
+**Beispiel Apache (z. B. KeyHelp, Feld "Apache-Direktiven" der Domain):**
+
+```apache
+Alias /.well-known/acme-challenge /home/keyhelp/www/.well-known/acme-challenge
+
+ProxyPreserveHost On
+RequestHeader set X-Forwarded-Proto "https"
+
+<Location />
+    ProxyPass http://127.0.0.1:5174/
+    ProxyPassReverse http://127.0.0.1:5174/
+</Location>
+
+<Location /.well-known/acme-challenge>
+    ProxyPass !
+</Location>
+```
+
+- Port an `PROD_PORT` der Instanz anpassen.
+- `ProxyPreserveHost On` ist nötig, weil Canonical- und OG-URLs aus dem
+  Host-Header gebaut werden. Die Domain muss in `TRUSTED_HOSTS` stehen.
+- `X-Forwarded-Proto` setzt Apache nicht von selbst. Ohne den Header fehlt dem
+  Session-Cookie das `Secure`-Flag, und Canonical-URLs zeigen auf `http://`.
+  Voraussetzung ist `mod_headers`.
+- WebSocket-Regeln und `ProxyPassReverseCookieDomain` braucht die App nicht.
 
 **Mehrere Events auf einem Server:** Jede Instanz bekommt ein eigenes
 Verzeichnis und in ihrer `.env` einen eigenen `COMPOSE_PROJECT_NAME` und
