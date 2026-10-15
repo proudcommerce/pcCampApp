@@ -12,7 +12,8 @@ const BUILD_DIR = 'build';      // Deployment-ready output (copied into the imag
 const EVENT_CONFIG_PATH = path.join(SEED_DIR, 'event.json');
 
 // Load event configuration (only used for build-time placeholder replacement
-// and manifest.json generation — runtime edits happen via /content/event.json).
+// — runtime edits happen via /content/event.json; manifest.json is rendered by
+// src/manifest.php at request time).
 let eventConfig;
 try {
   eventConfig = JSON.parse(fs.readFileSync(EVENT_CONFIG_PATH, 'utf8'));
@@ -82,6 +83,7 @@ const htmlFiles = [
 // are NOT listed — they live in /content/ which is seeded on container start.
 const copyOnlyFiles = [
   'assets/event-head.php',
+  'manifest.php',
   'votes/vote.php',
   'votes/change-status.php',
   'votes/transfer-votes.php',
@@ -116,7 +118,7 @@ async function generateIcons() {
 
   // Icons bleiben bewusst ungehasht und unter festem Namen — das erlaubt
   // Admin-Logo-Uploads, ihre resizes per nginx try_files /content$uri $uri
-  // vor den Build-Default zu legen, ohne manifest.json / HTML neu bauen zu muessen.
+  // vor den Build-Default zu legen, ohne HTML neu bauen zu muessen.
   // Cache-Invalidation laeuft ueber BUILD_VERSION + content/sw-version.txt im SW.
   console.log(`\n🎨 Generating PWA icons from ${SOURCE_ICON}...`);
   const iconPaths = [];
@@ -357,41 +359,6 @@ function updateHtmlFiles(hashMap) {
   });
 }
 
-function updateManifestJson() {
-  const manifest = {
-    name: eventConfig.pwa.manifestName,
-    short_name: eventConfig.pwa.manifestShortName,
-    description: eventConfig.pwa.manifestDescription,
-    start_url: eventConfig.pwa.startUrl,
-    display: eventConfig.pwa.display,
-    background_color: eventConfig.branding.backgroundColor,
-    theme_color: eventConfig.branding.themeColor,
-    orientation: eventConfig.pwa.orientation,
-    scope: eventConfig.pwa.scope,
-    lang: eventConfig.event.locale,
-    icons: []
-  };
-
-  GENERATED_ICONS.forEach(icon => {
-    if (icon.size === 16) return;
-    manifest.icons.push({
-      src: `/assets/${icon.name}`,
-      sizes: `${icon.size}x${icon.size}`,
-      type: 'image/png',
-      purpose: icon.size === 144 ? 'any' : 'any maskable'
-    });
-  });
-
-  if (eventConfig.pwa.categories) {
-    manifest.categories = eventConfig.pwa.categories;
-  }
-
-  const buildManifestPath = path.join(BUILD_DIR, 'manifest.json');
-  ensureDir(buildManifestPath);
-  fs.writeFileSync(buildManifestPath, JSON.stringify(manifest, null, 2));
-  console.log('✓ manifest.json generiert');
-}
-
 function updateServiceWorker(hashMap, iconPaths = []) {
   const srcSwPath = path.join(SRC_DIR, 'sw.js');
   if (!fs.existsSync(srcSwPath)) {
@@ -537,9 +504,6 @@ async function main() {
 
     console.log('\n📝 Aktualisiere HTML-Dateien...');
     updateHtmlFiles(hashMap);
-
-    console.log('\n📱 Aktualisiere PWA Manifest...');
-    updateManifestJson();
 
     console.log('\n⚙️ Aktualisiere Service Worker...');
     updateServiceWorker(hashMap, iconPaths);
