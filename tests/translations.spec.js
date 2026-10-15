@@ -13,15 +13,13 @@ const expectedTranslations = {
     'favorites.filterLabel': 'Nur Favoriten anzeigen',
     'pageTitle.sessionplan': 'Sessionplan',
     'aria.newsButton': 'News',
-    'aria.menuButton': 'Menü',
-    'sessionplan.roomPrefix': 'Raum'
+    'aria.menuButton': 'Menü'
   },
   en: {
     'favorites.filterLabel': 'Show favorites only',
     'pageTitle.sessionplan': 'Session Plan',  // With space!
     'aria.newsButton': 'News',
-    'aria.menuButton': 'Menu',
-    'sessionplan.roomPrefix': 'Room'
+    'aria.menuButton': 'Menu'
   }
 };
 
@@ -356,7 +354,7 @@ test.describe('Dynamically rendered translations (via JavaScript)', () => {
     currentLocale = getCurrentLocale(testInfo);
   });
 
-  test('Sessionplan: roomPrefix should be translated (not show translation key)', async ({ page }) => {
+  test('Sessionplan: room should be rendered without prefix or translation key', async ({ page }) => {
     await page.goto('/sessionplan/');
     await page.waitForLoadState('networkidle');
 
@@ -370,14 +368,11 @@ test.describe('Dynamically rendered translations (via JavaScript)', () => {
       for (const roomEl of roomElements) {
         const text = await roomEl.textContent();
 
-        // Der Text sollte NICHT den Translation-Key enthalten
-        expect(text).not.toContain('sessionplan.roomPrefix');
+        // Der Text sollte keinen Translation-Key enthalten
+        expect(text).not.toContain('sessionplan.');
 
-        // Wenn ein Raum angegeben ist, sollte die korrekte Übersetzung enthalten sein
-        if (text.trim().length > 0) {
-          const expectedPrefix = expectedTranslations[currentLocale]['sessionplan.roomPrefix'];
-          expect(text).toContain(expectedPrefix);
-        }
+        // Seit 3.0.8 nur noch der reine Raumname, ohne „Raum"/„Room"-Praefix
+        expect(text.trim()).not.toMatch(/^(Raum|Room)\s/);
       }
     }
   });
