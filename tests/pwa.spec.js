@@ -198,6 +198,10 @@ test.describe('Cache-Busting', () => {
     for (const link of cssLinks) {
       const href = await link.getAttribute('href');
 
+      // content/assets/custom.css ist admin-editierbarer Runtime-Content und
+      // bewusst ungehasht (Cache-Steuerung via nginx, siehe nginx.prod.conf).
+      if (href.includes('content/')) continue;
+
       // Prüfe ob Hash im Dateinamen (z.B. app.abc123.css)
       const hasHash = /\.[a-f0-9]{8}\.css/.test(href);
       expect(hasHash).toBe(true);

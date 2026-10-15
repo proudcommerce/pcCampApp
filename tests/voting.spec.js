@@ -157,7 +157,7 @@ test.describe('Voting Results Page', () => {
   const phpEnabled = process.env.PHP_TESTS_ENABLED === 'true';
 
   (phpEnabled ? test : test.skip)('results.php sollte ohne admin key 403 zurückgeben', async ({ page }) => {
-    const response = await page.goto('/votes/results.php');
+    const response = await page.goto('/admin/results.php');
     expect(response.status()).toBe(403);
   });
 
@@ -169,14 +169,14 @@ test.describe('Voting Results Page', () => {
       return;
     }
 
-    // POST login to admin.php to establish session
-    await page.goto('/votes/admin.php');
+    // POST login to the unified admin panel to establish session
+    await page.goto('/admin/');
     await page.fill('input[name="admin_key"]', adminKey);
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
 
     // Now access results.php with session cookie
-    const response = await page.goto('/votes/results.php');
+    const response = await page.goto('/admin/results.php');
     expect(response.status()).toBe(200);
 
     const contentType = response.headers()['content-type'];
@@ -333,13 +333,13 @@ test.describe('Voting Security', () => {
   const phpEnabled = process.env.PHP_TESTS_ENABLED === 'true';
 
   (phpEnabled ? test : test.skip)('Admin-Bereiche sollten ohne Key geschützt sein', async ({ page }) => {
-    // /votes/results.php leitet weiter zu /admin/results.php — dort 403 ohne Session.
-    const resultsResponse = await page.goto('/votes/results.php');
+    // Ergebnisse liegen im unified Admin-Panel — ohne Session 403.
+    const resultsResponse = await page.goto('/admin/results.php');
     expect(resultsResponse.status()).toBe(403);
 
-    // /votes/admin.php leitet zu /admin/ → Login-Formular (200),
+    // /admin/ zeigt ohne Auth nur das Login-Formular (200),
     // Admin-UI darf ohne Auth nicht erreichbar sein.
-    await page.goto('/votes/admin.php');
+    await page.goto('/admin/');
     await expect(page.locator('form input[name="admin_key"]')).toBeVisible();
     await expect(page.locator('.admin-tabs')).toHaveCount(0);
   });
