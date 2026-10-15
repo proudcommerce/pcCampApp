@@ -1,12 +1,12 @@
 /**
  * Event Configuration Loader
  *
- * Wendet Branding/Meta/Copyright/Manifest zur Laufzeit aus /content/event.json an.
+ * Wendet Branding/Meta/Copyright zur Laufzeit aus /content/event.json an.
  * Seit der PHP-Umstellung rendert index.php den Head-Bereich bereits server-seitig
  * aus derselben JSON — das reicht fuer Crawler/Social-Previews. Dieser Loader
  * bleibt aktiv, damit Admin-Edits ohne Full-Reload sichtbar werden (DOM-Override)
- * und damit dynamisch generierte Felder wie Manifest/Logo-URL zur Laufzeit
- * gesetzt werden.
+ * und damit dynamisch generierte Felder wie die Logo-URL zur Laufzeit
+ * gesetzt werden. Das PWA-Manifest rendert manifest.php server-seitig.
  *
  * Copyright/Hashtag werden via textContent gesetzt (XSS-Schutz fuer
  * Admin-Content — siehe frueheren Kommentar zu innerHTML). Wer HTML im Footer
@@ -54,7 +54,6 @@
     setMeta('apple-mobile-web-app-title', titleText);
     setMeta('msapplication-TileColor', branding.themeColor);
 
-    applyManifest(config);
   }
 
   function applyBodyConfig(config) {
@@ -83,37 +82,6 @@
 
     const copyrightRight = document.querySelector('.copyright-right');
     if (copyrightRight && event.hashtag !== undefined) copyrightRight.textContent = event.hashtag || '';
-  }
-
-  function applyManifest(config) {
-    const manifestLink = document.querySelector('link[rel="manifest"]');
-    if (!manifestLink) return;
-
-    const event = config.event || {};
-    const branding = config.branding || {};
-    const pwa = config.pwa || {};
-
-    const manifest = {
-      name: pwa.manifestName,
-      short_name: pwa.manifestShortName,
-      description: pwa.manifestDescription,
-      start_url: pwa.startUrl,
-      display: pwa.display,
-      background_color: branding.backgroundColor,
-      theme_color: branding.themeColor,
-      orientation: pwa.orientation,
-      scope: pwa.scope,
-      lang: event.locale,
-      icons: [
-        { src: basePath + '/assets/icon-144.png', sizes: '144x144', type: 'image/png', purpose: 'any' },
-        { src: basePath + '/assets/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-        { src: basePath + '/assets/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-      ]
-    };
-    if (pwa.categories) manifest.categories = pwa.categories;
-
-    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-    manifestLink.setAttribute('href', URL.createObjectURL(blob));
   }
 
   function apply(config) {

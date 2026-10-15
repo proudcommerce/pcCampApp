@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+PWA-Manifest wird jetzt server-seitig aus `content/event.json` gerendert. Bisher erzeugte `build-cache-busting.cjs` das `manifest.json` zur Build-Zeit aus `seed/event.json`, und `event-config-loader.js` ersetzte es zur Laufzeit durch eine Blob-URL mit den Werten aus `content/event.json`. Beides funktionierte nicht: Chrome loest `start_url`, `scope` und die Icon-Pfade relativ zur Manifest-URL auf, was bei einer `blob:`-URL scheitert. Das Manifest war damit ungueltig, die App unter Chrome/Android nicht mehr installierbar (`start-url-not-valid`, `manifest-missing-suitable-icon`). iOS Safari griff dagegen auf das statische Build-Manifest zurueck, installierte Apps trugen dort den Namen aus den Seed-Defaults statt der Admin-Konfiguration. Neu rendert `src/manifest.php` das Manifest pro Request aus `content/event.json`; nginx leitet `/manifest.json` intern dorthin um (Dev und Prod). Admin-Edits im Tab „Event" wirken damit ohne Rebuild auch auf Name und Beschreibung beim Add-to-Homescreen. `applyManifest()` im Loader, `updateManifestJson()` im Build und `src/manifest.json` entfallen. Bereits installierte Apps behalten ihren Namen, bis sie neu zum Homescreen hinzugefuegt werden.
+
 ## [3.0.20] - 2026-10-14
 
 Speichern der Allergen-Legende im Admin-Bereich schlug fehl, sobald die Zusatzstoff-Codes `1` bis `14` enthalten waren (Fehler "allergen code must be 1-8 alphanumerics"). `json_decode()` wandelt numerische Objekt-Keys in Integer um, `validateAllergene()` in `src/admin/schemas.php` verlangte aber einen String. Der Code wird jetzt vor der Pruefung in einen String umgewandelt; ungueltige Codes wie `A-1` oder leere Keys werden weiterhin abgelehnt.
