@@ -8,7 +8,7 @@ topics: [testing, voting, admin]
 
 # pctest-Learnings pcCampApp
 
-_Last updated: 2026-10-18 (F001 Voting-Zeitraum, Re-Run)_
+_Last updated: 2026-10-19 (F002 PWA-Manifest serverseitig)_
 
 ## Fast-Path
 
@@ -16,6 +16,7 @@ _Last updated: 2026-10-18 (F001 Voting-Zeitraum, Re-Run)_
 - Admin-Login: `fill "input[name=admin_key]" <key>` + `press Enter`; lokaler Key steht in `.env` (`VOTING_ADMIN_KEY`). `[2026-10-18]`
 - Admin-Tabs: `button[data-resource=<name>]`, Tag-Tabs: `button.day-tab[data-day=<tag>]`, Speichern: `#btn-save`, Meldungen: `.success-message` / `.error-message`. `[2026-10-18]`
 - Sessionplan-Voting: `#voting-section` (display none = aus), Auswahl `#<tag>-vote`, Button `#<tag>-submit`, Status `#<tag>-status`. `[2026-10-18]`
+- nginx-abhängige Tests (Rewrites wie `/manifest.json` → `manifest.php`): Prod-Image isoliert starten statt PHP-Built-in: `docker build -t pccampapp-<id>-pctest .` + `docker run -d --rm -p 5199:5173 -e VOTING_ADMIN_KEY=<key> -e TRUSTED_HOSTS=localhost …`, Content kommt aus `seed/`. `[2026-10-19]`
 
 ## Dev-Env
 
@@ -27,6 +28,7 @@ _Last updated: 2026-10-18 (F001 Voting-Zeitraum, Re-Run)_
 - `type=time`-Inputs: `fill` setzt keinen Wert. `focus` + Ziffern einzeln per `press` (z. B. 0,8,3,0) und leeren per `press Backspace` je Segment. `[2026-10-18]`
 - Admin-Buttons mit nativem `confirm()` (Voting aktivieren/deaktivieren/beenden, Votes übertragen): agent-browser blockiert schon beim `click` und hält den Daemon für alle Sessions. Stattdessen ein Node-Skript mit `require('<repo>/node_modules/@playwright/test').chromium` und `page.on('dialog', d => d.accept()|d.dismiss())`. Hänger lösen: `agent-browser close --all`. `[2026-10-18]`
 - Sessionplan scrollt nach dem Laden zum aktuellen Slot, das Voting-Formular landet unter dem fixierten Header und `click` trifft den Header (meldet trotzdem "Done"). Vor dem Klick `eval "el.scrollIntoView({block:'center'})"`. `[2026-10-18]`
+- Admin-Tab "Event" ist nur Raw-JSON (Textarea). Nach `fill` mit dem ganzen JSON liegt `#btn-save` außerhalb des Viewports, `click` läuft ins Leere: vorher `scrollintoview "#btn-save"`. `.success-message` verschwindet nach 5 s. `[2026-10-19]`
 - Der userKey kommt aus einem Browser-Fingerprint: frische Sessions haben denselben Key. Für einen zweiten Vote `content/voting/votes.json` im Test-Content löschen. `[2026-10-18]`
 
 ## Daten/Seeding
