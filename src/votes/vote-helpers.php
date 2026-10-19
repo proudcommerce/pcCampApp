@@ -99,3 +99,83 @@ function lookupOwnVote(string $day, string $userKey): array {
         'sessionId' => isset($record['sessionId']) ? (string) $record['sessionId'] : null,
     ];
 }
+
+const VOTING_WEEKDAY_KEYS = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag'];
+
+/**
+ * null bei fehlender oder unlesbarer Datei — damit ein Lesefehler nicht wie
+ * "kein Zeitraum gesetzt" (= ganzer Tag offen) behandelt wird.
+ */
+function loadEventConfig(): ?array {
+    $path = contentPath('event.json');
+    $fp = @fopen($path, 'r');
+    if (!$fp) {
+        return null;
+    }
+    if (!flock($fp, LOCK_SH)) {
+        fclose($fp);
+        return null;
+    }
+    $raw = stream_get_contents($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
+    $config = json_decode((string) $raw, true);
+    return is_array($config) ? $config : null;
+}
+
+function findVotingScheduleEntry(array $eventConfig, string $day): ?array {
+    $schedule = $eventConfig['features']['votingSchedule'] ?? [];
+    if (!is_array($schedule)) {
+        return null;
+    }
+    foreach ($schedule as $entry) {
+        if (is_array($entry) && ($entry['day'] ?? null) === $day) {
+            return $entry;
+        }
+    }
+    return null;
+}
+
+/**
+ * Wochentag (0 = Sonntag) eines Session-Tags: explizit aus votingSchedule,
+ * sonst aus dem deutschen Tagesnamen (so benennt der Sessionplan seine Keys).
+ */
+function votingDayOfWeek(string $day, ?array $entry): ?int {
+    if (isset($entry['dayOfWeek']) && is_int($entry['dayOfWeek'])) {
+        return $entry['dayOfWeek'];
+    }
+    $index = array_search($day, VOTING_WEEKDAY_KEYS, true);
+    return $index === false ? null : $index;
+}
+
+// Default aus event.schema.json; sessionplan.js nutzt denselben Fallback.
+const VOTING_DEFAULT_TIMEZONE = 'Europe/Berlin';
+
+function eventNow(array $eventConfig): DateTimeImmutable {
+    $timezone = $eventConfig['event']['timezone'] ?? '';
+    try {
+        return new DateTimeImmutable('now', new DateTimeZone(is_string($timezone) && $timezone !== '' ? $timezone : VOTING_DEFAULT_TIMEZONE));
+    } catch (Exception $e) {
+        return new DateTimeImmutable('now', new DateTimeZone(VOTING_DEFAULT_TIMEZONE));
+    }
+}
+
+/**
+ * Voting fuer $day ist offen, wenn heute dieser Wochentag ist und — falls ein
+ * Zeitraum gesetzt ist — die aktuelle Uhrzeit darin liegt. Ohne Zeitraum gilt
+ * der ganze Tag.
+ */
+function isVotingWindowOpen(string $day, array $eventConfig, DateTimeImmutable $now): bool {
+    $entry = findVotingScheduleEntry($eventConfig, $day);
+    $dayOfWeek = votingDayOfWeek($day, $entry);
+    if ($dayOfWeek === null || (int) $now->format('w') !== $dayOfWeek) {
+        return false;
+    }
+    $start = $entry['startTime'] ?? '';
+    $end = $entry['endTime'] ?? '';
+    if ($start === '' || $end === '') {
+        return true;
+    }
+    $current = $now->format('H:i');
+    return $current >= $start && $current <= $end;
+}

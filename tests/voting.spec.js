@@ -64,22 +64,19 @@ test.describe('Voting Configuration', () => {
     expect(typeof config.features.voting).toBe('boolean');
   });
 
-  test('event.json sollte votingSchedule haben wenn voting aktiv', async ({ page }) => {
+  test('votingSchedule-Eintraege haben einen Tag und optional ein vollstaendiges Zeitfenster', async ({ page }) => {
     const response = await page.goto('/content/event.json');
     const config = await response.json();
+    const schedule = config.features.votingSchedule || [];
 
-    if (config.features.voting === true) {
-      expect(config.features).toHaveProperty('votingSchedule');
-      expect(Array.isArray(config.features.votingSchedule)).toBe(true);
-      expect(config.features.votingSchedule.length).toBeGreaterThan(0);
-
-      // Validate schedule structure
-      for (const schedule of config.features.votingSchedule) {
-        expect(schedule).toHaveProperty('day');
-        expect(schedule).toHaveProperty('dayLabel');
-        expect(schedule).toHaveProperty('startTime');
-        expect(schedule).toHaveProperty('endTime');
-        // Optional: date field (not required)
+    expect(Array.isArray(schedule)).toBe(true);
+    for (const entry of schedule) {
+      expect(entry).toHaveProperty('day');
+      expect('startTime' in entry).toBe('endTime' in entry);
+      if (entry.startTime) {
+        expect(entry.startTime).toMatch(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/);
+        expect(entry.endTime).toMatch(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/);
+        expect(entry.startTime < entry.endTime).toBe(true);
       }
     }
   });

@@ -589,11 +589,11 @@ Der **Admin-Key** wird ausschließlich über die `VOTING_ADMIN_KEY` Umgebungsvar
 ### Voting-Konfiguration
 
 - **voting:** Aktiviert/deaktiviert das Voting-System
-- **votingSchedule:** Zeitfenster für Abstimmungen
-  - `day`: Interner Tag-Name (z.B. "samstag")
+- **votingSchedule:** Zeitfenster für Abstimmungen, ein Eintrag je Session-Tag. Wird im Admin im Tab "Sessions" je Tag über die Felder "Voting-Zeitraum" gepflegt.
+  - `day`: Interner Tag-Name, gleich dem Tag-Key in `sessions.json` (z.B. "samstag")
   - `dayLabel`: Anzeige-Name (z.B. "Samstag")
-  - `dayOfWeek`: Wochentag als Zahl (0=Sonntag, 6=Samstag)
-  - `startTime` / `endTime`: Zeitfenster für Abstimmungen
+  - `dayOfWeek`: Wochentag als Zahl (0=Sonntag, 6=Samstag). Optional, wenn `day` ein deutscher Wochentagsname ist
+  - `startTime` / `endTime`: optionales Zeitfenster (beide oder keines). Ohne Zeitfenster ist das Voting am jeweiligen Tag von 00:00 bis 23:59 offen
 - **VOTING_ADMIN_KEY** (env): Geheimes Passwort für Admin-Bereich — in `.env` setzen
 
 ### Voting-Logik: Wann wird das Voting-Fenster angezeigt?
@@ -622,9 +622,9 @@ Das Voting-Fenster wird nur angezeigt, wenn **alle** folgenden Bedingungen erfü
 
 Der Status kann über den [Admin-Bereich](#admin-bereich) geändert werden.
 
-#### 3. Zeitfenster aktiv
+#### 3. Heute ist ein Session-Tag, und das Zeitfenster passt
 
-Das aktuelle Datum und die Uhrzeit müssen innerhalb eines konfigurierten Zeitfensters liegen:
+Der heutige Wochentag muss zu einem Tag in `sessions.json` passen. Ist für diesen Tag ein Zeitraum gesetzt, muss die aktuelle Uhrzeit darin liegen; ohne Zeitraum gilt der ganze Tag. Maßgeblich ist die Zeitzone aus `event.timezone`. `vote.php` prüft dieselbe Regel serverseitig und lehnt Stimmen außerhalb des Zeitfensters mit HTTP 403 ab.
 
 ```json
 // event.json
@@ -643,9 +643,10 @@ Das aktuelle Datum und die Uhrzeit müssen innerhalb eines konfigurierten Zeitfe
 
 **Prüfung:** System vergleicht aktuellen Wochentag (0=Sonntag, 6=Samstag) und Uhrzeit mit der Konfiguration.
 
-> **Testing:** Für lokale Tests kann die Zeitfenster-Prüfung mit dem
-> Query-Parameter `?vote=<tag>` (z. B. `?vote=samstag`) übersprungen werden —
-> Feature-Flag und Admin-Status müssen trotzdem aktiv sein.
+> **Testing:** Mit dem Query-Parameter `?vote=<tag>` (z. B. `?vote=samstag`)
+> zeigt der Sessionplan das Voting-Formular auch außerhalb des Zeitfensters an.
+> Feature-Flag und Admin-Status müssen trotzdem aktiv sein. Abstimmen
+> funktioniert nur innerhalb des Zeitfensters, weil `vote.php` es serverseitig prüft.
 
 ### Nutzung
 

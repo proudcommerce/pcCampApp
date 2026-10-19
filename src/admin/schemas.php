@@ -326,6 +326,12 @@ function validateEvent($data): ?string {
                     return "votingSchedule[$i].$tf must be HH:MM";
                 }
             }
+            if (isset($s['startTime']) !== isset($s['endTime'])) {
+                return "votingSchedule[$i] needs both startTime and endTime or neither";
+            }
+            if (isset($s['startTime']) && $s['startTime'] >= $s['endTime']) {
+                return "votingSchedule[$i].startTime must be before endTime";
+            }
         }
     }
 

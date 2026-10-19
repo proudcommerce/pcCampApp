@@ -131,10 +131,14 @@
         },
         "votingSchedule": {
           "type": "array",
-          "description": "Voting schedule configuration (when voting is active)",
+          "description": "Voting window per session day. Without startTime/endTime (or without an entry) voting is open the whole day. Applies only while voting is activated in the admin.",
           "items": {
             "type": "object",
-            "required": ["day", "dayOfWeek", "startTime", "endTime"],
+            "required": ["day"],
+            "dependencies": {
+              "startTime": ["endTime"],
+              "endTime": ["startTime"]
+            },
             "properties": {
               "day": {
                 "type": "string",
@@ -146,7 +150,7 @@
               },
               "dayOfWeek": {
                 "type": "integer",
-                "description": "Day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)",
+                "description": "Day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday). Optional when day is a German weekday name.",
                 "minimum": 0,
                 "maximum": 6
               },

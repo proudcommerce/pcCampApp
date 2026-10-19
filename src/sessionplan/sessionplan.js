@@ -803,6 +803,29 @@
 			button.textContent = t('voting.submitButton');
 		}
 	};
+	const VOTING_WEEKDAY_KEYS = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag'];
+
+	// Default aus event.schema.json; vote-helpers.php nutzt denselben Fallback.
+	const VOTING_DEFAULT_TIMEZONE = 'Europe/Berlin';
+
+	const eventNow = (timeZone) => {
+		const format = (zone) => Object.fromEntries(new Intl.DateTimeFormat('en-US', {
+			timeZone: zone,
+			weekday: 'short',
+			hour: '2-digit',
+			minute: '2-digit',
+			hourCycle: 'h23'
+		}).formatToParts(new Date()).map(p => [p.type, p.value]));
+		let parts;
+		try {
+			parts = format(timeZone || VOTING_DEFAULT_TIMEZONE);
+		} catch (error) {
+			parts = format(VOTING_DEFAULT_TIMEZONE);
+		}
+		const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+		return { dayOfWeek: weekdays.indexOf(parts.weekday), time: `${parts.hour}:${parts.minute}` };
+	};
+
 
 
 	// Check if voting should be visible for current day and time
@@ -823,65 +846,64 @@
 			console.log('Voting feature is disabled');
 			return { show: false, day: null, dayLabel: null };
 		}
+		// Ohne lesbaren Status gilt das Voting als inaktiv, wie in vote.php.
 
 		// Check voting-state.json for admin-controlled status
 		try {
 			const stateResponse = await fetch(window.contentUrl('voting/voting-state.json'));
-			if (stateResponse.ok) {
-				const votingState = await stateResponse.json();
-				if (votingState.status !== 'active') {
-					console.log('Voting is not active (admin-controlled status):', votingState.status);
-					return { show: false, day: null, dayLabel: null };
-				}
+			const votingState = stateResponse.ok ? await stateResponse.json() : null;
+			if (votingState?.status !== 'active') {
+				console.log('Voting is not active (admin-controlled status):', votingState?.status);
+				return { show: false, day: null, dayLabel: null };
 			}
+			return { show: false, day: null, dayLabel: null };
 		} catch (error) {
-			// voting-state.json might not exist yet, continue
 			console.warn('Could not load voting-state.json:', error);
 		}
 
-		// Get voting schedule from config
 		const votingSchedule = window.eventConfig?.features?.votingSchedule || [];
 
-		if (votingSchedule.length === 0) {
-			console.warn('No voting schedule configured');
+		let sessionDays = [];
+		try {
+			await window.assetHashesReady;
+			const sessionsResponse = await fetch(window.contentUrl('sessionplan/sessions.json'), { cache: 'no-cache' });
+			sessionDays = Object.keys(await sessionsResponse.json());
+		} catch (error) {
+			console.error('Failed to load sessions for voting:', error);
 			return { show: false, day: null, dayLabel: null };
 		}
 
-		// Check current day and time against schedule
-		const now = new Date();
-		const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
-		const currentHour = now.getHours();
-		const currentMinute = now.getMinutes();
-		const currentTime = currentHour * 60 + currentMinute;
+		const dayInfo = (day) => {
+			const schedule = votingSchedule.find(s => s.day === day) || {};
+			const weekdayIndex = VOTING_WEEKDAY_KEYS.indexOf(day);
+			return {
+				day,
+				dayLabel: schedule.dayLabel || day.charAt(0).toUpperCase() + day.slice(1),
+				dayOfWeek: Number.isInteger(schedule.dayOfWeek) ? schedule.dayOfWeek : (weekdayIndex === -1 ? null : weekdayIndex),
+				startTime: schedule.startTime || '',
+				endTime: schedule.endTime || ''
+			};
+		};
 
-		// Find matching voting schedule
-		for (const schedule of votingSchedule) {
-			if (schedule.dayOfWeek !== dayOfWeek) continue;
-
-			// Parse start and end times
-			const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
-			const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
-			const startTime = startHour * 60 + startMinute;
-			const endTime = endHour * 60 + endMinute;
-
-			// Check if current time is within voting window
-			if (currentTime >= startTime && currentTime <= endTime) {
-				console.log(`Voting active for: ${schedule.dayLabel} (${schedule.startTime}-${schedule.endTime})`);
-				return { show: true, day: schedule.day, dayLabel: schedule.dayLabel };
+		// Gleiche Regel wie isVotingWindowOpen() in vote-helpers.php: Event-Zeitzone,
+		// passender Wochentag, Zeitraum nur wenn gesetzt — sonst ganzer Tag.
+		const now = eventNow(window.eventConfig?.event?.timezone);
+		for (const info of sessionDays.map(dayInfo)) {
+			if (info.dayOfWeek !== now.dayOfWeek) continue;
+			if (!info.startTime || !info.endTime || (now.time >= info.startTime && now.time <= info.endTime)) {
+				console.log(`Voting active for: ${info.dayLabel} (${info.startTime || '00:00'}-${info.endTime || '23:59'})`);
+				return { show: true, day: info.day, dayLabel: info.dayLabel };
 			}
 		}
 
 		// URL-Override: ?vote=<day> (e.g., ?vote=samstag)
-		// IMPORTANT: This is checked AFTER status and time checks, so it respects admin-controlled voting state
-		// Only use for testing/debugging purposes
+		// Zeigt nur das Formular; vote.php nimmt Stimmen trotzdem nur im Zeitfenster an.
 		const params = new URLSearchParams(window.location.search);
 		const forceDay = (params.get('vote') || '').toLowerCase();
-		if (forceDay) {
-			const matchingDay = votingSchedule.find(s => s.day === forceDay);
-			if (matchingDay) {
-				console.log(`Voting forced via URL for: ${matchingDay.dayLabel} (URL override - testing only)`);
-				return { show: true, day: matchingDay.day, dayLabel: matchingDay.dayLabel };
-			}
+		if (forceDay && sessionDays.includes(forceDay)) {
+			const info = dayInfo(forceDay);
+			console.log(`Voting forced via URL for: ${info.dayLabel} (URL override - testing only)`);
+			return { show: true, day: info.day, dayLabel: info.dayLabel };
 		}
 
 		return { show: false, day: null, dayLabel: null };

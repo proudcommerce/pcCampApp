@@ -36,17 +36,9 @@ if (!preg_match('/^vote_[a-z0-9]{4,58}$/', $userKey)) {
     exit;
 }
 
-$eventConfigPath = contentPath('event.json');
-$allowedDays = ['samstag', 'sonntag'];
-
-if (file_exists($eventConfigPath)) {
-    $eventConfig = json_decode(file_get_contents($eventConfigPath), true);
-    if (isset($eventConfig['features']['votingSchedule']) && is_array($eventConfig['features']['votingSchedule'])) {
-        $allowedDays = array_map(function($schedule) {
-            return $schedule['day'];
-        }, $eventConfig['features']['votingSchedule']);
-    }
-}
+$eventConfig = loadEventConfig();
+$sessionsData = json_decode((string) @file_get_contents(contentPath('sessionplan/sessions.json')), true);
+$allowedDays = is_array($sessionsData) ? array_map('strval', array_keys($sessionsData)) : [];
 
 if (!in_array($day, $allowedDays, true)) {
     http_response_code(400);
@@ -55,13 +47,23 @@ if (!in_array($day, $allowedDays, true)) {
 }
 
 $stateFile = contentPath('voting/voting-state.json');
-if (file_exists($stateFile)) {
-    $votingState = json_decode(file_get_contents($stateFile), true);
-    if (($votingState['status'] ?? null) !== 'active') {
-        http_response_code(403);
-        echo json_encode(['error' => 'Voting is not active', 'status' => $votingState['status'] ?? null]);
-        exit;
-    }
+$votingState = file_exists($stateFile) ? json_decode(file_get_contents($stateFile), true) : null;
+if (($votingState['status'] ?? null) !== 'active') {
+    http_response_code(403);
+    echo json_encode(['error' => 'Voting is not active', 'status' => $votingState['status'] ?? null]);
+    exit;
+}
+
+if ($eventConfig === null) {
+    http_response_code(503);
+    echo json_encode(['error' => 'Voting configuration unavailable']);
+    exit;
+}
+
+if (!isVotingWindowOpen($day, $eventConfig, eventNow($eventConfig))) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Voting window closed for this day']);
+    exit;
 }
 
 // sessionId gegen sessions.json[day] pruefen — nur existierende, nicht gecancelte

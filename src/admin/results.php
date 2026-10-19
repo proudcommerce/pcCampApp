@@ -31,6 +31,14 @@ if (file_exists($eventConfigPath)) {
     }
 }
 
+// Tage ohne Schedule-Eintrag sind ganztaegig votebar und brauchen trotzdem eine Ergebniszeile.
+$configuredDays = array_column($votingDays, 'day');
+foreach (array_keys($votes) as $votedDay) {
+    if (!in_array((string) $votedDay, $configuredDays, true)) {
+        $votingDays[] = ['day' => (string) $votedDay, 'dayLabel' => ucfirst((string) $votedDay)];
+    }
+}
+
 // Fallback to hardcoded days if no config found
 if (empty($votingDays)) {
     $votingDays = [

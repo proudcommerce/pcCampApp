@@ -8,6 +8,7 @@
   let currentResource = 'sessions';
   let currentData = null;
   let isRawMode = false;
+  let votingWindows = {};
 
   // CSRF-Token kommt aus dem Meta-Tag in index.php. Wird bei jedem mutierenden
   // Request als X-CSRF-Token Header mitgesendet. Kein Admin-Secret mehr im DOM.
@@ -142,6 +143,7 @@
     try {
       const result = await apiCall('get', resource);
       currentData = result.data;
+      if (resource === 'sessions') await loadVotingWindows();
 
       loading.classList.remove('visible');
       renderEditor();
@@ -225,10 +227,22 @@
       if (data === null) return;
     }
 
+    const syncVotingSchedule = currentResource === 'sessions' && !isRawMode;
+    if (syncVotingSchedule) {
+      const windowError = validateVotingWindows(Object.keys(data));
+      if (windowError) {
+        showMessage(windowError, 'error');
+        return;
+      }
+    }
+
     btnSave.disabled = true;
     btnSave.textContent = 'Speichern...';
 
     try {
+      // Schedule zuerst und ohne gelöschte Tage zu entfernen: Scheitert einer der beiden
+      // Schritte, hat nie ein Session-Tag seinen Zeitraum verloren und ist dadurch ganztägig offen.
+      if (syncVotingSchedule) await saveVotingSchedule(Object.keys(data));
       await apiCall('update', currentResource, data);
       currentData = data;
       showMessage(resourceNames[currentResource] + ' gespeichert', 'success');
@@ -396,8 +410,81 @@
   // SESSIONS EDITOR
   // ═══════════════════════════════════════════════════════════════
 
+  const VOTING_WEEKDAY_KEYS = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag'];
+  // Muss zur day-Regel in schemas.php passen, sonst lehnt der Server event.json ab.
+  const VOTING_DAY_PATTERN = /^[a-z0-9_-]{1,32}$/;
+
+  async function loadVotingWindows() {
+    const result = await apiCall('get', 'event');
+    const schedule = result.data?.features?.votingSchedule || [];
+    votingWindows = {};
+    schedule.forEach(entry => {
+      if (entry && entry.day) {
+        votingWindows[entry.day] = { startTime: entry.startTime || '', endTime: entry.endTime || '' };
+      }
+    });
+  }
+
+  function renderVotingWindow(day) {
+    const box = h('div', { className: 'voting-window', 'data-voting-day': day });
+    box.appendChild(h('h3', null, 'Voting-Zeitraum'));
+    if (!VOTING_DAY_PATTERN.test(day)) {
+      box.appendChild(h('p', { className: 'voting-window-hint' }, 'Für diesen Tag ist kein Voting möglich: Der Tagesname darf nur Kleinbuchstaben, Ziffern, "-" und "_" enthalten.'));
+      return box;
+    }
+    const current = votingWindows[day] || { startTime: '', endTime: '' };
+    const row = h('div', { className: 'item-row' });
+    [['Von', 'startTime'], ['Bis', 'endTime']].forEach(([label, key]) => {
+      const field = h('div', { className: 'item-field' });
+      field.appendChild(h('label', null, label));
+      const input = h('input', { type: 'time', 'data-name': key, value: current[key] });
+      input.addEventListener('input', () => {
+        votingWindows[day] = { ...(votingWindows[day] || { startTime: '', endTime: '' }), [key]: input.value };
+      });
+      field.appendChild(input);
+      row.appendChild(field);
+    });
+    box.appendChild(row);
+    box.appendChild(h('p', { className: 'voting-window-hint' }, 'Leer lassen: Voting ist den ganzen Tag offen. Gilt nur, wenn das Voting im Bereich "Voting" aktiviert ist.'));
+    return box;
+  }
+
+  function validateVotingWindows(days) {
+    for (const day of days) {
+      const { startTime = '', endTime = '' } = votingWindows[day] || {};
+      if (!startTime && !endTime) continue;
+      if (!startTime || !endTime) return `Voting-Zeitraum ${day}: bitte Von und Bis angeben oder beide leer lassen.`;
+      if (startTime >= endTime) return `Voting-Zeitraum ${day}: Von muss vor Bis liegen.`;
+    }
+    return null;
+  }
+
+  async function saveVotingSchedule(days) {
+    const result = await apiCall('get', 'event');
+    const eventData = result.data || {};
+    const previous = eventData.features?.votingSchedule || [];
+    const schedule = days.filter(day => VOTING_DAY_PATTERN.test(day)).map(day => {
+      const prev = previous.find(entry => entry && entry.day === day) || {};
+      const entry = { day, dayLabel: prev.dayLabel || day.charAt(0).toUpperCase() + day.slice(1) };
+      const dayOfWeek = Number.isInteger(prev.dayOfWeek) ? prev.dayOfWeek : VOTING_WEEKDAY_KEYS.indexOf(day);
+      if (dayOfWeek !== -1) entry.dayOfWeek = dayOfWeek;
+      const { startTime = '', endTime = '' } = votingWindows[day] || {};
+      if (startTime && endTime) {
+        entry.startTime = startTime;
+        entry.endTime = endTime;
+      }
+      return entry;
+    });
+    previous.forEach(entry => {
+      if (entry && !days.includes(entry.day)) schedule.push(entry);
+    });
+    eventData.features = { ...(eventData.features || {}), votingSchedule: schedule };
+    await apiCall('update', 'event', eventData);
+  }
+
   function renderSessions() {
     renderDayTabs(currentData, (container, day, timeslots) => {
+      container.appendChild(renderVotingWindow(day));
       const slots = Object.keys(timeslots);
 
       slots.forEach(slot => {
