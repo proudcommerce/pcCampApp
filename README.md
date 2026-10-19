@@ -533,7 +533,7 @@ rechts im Admin-Panel.
 
 | Bereich   | Datei            | Beschreibung                                                                                                      |
 | --------- | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Sessions  | `sessions.json`  | Sessionplan nach Tagen und Zeitslots                                                                              |
+| Sessions  | `sessions.json`  | Sessionplan nach Tagen und Zeitslots, Voting-Zeitraum je Tag (wird in `event.json` gespeichert)                   |
 | Timetable | `timetable.json` | Event-Zeitplan                                                                                                    |
 | News      | `news.json`      | Permanente und tagesspezifische Ankündigungen                                                                     |
 | Food      | `menue.json`     | Speisekarten mit Allergenen                                                                                       |
@@ -661,10 +661,9 @@ Der heutige Wochentag muss zu einem Tag in `sessions.json` passen. Ist für dies
 
 Voting wird im [Admin-Panel](#️-content-verwaltung-admin) im Tab **"Voting"** verwaltet:
 
-- Live-Statistik und Teilnehmerzahlen
 - Voting aktivieren / deaktivieren / beenden
 - Ergebnisse in `sessions.json` übertragen (Winner-Badge TOP 3), bei aktivem oder beendetem Voting
-- Ergebnis-Ansicht mit Medaillen-Ranking
+- Ergebnisseite mit Medaillen-Ranking, Statistik und Teilnehmerzahlen
 
 ### Ablauf an einem mehrtägigen Event
 

@@ -1,248 +1,82 @@
 # Voting System
 
-This directory contains the voting system for session ratings.
+Backend endpoints for session voting. Setup, admin workflow for multi-day events and the visibility rules are described in the main [README](../../README.md#️-voting-system); this file covers data and endpoints.
 
-## Files
+## Data
 
-### `votes.json` (Not in Git)
-**Active voting data file** - Contains all user votes and session vote counts.
+All voting data lives in the content volume (`content/`, not in Git, seeded from `seed/` on first container start).
 
-- ⚠️ **This file is NOT committed to Git** (excluded via `.gitignore`)
-- Contains sensitive user tracking data (userKey, timestamps)
-- Automatically created by `vote.php` on first vote
-- Preserved during deployment (excluded from rsync via `--exclude`)
+### `content/voting/votes.json`
 
-**Structure:**
+Votes per day. Created on the first vote, seeded as `{}`. nginx blocks public access (`nginx.conf`, `nginx.prod.conf`), clients only get aggregates via `status.php`.
+
 ```json
 {
   "samstag": {
-    "sessions": {
-      "10": 5,     // sessionId: voteCount
-      "20": 3
-    },
+    "sessions": { "10": 5, "20": 3 },
     "users": {
-      "vote_abc123": {
-        "sessionId": "10",
-        "timestamp": 1735689600
-      }
+      "vote_abc123": { "sessionId": "10", "timestamp": 1735689600 }
     }
-  },
-  "sonntag": { ... }
-}
-```
-
-### `votes.json.example`
-**Template file** - Shows the expected structure of `votes.json`.
-
-- ✅ **This file IS committed to Git**
-- Use this as a reference for the data structure
-- Copy to `votes.json` to initialize an empty voting system
-
-**To initialize voting system:**
-```bash
-cp src/votes/votes.json.example src/votes/votes.json
-```
-
-### `vote.php`
-**Backend endpoint** - Handles vote submissions via POST requests.
-
-**Features:**
-- Validates day against `event.json` voting schedule
-- Prevents duplicate votes per day (per userKey)
-- Automatically creates `votes.json` if it doesn't exist
-- Returns updated vote counts
-
-**Request:**
-```json
-POST /votes/vote.php
-{
-  "sessionId": "10",
-  "day": "samstag",
-  "userKey": "vote_abc123"
-}
-```
-
-**Response (Success):**
-```json
-{
-  "success": true,
-  "message": "Vote recorded successfully",
-  "votes": { ... }
-}
-```
-
-**Response (Already Voted):**
-```json
-{
-  "error": "User already voted for this day"
-}
-// HTTP 409 Conflict
-```
-
-### Results page
-
-**Admin results page** — Displays voting results (requires admin session).
-
-**Access:**
-```
-/admin/results.php   (nur via authentisierter Admin-Session erreichbar)
-```
-
-**Features:**
-- Session-basierte Auth ueber `/admin/` — kein Key in der URL
-- Shows top voted sessions per day
-- Displays session titles, hosts, rooms, and vote counts
-- Winner badge for top session
-
-**Security:**
-- Admin-Key wird ausschliesslich ueber die Environment-Variable
-  `VOTING_ADMIN_KEY` konfiguriert und nie ins Repo oder in `event.json`
-  geschrieben.
-- Ohne Admin-Session liefert der Endpoint 403.
-
-## Data Flow
-
-```
-User clicks vote button
-  ↓
-sessionplan.js sends POST to vote.php
-  ↓
-vote.php validates:
-  - Required parameters (sessionId, day, userKey)
-  - Valid voting day (from event.json)
-  - User hasn't voted yet (checks votes.json)
-  ↓
-vote.php updates votes.json:
-  - Increments session vote count
-  - Stores user vote record
-  ↓
-Returns success + updated vote counts
-  ↓
-sessionplan.js updates sessions.json with votes
-  ↓
-Top 3 sessions shown with medals 🥇🥈🥉
-```
-
-## Voting Schedule
-
-Voting times are configured in `event.json`:
-
-```json
-{
-  "features": {
-    "voting": true,
-    "votingSchedule": [
-      {
-        "day": "samstag",
-        "dayLabel": "Samstag",
-        "dayOfWeek": 6,
-        "startTime": "16:00",
-        "endTime": "17:45"
-      },
-      {
-        "day": "sonntag",
-        "dayLabel": "Sonntag",
-        "dayOfWeek": 0,
-        "startTime": "14:00",
-        "endTime": "15:30"
-      }
-    ]
   }
 }
 ```
 
-## User Identification
+Day keys are the day keys from `content/sessionplan/sessions.json`. One vote per user and day.
 
-Users are identified by a **persistent browser fingerprint**:
+### `content/voting/voting-state.json`
 
-1. **Primary:** `localStorage` key (`pccampapp_vote_key`)
-2. **Fallback:** Browser fingerprint (userAgent, screen, timezone, canvas)
-3. **Format:** `vote_abc123` (hash-based)
+Global voting status set in the admin tab "Voting": `inactive`, `active` or `ended`. A missing or unreadable file counts as inactive.
 
-**Reset user identity (for testing):**
-```javascript
-// In browser console:
-resetUserIdentity()
+### `content/event.json` → `features.votingSchedule`
+
+Optional voting window per session day, edited in the admin tab "Sessions":
+
+```json
+{ "day": "samstag", "dayLabel": "Samstag", "dayOfWeek": 6, "startTime": "16:00", "endTime": "17:45" }
 ```
 
-## Deployment
+`startTime`/`endTime` are optional (both or neither). Without a window, voting is open the whole day. `dayOfWeek` is optional if `day` is a German weekday name.
 
-### Production Deployment
-The `votes.json` file is **preserved** during deployment:
+## Endpoints
 
-```bash
-# .gitlab-ci.yml
-rsync -avz --delete --exclude "votes/votes.json" build/ server:/path/
+| Endpoint | Auth | Purpose |
+| --- | --- | --- |
+| `vote.php` | public, POST | Records a vote |
+| `status.php` | public, POST | Aggregated counts plus the caller's own vote, no other users' keys |
+| `change-status.php` | admin session + CSRF | Sets `voting-state.json` |
+| `transfer-votes.php` | admin session + CSRF | Copies counts from `votes.json` into `sessions.json` (medals in the session plan) |
+
+### `vote.php`
+
+```json
+POST /votes/vote.php
+{ "sessionId": "10", "day": "samstag", "userKey": "vote_abc123" }
 ```
 
-### Initial Setup on Server
-1. SSH into production server
-2. Copy example file:
-   ```bash
-   cd /var/www/html/votes
-   cp votes.json.example votes.json
-   chmod 666 votes.json  # PHP needs write access
-   ```
+Checks, in this order:
 
-## Security Considerations
+| Check | Response on failure |
+| --- | --- |
+| Parameters present, `userKey` matches `vote_[a-z0-9]{4,58}` | 400 |
+| `day` is a day key in `sessions.json` | 400 `Invalid day` |
+| Status is `active` | 403 `Voting is not active` |
+| `event.json` readable | 503 `Voting configuration unavailable` |
+| Today (in `event.timezone`, default `Europe/Berlin`) is this day, and the time is inside the window if one is set | 403 `Voting window closed for this day` |
+| Session exists and is not cancelled | 400 `Unknown or cancelled session` |
+| User has not voted for this day | 409 `User already voted for this day` |
 
-### User Privacy
-- UserKeys are anonymized hashes (not directly identifiable)
-- No personal data (name, email, IP) is stored
-- Timestamps are Unix timestamps (for internal use only)
+Success returns `{ "success": true, "sessions": { ... }, "hasVoted": true }`. The window logic lives in `vote-helpers.php` (`isVotingWindowOpen()`); `src/sessionplan/sessionplan.js` applies the same rule to decide whether to show the form.
 
-### Vote Integrity
-- One vote per day per user
-- UserKey stored in localStorage (persists across sessions)
-- Browser fingerprint as fallback (less reliable)
+### `transfer-votes.php`
 
-### Admin Access
-- Results page requires secret key
-- Key should be changed in production
-- Consider IP whitelisting for results page
+Allowed while the status is `active` or `ended`, so the results of a finished day can be transferred while the next day is still voting. Overwrites the `votes` field of matching sessions with the current counts; safe to repeat, deletes no votes.
 
-## Troubleshooting
+## User identification
 
-### Votes not saving
-1. Check PHP error logs
-2. Verify `votes.json` is writable: `chmod 666 src/votes/votes.json`
-3. Check `vote.php` returns 200 status
+The client stores a key in `localStorage` (`pccampapp_vote_key`), falling back to a browser fingerprint hash. Reset in the browser console with `resetUserIdentity()`.
 
-### Users can vote multiple times
-1. Clear browser `localStorage` (testing only)
-2. Check userKey generation in `sessionplan.js`
-3. Verify `votes.json` structure matches example
+## Testing
 
-### Voting not showing up
-1. Check current day/time matches `votingSchedule`
-2. Use URL override: `?vote=samstag`
-3. Check browser console for errors
-
-## Example Usage
-
-### Initialize empty voting system:
-```bash
-cp src/votes/votes.json.example src/votes/votes.json
-```
-
-### Test voting in development:
-```bash
-# Start dev server
-make dev-start
-
-# Open browser to sessionplan page
-# Wait for voting time window (or use ?vote=samstag)
-# Vote for a session
-# Check votes.json for updates
-```
-
-### View results:
-```
-http://localhost:5173/admin/   (Login -> Tab "Voting" -> "Ergebnisse anzeigen")
-```
-
-### Reset votes for new event:
-```bash
-cp src/votes/votes.json.example src/votes/votes.json
-# Or manually edit votes.json to reset counters
-```
+- `?vote=<day>` on the session plan shows the voting form outside the window. Votes are still rejected server-side outside the window.
+- To reset all votes, replace `content/voting/votes.json` with `{}`.
+- Results: admin → tab "Voting" → "Ergebnisse anzeigen" (`/admin/results.php`, admin session required).

@@ -184,3 +184,5 @@ src/assets/icon-512.png
 
 # Build scripts (nicht für GitLab CI)
 build-css.sh
+
+docs/
