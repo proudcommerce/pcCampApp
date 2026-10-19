@@ -6,6 +6,8 @@ Voting-Zeitraum je Session-Tag im Admin einstellbar. Im Tab "Sessions" hat jeder
 
 "Votes in sessions.json übertragen" geht jetzt auch bei aktivem Voting, nicht nur nach "Beenden" (`src/votes/transfer-votes.php`, Button im Admin-Tab "Voting"). Bisher musste man bei mehrtägigen Events für die Medaillen des ersten Tages das Voting beenden und für den nächsten Tag über "Zurücksetzen" und "Aktivieren" wieder öffnen. Mit den Zeiträumen je Tag bleibt der Status jetzt das ganze Event über aktiv. README und Voting-Tab enthalten eine kurze Anleitung zum Ablauf.
 
+Medaillen im Sessionplan gehen nur noch an Sessions mit mindestens einer Stimme. Bisher nahm `getTopSessions()` in `src/sessionplan/sessionplan.js` nach dem Sortieren einfach die ersten drei, sodass bei weniger als drei bewerteten Sessions eine Session mit 0 Stimmen eine Medaille bekam. Bei Gleichstand entschied bisher die Reihenfolge im Sessionplan über Gold, Silber und Bronze. Jetzt bekommt gleiche Stimmenzahl dieselbe Medaille, vergeben werden die drei höchsten Stimmenzahlen (`getMedalRanks()`, 5, 3, 3, 1 → 🥇 🥈 🥈 🥉). Die Ergebnisseite im Admin (`src/admin/results.php`) färbt die Ränge nach derselben Regel.
+
 ## [3.0.20] - 2026-10-14
 
 Speichern der Allergen-Legende im Admin-Bereich schlug fehl, sobald die Zusatzstoff-Codes `1` bis `14` enthalten waren (Fehler "allergen code must be 1-8 alphanumerics"). `json_decode()` wandelt numerische Objekt-Keys in Integer um, `validateAllergene()` in `src/admin/schemas.php` verlangte aber einen String. Der Code wird jetzt vor der Pruefung in einen String umgewandelt; ungueltige Codes wie `A-1` oder leere Keys werden weiterhin abgelehnt.

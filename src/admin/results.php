@@ -198,10 +198,15 @@ body { background:#f9fafb; }
             <?php else: ?>
                 <table class="results-table">
                     <tbody>
-                        <?php foreach ($dayResult['sessions'] as $index => $item): ?>
+                        <?php
+                            // Gleiche Stimmenzahl ergibt dieselbe Medaille, wie im Sessionplan.
+                            $medalVoteCounts = array_slice(array_values(array_unique(array_column($dayResult['sessions'], 'votes'))), 0, 3);
+                        ?>
+                        <?php foreach ($dayResult['sessions'] as $item): ?>
+                            <?php $medalIndex = array_search($item['votes'], $medalVoteCounts, true); ?>
                             <tr>
-                                <td class="rank rank-<?= $index + 1 ?>">
-                                    <div class="votes-badge <?= $index === 0 ? 'votes-badge-gold' : ($index === 1 ? 'votes-badge-silver' : ($index === 2 ? 'votes-badge-bronze' : '')) ?>">
+                                <td class="rank<?= $medalIndex !== false ? ' rank-' . ($medalIndex + 1) : '' ?>">
+                                    <div class="votes-badge <?= $medalIndex === 0 ? 'votes-badge-gold' : ($medalIndex === 1 ? 'votes-badge-silver' : ($medalIndex === 2 ? 'votes-badge-bronze' : '')) ?>">
                                         <?= $item['votes'] ?>
                                     </div>
                                 </td>

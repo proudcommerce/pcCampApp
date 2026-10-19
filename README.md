@@ -655,7 +655,7 @@ Der heutige Wochentag muss zu einem Tag in `sessions.json` passen. Ist für dies
 - Voting-Button erscheint im Sessionplan während der konfigurierten Zeitfenster
 - Jeder Teilnehmer kann **eine Stimme pro Tag** abgeben
 - Abstimmung erfolgt via Browser-Fingerprint (anonymisiert)
-- Top 3 Sessions werden mit Medaillen (🥇🥈🥉) angezeigt
+- Die drei höchsten Stimmenzahlen eines Tages bekommen Medaillen (🥇🥈🥉), nur Sessions mit mindestens einer Stimme. Gleiche Stimmenzahl ergibt dieselbe Medaille (z. B. 5, 3, 3, 1 → 🥇 🥈 🥈 🥉)
 
 ### Admin-Bereich
 

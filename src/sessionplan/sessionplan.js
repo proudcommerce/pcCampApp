@@ -365,7 +365,8 @@
 		return roomGroups;
 	};
 
-	const getTopSessions = (data) => {
+	// Rang 1-3 je Session-ID; gleiche Stimmenzahl ergibt dieselbe Medaille.
+	const getMedalRanks = (data) => {
 		// Sammle alle Sessions des Tages (ohne cancelled Sessions)
 		const allSessions = [];
 		Object.values(data).forEach(sessions => {
@@ -382,20 +383,17 @@
 		const allHaveVotes = allSessions.every(session => session.hasOwnProperty('votes'));
 
 		if (!allHaveVotes || allSessions.length === 0) {
-			return [];
+			return new Map();
 		}
 
-		// Keine Medaillen zeigen, solange niemand tatsächlich gevotet hat
-		const hasAnyVotes = allSessions.some(session => (session.votes || 0) > 0);
-		if (!hasAnyVotes) {
-			return [];
-		}
-
-		// Sortiere nach Vote-Anzahl (absteigend) und nimm die Top 3
-		return allSessions
-			.sort((a, b) => (b.votes || 0) - (a.votes || 0))
-			.slice(0, 3)
-			.map(session => session.id);
+		// Medaillen nur für Sessions mit mindestens einer Stimme
+		const voted = allSessions.filter(session => (session.votes || 0) > 0);
+		const medalVoteCounts = [...new Set(voted.map(session => session.votes))]
+			.sort((a, b) => b - a)
+			.slice(0, 3);
+		return new Map(voted
+			.filter(session => medalVoteCounts.includes(session.votes))
+			.map(session => [session.id, medalVoteCounts.indexOf(session.votes) + 1]));
 	};
 
 
@@ -405,8 +403,8 @@
 		const showFavoritesOnly = document.getElementById('favorites-only')?.checked || false;
 		const isRoomGrouping = document.getElementById('room-grouping')?.classList.contains('active');
 		
-		// Ermittle Top 3 Sessions für diesen Tag
-		const topSessionIds = getTopSessions(data);
+		// Medaillen-Ränge für diesen Tag
+		const medalRanks = getMedalRanks(data);
 		
 		if (isRoomGrouping) {
 			const roomGroups = groupByRoom(data);
@@ -444,8 +442,8 @@
 						const badge = el('span', 'cancelled-badge', t('sessionplan.cancelledBadge'));
 						titleDiv.appendChild(badge);
 						li.classList.add('cancelled');
-					} else if (topSessionIds.includes(item?.id)) {
-						const rank = topSessionIds.indexOf(item.id) + 1;
+					} else if (medalRanks.has(item?.id)) {
+						const rank = medalRanks.get(item.id);
 						const medalIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
 						titleDiv.appendChild(document.createTextNode(' ' + medalIcon));
 					}
@@ -499,8 +497,8 @@
 						const badge = el('span', 'cancelled-badge', t('sessionplan.cancelledBadge'));
 						titleDiv.appendChild(badge);
 						li.classList.add('cancelled');
-					} else if (topSessionIds.includes(item?.id)) {
-						const rank = topSessionIds.indexOf(item.id) + 1;
+					} else if (medalRanks.has(item?.id)) {
+						const rank = medalRanks.get(item.id);
 						const medalIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
 						titleDiv.appendChild(document.createTextNode(' ' + medalIcon));
 					}
@@ -803,6 +801,8 @@
 			button.textContent = t('voting.submitButton');
 		}
 	};
+
+
 	const VOTING_WEEKDAY_KEYS = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag'];
 
 	// Default aus event.schema.json; vote-helpers.php nutzt denselben Fallback.
@@ -826,8 +826,6 @@
 		return { dayOfWeek: weekdays.indexOf(parts.weekday), time: `${parts.hour}:${parts.minute}` };
 	};
 
-
-
 	// Check if voting should be visible for current day and time
 	const shouldShowVoting = async () => {
 		// Load event configuration if not already loaded
@@ -846,9 +844,9 @@
 			console.log('Voting feature is disabled');
 			return { show: false, day: null, dayLabel: null };
 		}
-		// Ohne lesbaren Status gilt das Voting als inaktiv, wie in vote.php.
 
 		// Check voting-state.json for admin-controlled status
+		// Ohne lesbaren Status gilt das Voting als inaktiv, wie in vote.php.
 		try {
 			const stateResponse = await fetch(window.contentUrl('voting/voting-state.json'));
 			const votingState = stateResponse.ok ? await stateResponse.json() : null;
@@ -856,9 +854,9 @@
 				console.log('Voting is not active (admin-controlled status):', votingState?.status);
 				return { show: false, day: null, dayLabel: null };
 			}
-			return { show: false, day: null, dayLabel: null };
 		} catch (error) {
 			console.warn('Could not load voting-state.json:', error);
+			return { show: false, day: null, dayLabel: null };
 		}
 
 		const votingSchedule = window.eventConfig?.features?.votingSchedule || [];
