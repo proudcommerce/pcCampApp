@@ -241,7 +241,6 @@ make build
 
 **Keine Code-Änderungen nötig!** Das Build-System automatisch:
 
-- Generiert PWA-Manifest aus der Konfiguration
 - Erstellt alle PWA-Icons (16x16, 144x144, 192x192, 512x512)
 - Wendet Theme-Farben an
 
