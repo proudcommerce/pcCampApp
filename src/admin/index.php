@@ -224,6 +224,7 @@ if (!file_exists($stateFile)) {
                     <?php elseif ($votingState['status'] === 'active'): ?>
                         <button class="btn btn-secondary" onclick="changeVotingStatus('inactive')">Deaktivieren</button>
                         <button class="btn btn-danger" onclick="changeVotingStatus('ended')">Beenden</button>
+                        <button class="btn btn-primary" onclick="transferVotes()">Votes in sessions.json übertragen</button>
                         <a href="results.php" class="btn btn-primary" style="text-align:center;text-decoration:none;display:block;background:#6366f1;">Ergebnisse anzeigen</a>
                     <?php elseif ($votingState['status'] === 'ended'): ?>
                         <button class="btn btn-primary" onclick="transferVotes()">Votes in sessions.json übertragen</button>
@@ -243,6 +244,17 @@ if (!file_exists($stateFile)) {
                         <p>Voting wurde beendet. Klicke auf "Votes in sessions.json übertragen", um die Ergebnisse dauerhaft zu speichern.</p>
                     </div>
                 <?php endif; ?>
+
+                <div class="voting-guide">
+                    <h3>So läuft das Voting an einem mehrtägigen Event</h3>
+                    <ol>
+                        <li><strong>Vorher:</strong> Im Tab "Sessions" je Tag den Voting-Zeitraum (Von/Bis) eintragen. Leer lassen heißt: Voting den ganzen Tag offen.</li>
+                        <li><strong>Zum Start:</strong> Hier einmal auf "Aktivieren" klicken. Der Status bleibt das ganze Event über aktiv, welcher Tag abstimmbar ist, regeln die Zeiträume.</li>
+                        <li><strong>Nach jedem Tag:</strong> "Votes in sessions.json übertragen", damit die Medaillen des Tages im Sessionplan erscheinen. Der nächste Tag läuft ohne weiteren Klick.</li>
+                        <li><strong>Zum Schluss:</strong> "Beenden", dann noch einmal übertragen.</li>
+                    </ol>
+                    <p>Stimmen werden je Tag getrennt gespeichert. Übertragen lässt sich beliebig oft wiederholen, Zurücksetzen löscht keine Stimmen.</p>
+                </div>
             </div>
         </div>
 

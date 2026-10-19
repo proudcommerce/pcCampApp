@@ -21,7 +21,9 @@ requireCsrfToken();
 
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Check if voting is ended
+// Auch bei aktivem Voting erlaubt: Bei mehrtaegigen Events werden die Ergebnisse
+// eines Tages uebertragen, waehrend der naechste Tag noch votet. Der Transfer
+// ueberschreibt nur mit den aktuellen Zaehlern und ist beliebig wiederholbar.
 $stateFile = contentPath('voting/voting-state.json');
 if (!file_exists($stateFile)) {
     http_response_code(400);
@@ -31,9 +33,9 @@ if (!file_exists($stateFile)) {
 
 $votingState = json_decode(file_get_contents($stateFile), true);
 
-if ($votingState['status'] !== 'ended') {
+if (!in_array($votingState['status'] ?? null, ['active', 'ended'], true)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Voting must be ended before transferring votes', 'currentStatus' => $votingState['status']]);
+    echo json_encode(['error' => 'Voting must be active or ended before transferring votes', 'currentStatus' => $votingState['status'] ?? null]);
     exit;
 }
 

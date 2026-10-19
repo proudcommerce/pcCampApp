@@ -663,8 +663,17 @@ Voting wird im [Admin-Panel](#️-content-verwaltung-admin) im Tab **"Voting"** 
 
 - Live-Statistik und Teilnehmerzahlen
 - Voting aktivieren / deaktivieren / beenden
-- Ergebnisse in `sessions.json` übertragen (Winner-Badge TOP 3)
+- Ergebnisse in `sessions.json` übertragen (Winner-Badge TOP 3), bei aktivem oder beendetem Voting
 - Ergebnis-Ansicht mit Medaillen-Ranking
+
+### Ablauf an einem mehrtägigen Event
+
+1. **Vorher:** Im Tab "Sessions" je Tag den Voting-Zeitraum (Von/Bis) eintragen und speichern. Leer lassen heißt: Voting den ganzen Tag offen.
+2. **Zum Start:** Im Tab "Voting" einmal auf **Aktivieren** klicken. Der Status bleibt das ganze Event über aktiv; welcher Tag abstimmbar ist, regeln die Zeiträume.
+3. **Nach jedem Tag:** **Votes in sessions.json übertragen** klicken, damit die Medaillen dieses Tages im Sessionplan erscheinen. Das Voting für den nächsten Tag läuft ohne weiteren Klick.
+4. **Zum Schluss:** **Beenden**, dann noch einmal übertragen.
+
+Stimmen werden je Tag getrennt gespeichert. Übertragen überschreibt nur die Zähler in `sessions.json` mit dem aktuellen Stand und lässt sich beliebig oft wiederholen. "Zurücksetzen (Inaktiv)" löscht keine Stimmen.
 
 ---
 
