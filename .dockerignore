@@ -27,7 +27,7 @@ yarn.lock
 Thumbs.db
 
 # Documentation (keep CLAUDE.md)
-*.md
+**/*.md
 !CLAUDE.md
 !README.md
 

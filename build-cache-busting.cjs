@@ -88,7 +88,6 @@ const copyOnlyFiles = [
   'votes/status.php',
   'votes/vote-helpers.php',
   'votes/config.php',
-  'votes/README.md',
   'admin/api.php',
   'admin/rehash.php',
   'admin/content-paths.php',
